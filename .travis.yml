@@ -1,0 +1,24 @@
+language: python
+
+python:
+    - 3.4
+
+sudo: required
+dist: trusty
+
+before_install:
+    - sudo make aptdeps
+    - make pythondeps
+
+install:
+    - make install
+
+script:
+    - make test
+    - make docs
+
+after_success:
+    - coverage run -m tornado.testing discover
+    - pip install codecov
+    - codecov
+    - bash <(curl -s https://codecov.io/bash)
