@@ -7,11 +7,12 @@ import tornado_crud
 from tornado_crud import registry, exceptions
 from tornado_crud.http import httpstatus
 from tornado_crud.resource import Resource
-from tornado_crud.rest_handler import RESTResourceHandler, \
-    RESTCollectionHandler
+from tornado_crud.handler import ResourceHandler, CollectionHandler
 from tornado_crud.tests import utils
 from tornado_crud.tests.utils import AsyncHTTPTestCase
 from tornado import web, gen, escape
+
+PREPARE_MODULE_STR = "tornado_crud.handler.BaseHandler.prepare"
 
 
 def prepare_side_effect(*args, **kwargs):
@@ -105,7 +106,7 @@ class TestREST(AsyncHTTPTestCase):
         Student.id = 0
 
     def get_app(self):
-        handlers = rest.api_handlers('/')
+        handlers = tornado_crud.api_handlers('/')
         registry.registry.register(Student)
         registry.registry.register(UnsupportAll)
         registry.registry.register(Unprocessable)
@@ -116,8 +117,7 @@ class TestREST(AsyncHTTPTestCase):
         return app
 
     def test_items(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                                side_effect=prepare_side_effect)):
             res = self.fetch("/api/v1/students/")
@@ -136,8 +136,7 @@ class TestREST(AsyncHTTPTestCase):
                              {"items": [1, 2, 3]})
 
     def test_create(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -167,8 +166,7 @@ class TestREST(AsyncHTTPTestCase):
                              {"items": ['0', '1']})
 
     def test_retrieve(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -193,8 +191,7 @@ class TestREST(AsyncHTTPTestCase):
             self.assertNotIn("Content-Type", res.headers)
 
     def test_post_on_resource(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -217,8 +214,7 @@ class TestREST(AsyncHTTPTestCase):
             self.assertEqual(res.code, httpstatus.CONFLICT)
 
     def test_update(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -255,8 +251,7 @@ class TestREST(AsyncHTTPTestCase):
             self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
     def test_delete(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -282,8 +277,7 @@ class TestREST(AsyncHTTPTestCase):
             self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
     def test_unexistent_resource_type(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -304,8 +298,7 @@ class TestREST(AsyncHTTPTestCase):
             self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
     def test_post_non_json(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -316,8 +309,7 @@ class TestREST(AsyncHTTPTestCase):
             self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_unsupported_methods(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -347,8 +339,7 @@ class TestREST(AsyncHTTPTestCase):
             self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
     def test_unprocessable(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -416,8 +407,7 @@ class TestREST(AsyncHTTPTestCase):
 
     def test_broken(self):
         collection_url = "/api/v1/brokens/"
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
 
@@ -432,8 +422,7 @@ class TestREST(AsyncHTTPTestCase):
                 self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
     def test_unsupports_collections(self):
-        with mock.patch("remoteappmanager.handlers.base_handler.BaseHandler"
-                        ".prepare",
+        with mock.patch(PREPARE_MODULE_STR,
                         new_callable=utils.mock_coro_new_callable(
                             side_effect=prepare_side_effect)):
             res = self.fetch(
@@ -444,8 +433,8 @@ class TestREST(AsyncHTTPTestCase):
 
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
-        handlers = rest.api_handlers("/foo")
+        handlers = tornado_crud.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/(.*)/(.*)/")
-        self.assertEqual(handlers[0][1], RESTResourceHandler)
+        self.assertEqual(handlers[0][1], ResourceHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
-        self.assertEqual(handlers[1][1], RESTCollectionHandler)
+        self.assertEqual(handlers[1][1], CollectionHandler)

@@ -1,65 +1,8 @@
-import contextlib
-import sys
 import socket
-from unittest import mock
 
 import tornado.netutil
 import tornado.testing
 from tornado import gen
-import docker
-
-from remoteappmanager.command_line_config import CommandLineConfig
-from remoteappmanager.file_config import FileConfig
-from remoteappmanager.db.orm import Database
-from tests import fixtures
-
-
-# A set of viable start arguments
-arguments = {
-    "user": "username",
-    "port": 57022,
-    "cookie-name": "jupyter-hub-token-username",
-    "base-urlpath": "/user/username/",
-    "hub-host": "",
-    "hub-prefix": "/hub/",
-    "hub-api-url": "http://172.17.5.167:8081/hub/api",
-    "proxy-api-url": "http://192.168.100.99/proxy/api",
-    "ip": "127.0.0.1",
-    "config-file": fixtures.get("remoteappmanager_config.py")
-}
-
-
-def init_sqlite_db(path):
-    """Initializes the sqlite database at a given path.
-    """
-    db = Database("sqlite:///"+path)
-    db.reset()
-
-
-def basic_command_line_config():
-    """Returns a basic application config for testing purposes.
-    The database is in memory.
-    """
-    options = {k.replace("-", "_"): v for k, v in arguments.items()}
-
-    return CommandLineConfig(**options)
-
-
-def basic_file_config():
-    return FileConfig()
-
-
-@contextlib.contextmanager
-def invocation_argv():
-    """Replaces and restores the argv arguments"""
-    saved_argv = sys.argv[:]
-    new_args = ["--{}={}".format(key, value)
-                for key, value in arguments.items()]
-    sys.argv[:] = [sys.argv[0]] + new_args
-
-    yield
-
-    sys.argv[:] = saved_argv
 
 
 # Workaround for tornado bug #1573, already fixed in master, but not yet
@@ -119,10 +62,3 @@ def mock_coro_factory(return_value=None, side_effect=None):
     coro.called = False
     coro.return_value = return_value
     return coro
-
-
-def assert_containers_equal(test_case, actual, expected):
-    for name in expected.trait_names():
-        if getattr(actual, name) != getattr(expected, name):
-            message = '{!r} is not identical to the expected {!r}.'
-            test_case.fail(message.format(actual, expected))
