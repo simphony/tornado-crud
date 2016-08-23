@@ -1,4 +1,4 @@
-from .rest_handler import RESTResourceHandler, RESTCollectionHandler
+from .handler import ResourceHandler, CollectionHandler
 from .utils import url_path_join, with_end_slash
 
 
@@ -23,10 +23,10 @@ def api_handlers(base_urlpath, version="v1"):
     return [
         (with_end_slash(
             url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
-         RESTResourceHandler
+         ResourceHandler
          ),
         (with_end_slash(
             url_path_join(base_urlpath, "api", version, "(.*)")),
-         RESTCollectionHandler
+         CollectionHandler
          ),
         ]
