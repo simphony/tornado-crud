@@ -1,4 +1,4 @@
-from remoteappmanager.rest.http import httpstatus
+from .http import httpstatus
 
 
 class RESTException(Exception):

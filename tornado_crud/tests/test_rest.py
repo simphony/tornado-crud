@@ -3,14 +3,14 @@ import urllib.parse
 from collections import OrderedDict
 from unittest import mock
 
-from remoteappmanager import rest
-from remoteappmanager.rest import registry, exceptions
-from remoteappmanager.rest.http import httpstatus
-from remoteappmanager.rest.resource import Resource
-from remoteappmanager.rest.rest_handler import RESTResourceHandler, \
+import tornado_crud
+from tornado_crud import registry, exceptions
+from tornado_crud.http import httpstatus
+from tornado_crud.resource import Resource
+from tornado_crud.rest_handler import RESTResourceHandler, \
     RESTCollectionHandler
-from tests import utils
-from tests.utils import AsyncHTTPTestCase
+from tornado_crud.tests import utils
+from tornado_crud.tests.utils import AsyncHTTPTestCase
 from tornado import web, gen, escape
 
 

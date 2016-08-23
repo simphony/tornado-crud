@@ -1,4 +1,4 @@
-from remoteappmanager.rest.resource import Resource
+from .resource import Resource
 
 
 class Registry:

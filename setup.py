@@ -12,7 +12,7 @@ setup(
     name='tornado_crud',
     version=VERSION,
     author='SimPhoNy Project',
-    description='Remote application manager sub-executable',
+    description='Tornado-based CRUD framework',
     install_requires=INSTALL_REQUIRES,
     packages=find_packages(),
     )

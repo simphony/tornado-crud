@@ -1,4 +1,4 @@
-from remoteappmanager.rest import exceptions
+from . import exceptions
 from tornado import gen, log
 
 

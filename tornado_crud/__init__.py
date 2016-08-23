@@ -1,6 +1,5 @@
-from remoteappmanager.rest.rest_handler import RESTResourceHandler, \
-    RESTCollectionHandler
-from remoteappmanager.utils import url_path_join, with_end_slash
+from .rest_handler import RESTResourceHandler, RESTCollectionHandler
+from .utils import url_path_join, with_end_slash
 
 
 def api_handlers(base_urlpath, version="v1"):

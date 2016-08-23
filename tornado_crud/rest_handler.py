@@ -1,9 +1,9 @@
-from remoteappmanager.handlers.base_handler import BaseHandler
-from remoteappmanager.rest import exceptions
-from remoteappmanager.rest.http import httpstatus
-from remoteappmanager.rest.http.payloaded_http_error import PayloadedHTTPError
-from remoteappmanager.rest.registry import registry
-from remoteappmanager.utils import url_path_join, with_end_slash
+from .handlers.base_handler import BaseHandler
+from .rest import exceptions
+from .rest.http import httpstatus
+from .rest.http.payloaded_http_error import PayloadedHTTPError
+from .rest.registry import registry
+from .utils import url_path_join, with_end_slash
 from tornado import gen, web, escape
 
 
