@@ -12,7 +12,7 @@ class TornadoCRUDException(Exception):
     def __init__(self, message=None, **kwargs):
         """Initializes the exception. keyword arguments will become
         part of the representation as key/value pairs."""
-        super().__init__(message, **kwargs)
+        super().__init__(message)
         self.message = message
         self.info = kwargs if len(kwargs) else None
 
