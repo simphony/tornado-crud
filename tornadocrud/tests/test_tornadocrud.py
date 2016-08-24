@@ -3,16 +3,16 @@ import urllib.parse
 from collections import OrderedDict
 from unittest import mock
 
-import tornado_crud
-from tornado_crud import registry, exceptions
-from tornado_crud.http import httpstatus
-from tornado_crud.resource import Resource
-from tornado_crud.handler import ResourceHandler, CollectionHandler
-from tornado_crud.tests import utils
-from tornado_crud.tests.utils import AsyncHTTPTestCase
+import tornadocrud
+from tornadocrud import registry, exceptions
+from tornadocrud.http import httpstatus
+from tornadocrud.resource import Resource
+from tornadocrud.handler import ResourceHandler, CollectionHandler
+from tornadocrud.tests import utils
+from tornadocrud.tests.utils import AsyncHTTPTestCase
 from tornado import web, gen, escape
 
-PREPARE_MODULE_STR = "tornado_crud.handler.BaseHandler.prepare"
+PREPARE_MODULE_STR = "tornadocrud.handler.BaseHandler.prepare"
 
 
 def prepare_side_effect(*args, **kwargs):
@@ -106,7 +106,7 @@ class TestREST(AsyncHTTPTestCase):
         Student.id = 0
 
     def get_app(self):
-        handlers = tornado_crud.api_handlers('/')
+        handlers = tornadocrud.api_handlers('/')
         registry.registry.register(Student)
         registry.registry.register(UnsupportAll)
         registry.registry.register(Unprocessable)
@@ -433,7 +433,7 @@ class TestREST(AsyncHTTPTestCase):
 
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
-        handlers = tornado_crud.api_handlers("/foo")
+        handlers = tornadocrud.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/(.*)/(.*)/")
         self.assertEqual(handlers[0][1], ResourceHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")

@@ -1,7 +1,7 @@
 import unittest
 
-from tornado_crud.registry import Registry
-from tornado_crud.resource import Resource
+from tornadocrud.registry import Registry
+from tornadocrud.resource import Resource
 
 
 class Student(Resource):
