@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-from tornado_crud import __version__
+from tornadocrud import __version__
 
 VERSION = __version__
 
@@ -9,7 +9,7 @@ with open("requirements.txt") as f:
 
 # main setup configuration class
 setup(
-    name='tornado_crud',
+    name='tornadocrud',
     version=VERSION,
     author='SimPhoNy Project',
     description='Tornado-based CRUD framework',

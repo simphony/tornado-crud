@@ -1,7 +1,7 @@
 from .http import httpstatus
 
 
-class RESTException(Exception):
+class TornadoCRUDException(Exception):
     """Base exception for the REST infrastructure
     These are exceptions that can be raised by the CRUD handlers.
     """
@@ -12,7 +12,7 @@ class RESTException(Exception):
     def __init__(self, message=None, **kwargs):
         """Initializes the exception. keyword arguments will become
         part of the representation as key/value pairs."""
-        super().__init__(message, **kwargs)
+        super().__init__(message)
         self.message = message
         self.info = kwargs if len(kwargs) else None
 
@@ -31,7 +31,7 @@ class RESTException(Exception):
         return data
 
 
-class NotFound(RESTException):
+class NotFound(TornadoCRUDException):
     """Exception raised when the resource is not found.
     Raise this exception in your CRUD handlers when you can't
     find the resource the identifier refers to.
@@ -44,7 +44,7 @@ class NotFound(RESTException):
         return None
 
 
-class BadRequest(RESTException):
+class BadRequest(TornadoCRUDException):
     """Exception raised when the resource representation is
     invalid or does not contain the appropriate keys.
     Raise this exception in your CRUD handlers when the received
@@ -53,7 +53,7 @@ class BadRequest(RESTException):
     http_code = httpstatus.BAD_REQUEST
 
 
-class Unable(RESTException):
+class Unable(TornadoCRUDException):
     """Exception raised when the CRUD request cannot be performed
     for whatever reason that is not dependent on the client.
     """

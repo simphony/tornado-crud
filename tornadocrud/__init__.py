@@ -1,5 +1,15 @@
-from .rest_handler import RESTResourceHandler, RESTCollectionHandler
+from .handler import ResourceHandler, CollectionHandler
 from .utils import url_path_join, with_end_slash
+
+MAJOR = 0
+MINOR = 1
+MICRO = 0
+IS_RELEASED = False
+
+__version__ = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+
+if not IS_RELEASED:
+    __version__ += '.dev0'
 
 
 def api_handlers(base_urlpath, version="v1"):
@@ -23,10 +33,10 @@ def api_handlers(base_urlpath, version="v1"):
     return [
         (with_end_slash(
             url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
-         RESTResourceHandler
+         ResourceHandler
          ),
         (with_end_slash(
             url_path_join(base_urlpath, "api", version, "(.*)")),
-         RESTCollectionHandler
+         CollectionHandler
          ),
         ]

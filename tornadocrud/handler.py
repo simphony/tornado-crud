@@ -1,17 +1,27 @@
-from .handlers.base_handler import BaseHandler
-from .rest import exceptions
-from .rest.http import httpstatus
-from .rest.http.payloaded_http_error import PayloadedHTTPError
-from .rest.registry import registry
+from . import exceptions
+from .http import httpstatus
+from .http.payloaded_http_error import PayloadedHTTPError
+from .registry import registry
 from .utils import url_path_join, with_end_slash
 from tornado import gen, web, escape
+from tornado.log import app_log
 
 
-class RESTBaseHandler(BaseHandler):
+class BaseHandler(web.RequestHandler):
+    @gen.coroutine
+    def prepare(self):
+        """Runs before any specific handler. """
+        # FIXME : Needs implementation to retrieve user.
+        self.current_user = None
+
     @property
     def registry(self):
         """Returns the global class vs Resource registry"""
         return registry
+
+    @property
+    def log(self):
+        return app_log
 
     def get_resource_handler_or_404(self, collection_name):
         """Given a collection name, inquires the registry
@@ -47,10 +57,10 @@ class RESTBaseHandler(BaseHandler):
             self.clear_header('Content-Type')
             self.finish()
 
-    def rest_to_http_exception(self, rest_exc):
+    def to_http_exception(self, crud_exc):
         """Converts a REST exception into the appropriate HTTP one."""
 
-        representation = rest_exc.representation()
+        representation = crud_exc.representation()
         payload = None
         content_type = None
 
@@ -59,13 +69,13 @@ class RESTBaseHandler(BaseHandler):
             content_type = "application/json"
 
         return PayloadedHTTPError(
-            status_code=rest_exc.http_code,
+            status_code=crud_exc.http_code,
             payload=payload,
             content_type=content_type
         )
 
 
-class RESTCollectionHandler(RESTBaseHandler):
+class CollectionHandler(BaseHandler):
     """Handler for URLs addressing a collection.
     """
     @web.authenticated
@@ -76,8 +86,8 @@ class RESTCollectionHandler(RESTBaseHandler):
 
         try:
             items = yield res_handler.items()
-        except exceptions.RESTException as e:
-            raise self.rest_to_http_exception(e)
+        except exceptions.TornadoCRUDException as e:
+            raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
         except Exception:
@@ -105,8 +115,8 @@ class RESTCollectionHandler(RESTBaseHandler):
 
         try:
             resource_id = yield res_handler.create(data)
-        except exceptions.RESTException as e:
-            raise self.rest_to_http_exception(e)
+        except exceptions.TornadoCRUDException as e:
+            raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
         except Exception:
@@ -130,7 +140,7 @@ class RESTCollectionHandler(RESTBaseHandler):
         self.flush()
 
 
-class RESTResourceHandler(RESTBaseHandler):
+class ResourceHandler(BaseHandler):
     """Handler for URLs addressing a resource.
     """
     SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
@@ -143,8 +153,8 @@ class RESTResourceHandler(RESTBaseHandler):
 
         try:
             representation = yield res_handler.retrieve(identifier)
-        except exceptions.RESTException as e:
-            raise self.rest_to_http_exception(e)
+        except exceptions.TornadoCRUDException as e:
+            raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
         except Exception:
@@ -168,8 +178,8 @@ class RESTResourceHandler(RESTBaseHandler):
 
         try:
             exists = yield res_handler.exists(identifier)
-        except exceptions.RESTException as e:
-            raise self.rest_to_http_exception(e)
+        except exceptions.TornadoCRUDException as e:
+            raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
         except Exception:
@@ -197,8 +207,8 @@ class RESTResourceHandler(RESTBaseHandler):
 
         try:
             yield res_handler.update(identifier, representation)
-        except exceptions.RESTException as e:
-            raise self.rest_to_http_exception(e)
+        except exceptions.TornadoCRUDException as e:
+            raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
         except Exception:
@@ -218,8 +228,8 @@ class RESTResourceHandler(RESTBaseHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
         try:
             yield res_handler.delete(identifier)
-        except exceptions.RESTException as e:
-            raise self.rest_to_http_exception(e)
+        except exceptions.TornadoCRUDException as e:
+            raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
         except Exception:

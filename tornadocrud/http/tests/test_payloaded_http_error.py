@@ -1,6 +1,6 @@
 import unittest
 
-from remoteappmanager.rest.http.payloaded_http_error import PayloadedHTTPError
+from tornadocrud.http.payloaded_http_error import PayloadedHTTPError
 
 
 class TestPayloadedHTTPError(unittest.TestCase):
