@@ -1,6 +1,6 @@
 import unittest
 
-from tornadocrud.http.payloaded_http_error import PayloadedHTTPError
+from tornadowebapi.http.payloaded_http_error import PayloadedHTTPError
 
 
 class TestPayloadedHTTPError(unittest.TestCase):

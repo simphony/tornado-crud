@@ -1,5 +1,6 @@
-from . import exceptions
 from tornado import gen, log
+
+from . import exceptions
 
 
 class Resource:

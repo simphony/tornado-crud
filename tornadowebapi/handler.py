@@ -1,10 +1,11 @@
+from tornado import gen, web, escape
+from tornado.log import app_log
+
 from . import exceptions
 from .http import httpstatus
 from .http.payloaded_http_error import PayloadedHTTPError
 from .registry import registry
 from .utils import url_path_join, with_end_slash
-from tornado import gen, web, escape
-from tornado.log import app_log
 
 
 class BaseHandler(web.RequestHandler):

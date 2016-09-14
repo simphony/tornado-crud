@@ -1,7 +1,7 @@
 import unittest
 
-from tornadocrud.registry import Registry
-from tornadocrud.resource import Resource
+from tornadowebapi.registry import Registry
+from tornadowebapi.resource import Resource
 
 
 class Student(Resource):

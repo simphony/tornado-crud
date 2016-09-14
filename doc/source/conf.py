@@ -19,9 +19,9 @@
 #
 import os
 import sys
-sys.path.append(os.path.abspath('../../../tornado-crud'))
+sys.path.append(os.path.abspath('../../'))
 
-from tornadocrud import __version__, MAJOR, MINOR
+from tornadowebapi import __version__, MAJOR, MINOR
 
 # -- General configuration ------------------------------------------------
 

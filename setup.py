@@ -1,18 +1,18 @@
 from setuptools import setup, find_packages
 
-from tornadocrud import __version__
+from tornadowebapi import __version__
 
 VERSION = __version__
 
-with open("requirements.txt") as f:
-    INSTALL_REQUIRES = f.readlines()
-
 # main setup configuration class
 setup(
-    name='tornadocrud',
+    name='tornadowebapi',
     version=VERSION,
     author='SimPhoNy Project',
-    description='Tornado-based CRUD framework',
-    install_requires=INSTALL_REQUIRES,
+    description='Tornado-based WebAPI framework',
+    install_requires=[
+        "setuptools>=21.0",
+        "tornado>=4.3"
+    ],
     packages=find_packages(),
     )
