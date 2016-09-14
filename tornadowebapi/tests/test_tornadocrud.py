@@ -8,11 +8,8 @@ from tornadowebapi import registry, exceptions
 from tornadowebapi.http import httpstatus
 from tornadowebapi.resource import Resource
 from tornadowebapi.handler import ResourceHandler, CollectionHandler
-from tornadowebapi.tests import utils
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, gen, escape
-
-PREPARE_MODULE_STR = "tornadowebapi.handler.BaseHandler.prepare"
 
 
 def prepare_side_effect(*args, **kwargs):
@@ -117,318 +114,282 @@ class TestREST(AsyncHTTPTestCase):
         return app
 
     def test_items(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                               side_effect=prepare_side_effect)):
-            res = self.fetch("/api/v1/students/")
+        res = self.fetch("/api/v1/students/")
 
-            self.assertEqual(res.code, httpstatus.OK)
-            self.assertEqual(escape.json_decode(res.body),
-                             {"items": []})
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": []})
 
-            Student.collection[1] = ""
-            Student.collection[2] = ""
-            Student.collection[3] = ""
+        Student.collection[1] = ""
+        Student.collection[2] = ""
+        Student.collection[3] = ""
 
-            res = self.fetch("/api/v1/students/")
-            self.assertEqual(res.code, httpstatus.OK)
-            self.assertEqual(escape.json_decode(res.body),
-                             {"items": [1, 2, 3]})
+        res = self.fetch("/api/v1/students/")
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": [1, 2, 3]})
 
     def test_create(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/students/",
-                method="POST",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
 
-            self.assertEqual(res.code, httpstatus.CREATED)
-            self.assertIn("api/v1/students/0/", res.headers["Location"])
+        self.assertEqual(res.code, httpstatus.CREATED)
+        self.assertIn("api/v1/students/0/", res.headers["Location"])
 
-            res = self.fetch(
-                "/api/v1/students/",
-                method="POST",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
-            self.assertEqual(res.code, httpstatus.CREATED)
-            self.assertIn("api/v1/students/1/", res.headers["Location"])
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
+        self.assertEqual(res.code, httpstatus.CREATED)
+        self.assertIn("api/v1/students/1/", res.headers["Location"])
 
-            res = self.fetch("/api/v1/students/")
-            self.assertEqual(res.code, httpstatus.OK)
-            self.assertEqual(escape.json_decode(res.body),
-                             {"items": ['0', '1']})
+        res = self.fetch("/api/v1/students/")
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": ['0', '1']})
 
     def test_retrieve(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/students/",
-                method="POST",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
 
-            location = urllib.parse.urlparse(res.headers["Location"]).path
+        location = urllib.parse.urlparse(res.headers["Location"]).path
 
-            res = self.fetch(location)
-            self.assertEqual(res.code, httpstatus.OK)
+        res = self.fetch(location)
+        self.assertEqual(res.code, httpstatus.OK)
 
-            self.assertEqual(escape.json_decode(res.body),
-                             {"foo": "bar"}
-                             )
+        self.assertEqual(escape.json_decode(res.body),
+                         {"foo": "bar"}
+                         )
 
-            res = self.fetch("/api/v1/students/1/")
-            self.assertEqual(res.code, httpstatus.NOT_FOUND)
-            self.assertNotIn("Content-Type", res.headers)
+        res = self.fetch("/api/v1/students/1/")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertNotIn("Content-Type", res.headers)
 
     def test_post_on_resource(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/students/",
-                method="POST",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
 
-            location = urllib.parse.urlparse(res.headers["Location"]).path
-            res = self.fetch(
-                location,
-                method="POST",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
+        location = urllib.parse.urlparse(res.headers["Location"]).path
+        res = self.fetch(
+            location,
+            method="POST",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
 
-            self.assertEqual(res.code, httpstatus.CONFLICT)
+        self.assertEqual(res.code, httpstatus.CONFLICT)
 
     def test_update(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/students/",
-                method="POST",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
 
-            location = urllib.parse.urlparse(res.headers["Location"]).path
+        location = urllib.parse.urlparse(res.headers["Location"]).path
 
-            res = self.fetch(
-                location,
-                method="PUT",
-                body=escape.json_encode({
-                    "foo": "baz"
-                })
-            )
-            self.assertEqual(res.code, httpstatus.NO_CONTENT)
+        res = self.fetch(
+            location,
+            method="PUT",
+            body=escape.json_encode({
+                "foo": "baz"
+            })
+        )
+        self.assertEqual(res.code, httpstatus.NO_CONTENT)
 
-            res = self.fetch(location)
-            self.assertEqual(escape.json_decode(res.body),
-                             {"foo": "baz"}
-                             )
+        res = self.fetch(location)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"foo": "baz"}
+                         )
 
-            res = self.fetch(
-                "/api/v1/students/1/",
-                method="PUT",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
-            self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        res = self.fetch(
+            "/api/v1/students/1/",
+            method="PUT",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
     def test_delete(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/students/",
-                method="POST",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
 
-            # Unfortunately, self.fetch wants a path and never consider
-            # the possibility of a fqdn in the url, but according to
-            # REST standard and HTTP standard, location should be absolute.
-            location = urllib.parse.urlparse(res.headers["Location"]).path
+        # Unfortunately, self.fetch wants a path and never consider
+        # the possibility of a fqdn in the url, but according to
+        # REST standard and HTTP standard, location should be absolute.
+        location = urllib.parse.urlparse(res.headers["Location"]).path
 
-            res = self.fetch(location, method="DELETE")
-            self.assertEqual(res.code, httpstatus.NO_CONTENT)
+        res = self.fetch(location, method="DELETE")
+        self.assertEqual(res.code, httpstatus.NO_CONTENT)
 
-            res = self.fetch(location)
-            self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        res = self.fetch(location)
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
-            res = self.fetch("/api/v1/students/1/", method="DELETE")
-            self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        res = self.fetch("/api/v1/students/1/", method="DELETE")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
     def test_unexistent_resource_type(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/teachers/",
-                method="POST",
-                body=escape.json_encode({
-                    "foo": "bar"
-                })
-            )
+        res = self.fetch(
+            "/api/v1/teachers/",
+            method="POST",
+            body=escape.json_encode({
+                "foo": "bar"
+            })
+        )
 
-            self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
-            res = self.fetch(
-                "/api/v1/teachers/",
-                method="GET",
-            )
+        res = self.fetch(
+            "/api/v1/teachers/",
+            method="GET",
+        )
 
-            self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
     def test_post_non_json(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/students/",
-                method="POST",
-                body="hello"
-            )
-            self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body="hello"
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_unsupported_methods(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/unsupportalls/",
-                method="POST",
-                body="{}"
-            )
-            self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        res = self.fetch(
+            "/api/v1/unsupportalls/",
+            method="POST",
+            body="{}"
+        )
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
-            res = self.fetch(
-                "/api/v1/unsupportalls/1/",
-                method="GET",
-            )
-            self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        res = self.fetch(
+            "/api/v1/unsupportalls/1/",
+            method="GET",
+        )
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
-            res = self.fetch(
-                "/api/v1/unsupportalls/1/",
-                method="DELETE",
-            )
-            self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        res = self.fetch(
+            "/api/v1/unsupportalls/1/",
+            method="DELETE",
+        )
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
-            res = self.fetch(
-                "/api/v1/unsupportalls/1/",
-                method="PUT",
-                body="{}"
-            )
-            self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        res = self.fetch(
+            "/api/v1/unsupportalls/1/",
+            method="PUT",
+            body="{}"
+        )
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
     def test_unprocessable(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/unprocessables/",
-                method="POST",
-                body="{}"
-            )
-            self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-            self.assertEqual(res.headers["Content-Type"], 'application/json')
-            self.assertEqual(escape.json_decode(res.body), {
-                "type": "BadRequest",
-                "message": "unprocessable",
-                "foo": "bar",
-            })
+        res = self.fetch(
+            "/api/v1/unprocessables/",
+            method="POST",
+            body="{}"
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.headers["Content-Type"], 'application/json')
+        self.assertEqual(escape.json_decode(res.body), {
+            "type": "BadRequest",
+            "message": "unprocessable",
+            "foo": "bar",
+        })
 
-            res = self.fetch(
-                "/api/v1/unprocessables/",
-                method="GET",
-            )
-            self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-            self.assertEqual(res.headers["Content-Type"], 'application/json')
-            self.assertEqual(escape.json_decode(res.body), {
-                "type": "BadRequest",
-                "message": "unprocessable",
-                "foo": "bar",
-            })
+        res = self.fetch(
+            "/api/v1/unprocessables/",
+            method="GET",
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.headers["Content-Type"], 'application/json')
+        self.assertEqual(escape.json_decode(res.body), {
+            "type": "BadRequest",
+            "message": "unprocessable",
+            "foo": "bar",
+        })
 
-            res = self.fetch(
-                "/api/v1/unprocessables/0/",
-                method="PUT",
-                body="{}"
-            )
-            self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-            self.assertEqual(res.headers["Content-Type"], 'application/json')
-            self.assertEqual(escape.json_decode(res.body), {
-                "type": "BadRequest",
-                "message": "unprocessable",
-                "foo": "bar",
-            })
+        res = self.fetch(
+            "/api/v1/unprocessables/0/",
+            method="PUT",
+            body="{}"
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.headers["Content-Type"], 'application/json')
+        self.assertEqual(escape.json_decode(res.body), {
+            "type": "BadRequest",
+            "message": "unprocessable",
+            "foo": "bar",
+        })
 
-            res = self.fetch(
-                "/api/v1/unprocessables/0/",
-                method="GET",
-            )
-            self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-            self.assertEqual(res.headers["Content-Type"], 'application/json')
-            self.assertEqual(escape.json_decode(res.body), {
-                "type": "BadRequest",
-                "message": "unprocessable",
-                "foo": "bar",
-            })
+        res = self.fetch(
+            "/api/v1/unprocessables/0/",
+            method="GET",
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.headers["Content-Type"], 'application/json')
+        self.assertEqual(escape.json_decode(res.body), {
+            "type": "BadRequest",
+            "message": "unprocessable",
+            "foo": "bar",
+        })
 
-            res = self.fetch(
-                "/api/v1/unprocessables/0/",
-                method="POST",
-                body="{}"
-            )
-            self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-            self.assertEqual(res.headers["Content-Type"], 'application/json')
-            self.assertEqual(escape.json_decode(res.body), {
-                "type": "BadRequest",
-                "message": "unprocessable",
-                "foo": "bar",
-            })
+        res = self.fetch(
+            "/api/v1/unprocessables/0/",
+            method="POST",
+            body="{}"
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.headers["Content-Type"], 'application/json')
+        self.assertEqual(escape.json_decode(res.body), {
+            "type": "BadRequest",
+            "message": "unprocessable",
+            "foo": "bar",
+        })
 
     def test_broken(self):
         collection_url = "/api/v1/brokens/"
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
 
-            for method, body in [("POST", "{}"), ("PUT", "{}"),
-                                 ("GET", None), ("DELETE", None)]:
-                res = self.fetch(
-                    collection_url+"0/", method=method, body=body)
-                self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+        for method, body in [("POST", "{}"), ("PUT", "{}"),
+                             ("GET", None), ("DELETE", None)]:
+            res = self.fetch(
+                collection_url+"0/", method=method, body=body)
+            self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
-            for method, body in [("POST", "{}"), ("GET", None)]:
-                res = self.fetch(collection_url, method=method, body=body)
-                self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+        for method, body in [("POST", "{}"), ("GET", None)]:
+            res = self.fetch(collection_url, method=method, body=body)
+            self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
     def test_unsupports_collections(self):
-        with mock.patch(PREPARE_MODULE_STR,
-                        new_callable=utils.mock_coro_new_callable(
-                            side_effect=prepare_side_effect)):
-            res = self.fetch(
-                "/api/v1/unsupportscollections/",
-                method="GET")
-            self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        res = self.fetch(
+            "/api/v1/unsupportscollections/",
+            method="GET")
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
 
 class TestRESTFunctions(unittest.TestCase):

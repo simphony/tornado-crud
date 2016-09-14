@@ -1,9 +1,19 @@
 from .resource import Resource
+from .authenticator import NullAuthenticator
 
 
 class Registry:
     def __init__(self):
         self._registered_types = {}
+        self._authenticator = NullAuthenticator
+
+    @property
+    def authenticator(self):
+        return self._authenticator
+
+    @authenticator.setter
+    def authenticator(self, authenticator):
+        self._authenticator = authenticator
 
     def register(self, typ, collection_name=None):
         """Registers a Resource type with an appropriate

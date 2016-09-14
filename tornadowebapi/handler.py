@@ -12,8 +12,8 @@ class BaseHandler(web.RequestHandler):
     @gen.coroutine
     def prepare(self):
         """Runs before any specific handler. """
-        # FIXME : Needs implementation to retrieve user.
-        self.current_user = None
+        authenticator = self.registry.authenticator
+        self.current_user = yield authenticator.authenticate(self)
 
     @property
     def registry(self):
@@ -79,7 +79,6 @@ class BaseHandler(web.RequestHandler):
 class CollectionHandler(BaseHandler):
     """Handler for URLs addressing a collection.
     """
-    @web.authenticated
     @gen.coroutine
     def get(self, collection_name):
         """Returns the collection of available items"""
@@ -103,7 +102,6 @@ class CollectionHandler(BaseHandler):
         self.write({"items": list(items)})
         self.flush()
 
-    @web.authenticated
     @gen.coroutine
     def post(self, collection_name):
         """Creates a new resource in the collection."""
@@ -146,7 +144,6 @@ class ResourceHandler(BaseHandler):
     """
     SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
 
-    @web.authenticated
     @gen.coroutine
     def get(self, collection_name, identifier):
         """Retrieves the resource representation."""
@@ -169,7 +166,6 @@ class ResourceHandler(BaseHandler):
         self.write(representation)
         self.flush()
 
-    @web.authenticated
     @gen.coroutine
     def post(self, collection_name, identifier):
         """This operation is not possible in REST, and results
@@ -195,7 +191,6 @@ class ResourceHandler(BaseHandler):
         else:
             raise web.HTTPError(httpstatus.NOT_FOUND)
 
-    @web.authenticated
     @gen.coroutine
     def put(self, collection_name, identifier):
         """Replaces the resource with a new representation."""
@@ -222,7 +217,6 @@ class ResourceHandler(BaseHandler):
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
 
-    @web.authenticated
     @gen.coroutine
     def delete(self, collection_name, identifier):
         """Deletes the resource."""
