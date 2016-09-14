@@ -9,6 +9,7 @@ setup(
     name='tornadowebapi',
     version=VERSION,
     author='SimPhoNy Project',
+    license='BSD',
     description='Tornado-based WebAPI framework',
     install_requires=[
         "setuptools>=21.0",
