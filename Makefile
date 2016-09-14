@@ -36,7 +36,7 @@ install:
 test:
 	@echo "Running testsuite"
 	@echo "-----------------"
-	flake8 . && python -m tornado.testing discover -s tornadocrud -t . -v
+	flake8 . && python -m tornado.testing discover -s tornadowebapi -t . -v
 
 .PHONY: docs
 docs:
