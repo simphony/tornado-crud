@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = tornado_crud
+source = tornadowebapi
 omit = tests 
 
 [report]
