@@ -2,9 +2,9 @@ from .handler import ResourceHandler, CollectionHandler
 from .utils import url_path_join, with_end_slash
 
 MAJOR = 0
-MINOR = 1
+MINOR = 2
 MICRO = 0
-IS_RELEASED = True
+IS_RELEASED = False
 
 __version__ = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
