@@ -4,11 +4,14 @@ from tornado.log import app_log
 from . import exceptions
 from .http import httpstatus
 from .http.payloaded_http_error import PayloadedHTTPError
-from .registry import registry
 from .utils import url_path_join, with_end_slash
 
 
 class BaseHandler(web.RequestHandler):
+    def initialize(self, registry):
+        """Initialization method for when the class is instantiated."""
+        self._registry = registry
+
     @gen.coroutine
     def prepare(self):
         """Runs before any specific handler. """
@@ -17,8 +20,8 @@ class BaseHandler(web.RequestHandler):
 
     @property
     def registry(self):
-        """Returns the global class vs Resource registry"""
-        return registry
+        """Returns the class vs Resource registry"""
+        return self._registry
 
     @property
     def log(self):

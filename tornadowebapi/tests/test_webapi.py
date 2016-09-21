@@ -6,6 +6,7 @@ from unittest import mock
 import tornadowebapi
 from tornadowebapi import registry, exceptions
 from tornadowebapi.http import httpstatus
+from tornadowebapi.registry import Registry
 from tornadowebapi.resource import Resource
 from tornadowebapi.handler import ResourceHandler, CollectionHandler
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
@@ -54,6 +55,16 @@ class Student(Resource):
     @gen.coroutine
     def items(self):
         return list(self.collection.keys())
+
+
+class Teacher(Resource):
+    @gen.coroutine
+    def retrieve(self, identifier):
+        return {}
+
+    @gen.coroutine
+    def items(self):
+        return []
 
 
 class UnsupportAll(Resource):
@@ -399,3 +410,23 @@ class TestRESTFunctions(unittest.TestCase):
         self.assertEqual(handlers[0][1], ResourceHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
         self.assertEqual(handlers[1][1], CollectionHandler)
+
+
+class TestNonGlobalRegistry(AsyncHTTPTestCase):
+    def setUp(self):
+        super().setUp()
+        Student.collection = OrderedDict()
+        Student.id = 0
+
+    def get_app(self):
+        self.registry = Registry()
+        self.registry.register(Teacher)
+        handlers = self.registry.api_handlers('/')
+        app = web.Application(handlers=handlers)
+        return app
+
+    def test_non_global_registry(self):
+        res = self.fetch("/api/v1/teachers/")
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": []})
