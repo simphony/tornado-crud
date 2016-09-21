@@ -12,8 +12,8 @@ class BaseHandler(web.RequestHandler):
     @gen.coroutine
     def prepare(self):
         """Runs before any specific handler. """
-        # FIXME : Needs implementation to retrieve user.
-        self.current_user = None
+        authenticator = self.registry.authenticator
+        self.current_user = yield authenticator.authenticate(self)
 
     @property
     def registry(self):
@@ -58,10 +58,10 @@ class BaseHandler(web.RequestHandler):
             self.clear_header('Content-Type')
             self.finish()
 
-    def to_http_exception(self, crud_exc):
+    def to_http_exception(self, exc):
         """Converts a REST exception into the appropriate HTTP one."""
 
-        representation = crud_exc.representation()
+        representation = exc.representation()
         payload = None
         content_type = None
 
@@ -70,7 +70,7 @@ class BaseHandler(web.RequestHandler):
             content_type = "application/json"
 
         return PayloadedHTTPError(
-            status_code=crud_exc.http_code,
+            status_code=exc.http_code,
             payload=payload,
             content_type=content_type
         )
@@ -79,7 +79,6 @@ class BaseHandler(web.RequestHandler):
 class CollectionHandler(BaseHandler):
     """Handler for URLs addressing a collection.
     """
-    @web.authenticated
     @gen.coroutine
     def get(self, collection_name):
         """Returns the collection of available items"""
@@ -87,7 +86,7 @@ class CollectionHandler(BaseHandler):
 
         try:
             items = yield res_handler.items()
-        except exceptions.TornadoCRUDException as e:
+        except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
@@ -103,7 +102,6 @@ class CollectionHandler(BaseHandler):
         self.write({"items": list(items)})
         self.flush()
 
-    @web.authenticated
     @gen.coroutine
     def post(self, collection_name):
         """Creates a new resource in the collection."""
@@ -116,7 +114,7 @@ class CollectionHandler(BaseHandler):
 
         try:
             resource_id = yield res_handler.create(data)
-        except exceptions.TornadoCRUDException as e:
+        except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
@@ -146,7 +144,6 @@ class ResourceHandler(BaseHandler):
     """
     SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
 
-    @web.authenticated
     @gen.coroutine
     def get(self, collection_name, identifier):
         """Retrieves the resource representation."""
@@ -154,7 +151,7 @@ class ResourceHandler(BaseHandler):
 
         try:
             representation = yield res_handler.retrieve(identifier)
-        except exceptions.TornadoCRUDException as e:
+        except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
@@ -169,7 +166,6 @@ class ResourceHandler(BaseHandler):
         self.write(representation)
         self.flush()
 
-    @web.authenticated
     @gen.coroutine
     def post(self, collection_name, identifier):
         """This operation is not possible in REST, and results
@@ -179,7 +175,7 @@ class ResourceHandler(BaseHandler):
 
         try:
             exists = yield res_handler.exists(identifier)
-        except exceptions.TornadoCRUDException as e:
+        except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
@@ -195,7 +191,6 @@ class ResourceHandler(BaseHandler):
         else:
             raise web.HTTPError(httpstatus.NOT_FOUND)
 
-    @web.authenticated
     @gen.coroutine
     def put(self, collection_name, identifier):
         """Replaces the resource with a new representation."""
@@ -208,7 +203,7 @@ class ResourceHandler(BaseHandler):
 
         try:
             yield res_handler.update(identifier, representation)
-        except exceptions.TornadoCRUDException as e:
+        except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
@@ -222,14 +217,13 @@ class ResourceHandler(BaseHandler):
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
 
-    @web.authenticated
     @gen.coroutine
     def delete(self, collection_name, identifier):
         """Deletes the resource."""
         res_handler = self.get_resource_handler_or_404(collection_name)
         try:
             yield res_handler.delete(identifier)
-        except exceptions.TornadoCRUDException as e:
+        except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)

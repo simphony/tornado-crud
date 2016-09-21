@@ -1,9 +1,9 @@
 from .http import httpstatus
 
 
-class TornadoCRUDException(Exception):
+class WebAPIException(Exception):
     """Base exception for the REST infrastructure
-    These are exceptions that can be raised by the CRUD handlers.
+    These are exceptions that can be raised by the handlers.
     """
     #: HTTP code generally associated to this exception.
     #: Missing any better info, default is a server error.
@@ -31,9 +31,9 @@ class TornadoCRUDException(Exception):
         return data
 
 
-class NotFound(TornadoCRUDException):
+class NotFound(WebAPIException):
     """Exception raised when the resource is not found.
-    Raise this exception in your CRUD handlers when you can't
+    Raise this exception in your handlers when you can't
     find the resource the identifier refers to.
     """
     http_code = httpstatus.NOT_FOUND
@@ -44,17 +44,17 @@ class NotFound(TornadoCRUDException):
         return None
 
 
-class BadRequest(TornadoCRUDException):
+class BadRequest(WebAPIException):
     """Exception raised when the resource representation is
     invalid or does not contain the appropriate keys.
-    Raise this exception in your CRUD handlers when the received
+    Raise this exception in your handlers when the received
     representation is ill-formed
     """
     http_code = httpstatus.BAD_REQUEST
 
 
-class Unable(TornadoCRUDException):
-    """Exception raised when the CRUD request cannot be performed
+class Unable(WebAPIException):
+    """Exception raised when the request cannot be performed
     for whatever reason that is not dependent on the client.
     """
     http_code = httpstatus.INTERNAL_SERVER_ERROR

@@ -37,3 +37,8 @@ class TestRegistry(unittest.TestCase):
         self.assertEqual(reg["students"], Student)
         self.assertEqual(reg["sheep"], Sheep)
         self.assertEqual(reg["octopuses"], Octopus)
+
+    def test_authenticator(self):
+        reg = Registry()
+
+        self.assertIsNotNone(reg.authenticator)

@@ -13,9 +13,9 @@ if not IS_RELEASED:
 
 
 def api_handlers(base_urlpath, version="v1"):
-    """Returns the API handlers for the REST interface.
-    Add these handlers to your application to provide a
-    REST interface to your Resources.
+    """Returns the API handlers for the interface.
+    Add these handlers to your application to provide an
+    interface to your Resources.
 
 
     Parameters
