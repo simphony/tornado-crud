@@ -1,3 +1,5 @@
+from .handler import ResourceHandler, CollectionHandler
+from .utils import url_path_join, with_end_slash
 from .resource import Resource
 from .authenticator import NullAuthenticator
 
@@ -62,6 +64,37 @@ class Registry:
     def __contains__(self, item):
         """If the registry contains the given item"""
         return item in self._registered_types
+
+    def api_handlers(self, base_urlpath, version="v1"):
+        """Returns the API handlers for the interface.
+        Add these handlers to your application to provide an
+        interface to your Resources.
+
+
+        Parameters
+        ----------
+        base_urlpath: str
+            The base url path to serve
+        version: str
+            A string identifying the version of the API.
+
+        Notes
+        -----
+        The current implementation does not support multiple API versions yet.
+        The version option is only provided for futureproofing.
+        """
+        return [
+            (with_end_slash(
+                url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
+             ResourceHandler,
+             dict(registry=self)
+             ),
+            (with_end_slash(
+                url_path_join(base_urlpath, "api", version, "(.*)")),
+             CollectionHandler,
+             dict(registry=self)
+             ),
+        ]
 
 #: global registry for registration of the classes.
 registry = Registry()

@@ -1,5 +1,4 @@
-from .handler import ResourceHandler, CollectionHandler
-from .utils import url_path_join, with_end_slash
+from . import registry
 
 MAJOR = 0
 MINOR = 2
@@ -30,13 +29,4 @@ def api_handlers(base_urlpath, version="v1"):
     The current implementation does not support multiple API versions yet.
     The version option is only provided for futureproofing.
     """
-    return [
-        (with_end_slash(
-            url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
-         ResourceHandler
-         ),
-        (with_end_slash(
-            url_path_join(base_urlpath, "api", version, "(.*)")),
-         CollectionHandler
-         ),
-        ]
+    return registry.registry.api_handlers(base_urlpath, version)
