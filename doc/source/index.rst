@@ -1,7 +1,7 @@
-Tornado-CRUD documentation
-==========================
+Tornado-WebAPI documentation
+============================
 
-Tornado CRUD is a Create-Retrieve-Update-Delete framework built on top of Tornado.
+Tornado WebAPI is a Create-Retrieve-Update-Delete framework built on top of Tornado.
 
 .. toctree::
    :maxdepth: 1
