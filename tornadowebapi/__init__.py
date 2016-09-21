@@ -1,14 +1,4 @@
-from . import registry
-
-MAJOR = 0
-MINOR = 2
-MICRO = 0
-IS_RELEASED = False
-
-__version__ = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
-
-if not IS_RELEASED:
-    __version__ += '.dev0'
+from ._version import __version__, MAJOR, MINOR, MICRO, IS_RELEASED # noqa
 
 
 def api_handlers(base_urlpath, version="v1"):
@@ -29,4 +19,5 @@ def api_handlers(base_urlpath, version="v1"):
     The current implementation does not support multiple API versions yet.
     The version option is only provided for futureproofing.
     """
+    from . import registry
     return registry.registry.api_handlers(base_urlpath, version)
