@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-from tornadowebapi import __version__
+from tornadowebapi._version import __version__
 
 VERSION = __version__
 

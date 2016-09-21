@@ -1,5 +1,4 @@
-from . import registry
-from ._version import __version__
+from ._version import __version__ # noqa
 
 
 def api_handlers(base_urlpath, version="v1"):
@@ -20,4 +19,5 @@ def api_handlers(base_urlpath, version="v1"):
     The current implementation does not support multiple API versions yet.
     The version option is only provided for futureproofing.
     """
+    from . import registry
     return registry.registry.api_handlers(base_urlpath, version)

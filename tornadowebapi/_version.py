@@ -7,4 +7,3 @@ __version__ = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 if not IS_RELEASED:
     __version__ += '.dev0'
-
