@@ -2,7 +2,7 @@
 Deprecated module. Scheduled for removal in 0.3.0
 Clients should use http.HTTPStatus directly instead.
 """
-from http import HTTPStatus
 
-for k, v in HTTPStatus.__members__.items():
-    globals()[k] = v
+# Note that this is deprecated in Python 3.5 itself, but kept for
+# backward compatibility. Py3.5 and above should use http.HTTPStatus
+from http.client import *  # noqa
