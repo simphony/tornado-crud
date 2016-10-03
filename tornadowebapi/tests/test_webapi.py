@@ -74,19 +74,19 @@ class UnsupportAll(Resource):
 class Unprocessable(Resource):
     @gen.coroutine
     def create(self, representation):
-        raise exceptions.BadRequest("unprocessable", foo="bar")
+        raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
     def update(self, identifier, representation):
-        raise exceptions.BadRequest("unprocessable", foo="bar")
+        raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
     def retrieve(self, identifier):
-        raise exceptions.BadRequest("unprocessable", foo="bar")
+        raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
     def items(self):
-        raise exceptions.BadRequest("unprocessable", foo="bar")
+        raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
 
 class UnsupportsCollection(Resource):
