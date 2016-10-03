@@ -53,8 +53,9 @@ class BadRepresentation(WebAPIException):
     http_code = httpstatus.BAD_REQUEST
 
 
-# Deprecated. Kept for compatibility
-BadRequest = BadRepresentation
+class BadRequest(WebAPIException):
+    """Deprecated. Kept for compatibility. Use BadRepresentation."""
+    http_code = httpstatus.BAD_REQUEST
 
 
 class Unable(WebAPIException):
