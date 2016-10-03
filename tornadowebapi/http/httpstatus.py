@@ -1,13 +1,8 @@
-#: HTTP status codes, with explicit naming.
-OK = 200
-CREATED = 201
-NO_CONTENT = 204
+"""
+Deprecated module. Scheduled for removal in 0.3.0
+Clients should use http.HTTPStatus directly instead.
+"""
 
-BAD_REQUEST = 400
-NOT_FOUND = 404
-METHOD_NOT_ALLOWED = 405
-CONFLICT = 409
-UNSUPPORTED_MEDIA_TYPE = 415
-UNPROCESSABLE_ENTITY = 422
-
-INTERNAL_SERVER_ERROR = 500
+# Note that this is deprecated in Python 3.5 itself, but kept for
+# backward compatibility. Py3.5 and above should use http.HTTPStatus
+from http.client import *  # noqa

@@ -1,4 +1,4 @@
-from .http import httpstatus
+from http import HTTPStatus
 
 
 class WebAPIException(Exception):
@@ -7,7 +7,7 @@ class WebAPIException(Exception):
     """
     #: HTTP code generally associated to this exception.
     #: Missing any better info, default is a server error.
-    http_code = httpstatus.INTERNAL_SERVER_ERROR
+    http_code = HTTPStatus.INTERNAL_SERVER_ERROR
 
     def __init__(self, message=None, **kwargs):
         """Initializes the exception. keyword arguments will become
@@ -36,7 +36,7 @@ class NotFound(WebAPIException):
     Raise this exception in your handlers when you can't
     find the resource the identifier refers to.
     """
-    http_code = httpstatus.NOT_FOUND
+    http_code = HTTPStatus.NOT_FOUND
 
     def representation(self):
         """NotFound is special as it does not have a representation,
@@ -50,11 +50,11 @@ class BadRequest(WebAPIException):
     Raise this exception in your handlers when the received
     representation is ill-formed
     """
-    http_code = httpstatus.BAD_REQUEST
+    http_code = HTTPStatus.BAD_REQUEST
 
 
 class Unable(WebAPIException):
     """Exception raised when the request cannot be performed
     for whatever reason that is not dependent on the client.
     """
-    http_code = httpstatus.INTERNAL_SERVER_ERROR
+    http_code = HTTPStatus.INTERNAL_SERVER_ERROR

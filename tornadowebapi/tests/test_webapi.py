@@ -2,10 +2,10 @@ import unittest
 import urllib.parse
 from collections import OrderedDict
 from unittest import mock
+from http import HTTPStatus
 
 import tornadowebapi
 from tornadowebapi import registry, exceptions
-from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.resource import Resource
 from tornadowebapi.handler import ResourceHandler, CollectionHandler
@@ -127,7 +127,7 @@ class TestREST(AsyncHTTPTestCase):
     def test_items(self):
         res = self.fetch("/api/v1/students/")
 
-        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(res.code, HTTPStatus.OK)
         self.assertEqual(escape.json_decode(res.body),
                          {"items": []})
 
@@ -136,7 +136,7 @@ class TestREST(AsyncHTTPTestCase):
         Student.collection[3] = ""
 
         res = self.fetch("/api/v1/students/")
-        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(res.code, HTTPStatus.OK)
         self.assertEqual(escape.json_decode(res.body),
                          {"items": [1, 2, 3]})
 
@@ -149,7 +149,7 @@ class TestREST(AsyncHTTPTestCase):
             })
         )
 
-        self.assertEqual(res.code, httpstatus.CREATED)
+        self.assertEqual(res.code, HTTPStatus.CREATED)
         self.assertIn("api/v1/students/0/", res.headers["Location"])
 
         res = self.fetch(
@@ -159,11 +159,11 @@ class TestREST(AsyncHTTPTestCase):
                 "foo": "bar"
             })
         )
-        self.assertEqual(res.code, httpstatus.CREATED)
+        self.assertEqual(res.code, HTTPStatus.CREATED)
         self.assertIn("api/v1/students/1/", res.headers["Location"])
 
         res = self.fetch("/api/v1/students/")
-        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(res.code, HTTPStatus.OK)
         self.assertEqual(escape.json_decode(res.body),
                          {"items": ['0', '1']})
 
@@ -179,14 +179,14 @@ class TestREST(AsyncHTTPTestCase):
         location = urllib.parse.urlparse(res.headers["Location"]).path
 
         res = self.fetch(location)
-        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(res.code, HTTPStatus.OK)
 
         self.assertEqual(escape.json_decode(res.body),
                          {"foo": "bar"}
                          )
 
         res = self.fetch("/api/v1/students/1/")
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, HTTPStatus.NOT_FOUND)
         self.assertNotIn("Content-Type", res.headers)
 
     def test_post_on_resource(self):
@@ -207,7 +207,7 @@ class TestREST(AsyncHTTPTestCase):
             })
         )
 
-        self.assertEqual(res.code, httpstatus.CONFLICT)
+        self.assertEqual(res.code, HTTPStatus.CONFLICT)
 
     def test_update(self):
         res = self.fetch(
@@ -227,7 +227,7 @@ class TestREST(AsyncHTTPTestCase):
                 "foo": "baz"
             })
         )
-        self.assertEqual(res.code, httpstatus.NO_CONTENT)
+        self.assertEqual(res.code, HTTPStatus.NO_CONTENT)
 
         res = self.fetch(location)
         self.assertEqual(escape.json_decode(res.body),
@@ -241,7 +241,7 @@ class TestREST(AsyncHTTPTestCase):
                 "foo": "bar"
             })
         )
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, HTTPStatus.NOT_FOUND)
 
     def test_delete(self):
         res = self.fetch(
@@ -258,13 +258,13 @@ class TestREST(AsyncHTTPTestCase):
         location = urllib.parse.urlparse(res.headers["Location"]).path
 
         res = self.fetch(location, method="DELETE")
-        self.assertEqual(res.code, httpstatus.NO_CONTENT)
+        self.assertEqual(res.code, HTTPStatus.NO_CONTENT)
 
         res = self.fetch(location)
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, HTTPStatus.NOT_FOUND)
 
         res = self.fetch("/api/v1/students/1/", method="DELETE")
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, HTTPStatus.NOT_FOUND)
 
     def test_unexistent_resource_type(self):
         res = self.fetch(
@@ -275,14 +275,14 @@ class TestREST(AsyncHTTPTestCase):
             })
         )
 
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, HTTPStatus.NOT_FOUND)
 
         res = self.fetch(
             "/api/v1/teachers/",
             method="GET",
         )
 
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, HTTPStatus.NOT_FOUND)
 
     def test_post_non_json(self):
         res = self.fetch(
@@ -290,7 +290,7 @@ class TestREST(AsyncHTTPTestCase):
             method="POST",
             body="hello"
         )
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.code, HTTPStatus.BAD_REQUEST)
 
     def test_unsupported_methods(self):
         res = self.fetch(
@@ -298,26 +298,26 @@ class TestREST(AsyncHTTPTestCase):
             method="POST",
             body="{}"
         )
-        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        self.assertEqual(res.code, HTTPStatus.METHOD_NOT_ALLOWED)
 
         res = self.fetch(
             "/api/v1/unsupportalls/1/",
             method="GET",
         )
-        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        self.assertEqual(res.code, HTTPStatus.METHOD_NOT_ALLOWED)
 
         res = self.fetch(
             "/api/v1/unsupportalls/1/",
             method="DELETE",
         )
-        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        self.assertEqual(res.code, HTTPStatus.METHOD_NOT_ALLOWED)
 
         res = self.fetch(
             "/api/v1/unsupportalls/1/",
             method="PUT",
             body="{}"
         )
-        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        self.assertEqual(res.code, HTTPStatus.METHOD_NOT_ALLOWED)
 
     def test_unprocessable(self):
         res = self.fetch(
@@ -325,7 +325,7 @@ class TestREST(AsyncHTTPTestCase):
             method="POST",
             body="{}"
         )
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
             "type": "BadRequest",
@@ -337,7 +337,7 @@ class TestREST(AsyncHTTPTestCase):
             "/api/v1/unprocessables/",
             method="GET",
         )
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
             "type": "BadRequest",
@@ -350,7 +350,7 @@ class TestREST(AsyncHTTPTestCase):
             method="PUT",
             body="{}"
         )
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
             "type": "BadRequest",
@@ -362,7 +362,7 @@ class TestREST(AsyncHTTPTestCase):
             "/api/v1/unprocessables/0/",
             method="GET",
         )
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
             "type": "BadRequest",
@@ -375,7 +375,7 @@ class TestREST(AsyncHTTPTestCase):
             method="POST",
             body="{}"
         )
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
             "type": "BadRequest",
@@ -390,17 +390,17 @@ class TestREST(AsyncHTTPTestCase):
                              ("GET", None), ("DELETE", None)]:
             res = self.fetch(
                 collection_url+"0/", method=method, body=body)
-            self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+            self.assertEqual(res.code, HTTPStatus.INTERNAL_SERVER_ERROR)
 
         for method, body in [("POST", "{}"), ("GET", None)]:
             res = self.fetch(collection_url, method=method, body=body)
-            self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+            self.assertEqual(res.code, HTTPStatus.INTERNAL_SERVER_ERROR)
 
     def test_unsupports_collections(self):
         res = self.fetch(
             "/api/v1/unsupportscollections/",
             method="GET")
-        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        self.assertEqual(res.code, HTTPStatus.METHOD_NOT_ALLOWED)
 
 
 class TestRESTFunctions(unittest.TestCase):
@@ -427,6 +427,6 @@ class TestNonGlobalRegistry(AsyncHTTPTestCase):
 
     def test_non_global_registry(self):
         res = self.fetch("/api/v1/teachers/")
-        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(res.code, HTTPStatus.OK)
         self.assertEqual(escape.json_decode(res.body),
                          {"items": []})
