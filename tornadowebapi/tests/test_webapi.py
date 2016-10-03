@@ -328,7 +328,7 @@ class TestREST(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
-            "type": "BadRequest",
+            "type": "BadRepresentation",
             "message": "unprocessable",
             "foo": "bar",
         })
@@ -340,7 +340,7 @@ class TestREST(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
-            "type": "BadRequest",
+            "type": "BadRepresentation",
             "message": "unprocessable",
             "foo": "bar",
         })
@@ -353,7 +353,7 @@ class TestREST(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
-            "type": "BadRequest",
+            "type": "BadRepresentation",
             "message": "unprocessable",
             "foo": "bar",
         })
@@ -365,7 +365,7 @@ class TestREST(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
-            "type": "BadRequest",
+            "type": "BadRepresentation",
             "message": "unprocessable",
             "foo": "bar",
         })
@@ -378,7 +378,7 @@ class TestREST(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
         self.assertEqual(res.headers["Content-Type"], 'application/json')
         self.assertEqual(escape.json_decode(res.body), {
-            "type": "BadRequest",
+            "type": "BadRepresentation",
             "message": "unprocessable",
             "foo": "bar",
         })
