@@ -44,12 +44,17 @@ class NotFound(WebAPIException):
         return None
 
 
-class BadRequest(WebAPIException):
+class BadRepresentation(WebAPIException):
     """Exception raised when the resource representation is
     invalid or does not contain the appropriate keys.
     Raise this exception in your handlers when the received
     representation is ill-formed
     """
+    http_code = httpstatus.BAD_REQUEST
+
+
+class BadRequest(WebAPIException):
+    """Deprecated. Kept for compatibility. Use BadRepresentation."""
     http_code = httpstatus.BAD_REQUEST
 
 
