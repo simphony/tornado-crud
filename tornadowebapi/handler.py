@@ -1,8 +1,8 @@
 from tornado import gen, web, escape
 from tornado.log import app_log
+from http import HTTPStatus
 
 from . import exceptions
-from .http import httpstatus
 from .http.payloaded_http_error import PayloadedHTTPError
 from .utils import url_path_join, with_end_slash
 
@@ -38,7 +38,7 @@ class BaseHandler(web.RequestHandler):
                 application=self.application,
                 current_user=self.current_user)
         except KeyError:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
+            raise web.HTTPError(HTTPStatus.NOT_FOUND)
 
     def write_error(self, status_code, **kwargs):
         """Provides appropriate payload to the response in case of error.
@@ -92,15 +92,15 @@ class CollectionHandler(BaseHandler):
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+            raise web.HTTPError(HTTPStatus.METHOD_NOT_ALLOWED)
         except Exception:
             self.log.exception(
                 "Internal error during get operation on {}".format(
                     collection_name,
                 ))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            raise web.HTTPError(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        self.set_status(httpstatus.OK)
+        self.set_status(HTTPStatus.OK)
         # Need to convert into a dict for security issue tornado/1009
         self.write({"items": list(items)})
         self.flush()
@@ -113,30 +113,30 @@ class CollectionHandler(BaseHandler):
         try:
             data = escape.json_decode(self.request.body)
         except ValueError:
-            raise web.HTTPError(httpstatus.BAD_REQUEST)
+            raise web.HTTPError(HTTPStatus.BAD_REQUEST)
 
         try:
             resource_id = yield res_handler.create(data)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+            raise web.HTTPError(HTTPStatus.METHOD_NOT_ALLOWED)
         except Exception:
             self.log.exception(
                 "Internal error during post operation on {}".format(
                     collection_name,
                 ))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            raise web.HTTPError(HTTPStatus.INTERNAL_SERVER_ERROR)
 
         if resource_id is None:
             self.log.error(
                 "create method for {} returned None".format(collection_name))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            raise web.HTTPError(HTTPStatus.INTERNAL_SERVER_ERROR)
 
         location = with_end_slash(
             url_path_join(self.request.full_url(), resource_id))
 
-        self.set_status(httpstatus.CREATED)
+        self.set_status(HTTPStatus.CREATED)
         self.set_header("Location", location)
         self.clear_header('Content-Type')
         self.flush()
@@ -157,15 +157,15 @@ class ResourceHandler(BaseHandler):
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+            raise web.HTTPError(HTTPStatus.METHOD_NOT_ALLOWED)
         except Exception:
             self.log.exception(
                 "Internal error during get of {}/{}".format(
                     collection_name,
                     identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            raise web.HTTPError(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        self.set_status(httpstatus.OK)
+        self.set_status(HTTPStatus.OK)
         self.write(representation)
         self.flush()
 
@@ -181,18 +181,18 @@ class ResourceHandler(BaseHandler):
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+            raise web.HTTPError(HTTPStatus.METHOD_NOT_ALLOWED)
         except Exception:
             self.log.exception(
                 "Internal error during post of {}/{}".format(
                     collection_name,
                     identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            raise web.HTTPError(HTTPStatus.INTERNAL_SERVER_ERROR)
 
         if exists:
-            raise web.HTTPError(httpstatus.CONFLICT)
+            raise web.HTTPError(HTTPStatus.CONFLICT)
         else:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
+            raise web.HTTPError(HTTPStatus.NOT_FOUND)
 
     @gen.coroutine
     def put(self, collection_name, identifier):
@@ -202,23 +202,23 @@ class ResourceHandler(BaseHandler):
         try:
             representation = escape.json_decode(self.request.body)
         except ValueError:
-            raise web.HTTPError(httpstatus.UNSUPPORTED_MEDIA_TYPE)
+            raise web.HTTPError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
 
         try:
             yield res_handler.update(identifier, representation)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+            raise web.HTTPError(HTTPStatus.METHOD_NOT_ALLOWED)
         except Exception:
             self.log.exception(
                 "Internal error during put of {}/{}".format(
                     collection_name,
                     identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            raise web.HTTPError(HTTPStatus.INTERNAL_SERVER_ERROR)
 
         self.clear_header('Content-Type')
-        self.set_status(httpstatus.NO_CONTENT)
+        self.set_status(HTTPStatus.NO_CONTENT)
 
     @gen.coroutine
     def delete(self, collection_name, identifier):
@@ -229,13 +229,13 @@ class ResourceHandler(BaseHandler):
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+            raise web.HTTPError(HTTPStatus.METHOD_NOT_ALLOWED)
         except Exception:
             self.log.exception(
                 "Internal error during delete of {}/{}".format(
                     collection_name,
                     identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            raise web.HTTPError(HTTPStatus.INTERNAL_SERVER_ERROR)
 
         self.clear_header('Content-Type')
-        self.set_status(httpstatus.NO_CONTENT)
+        self.set_status(HTTPStatus.NO_CONTENT)
