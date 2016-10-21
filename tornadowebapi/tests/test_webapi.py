@@ -106,6 +106,11 @@ class Broken(Resource):
     delete = boom
     items = boom
 
+class AlreadyPresent(Resource):
+    @gen.coroutine
+    def create(self, *args):
+        raise exceptions.Exists()
+
 
 class TestREST(AsyncHTTPTestCase):
     def setUp(self):
@@ -120,6 +125,7 @@ class TestREST(AsyncHTTPTestCase):
         registry.registry.register(Unprocessable)
         registry.registry.register(UnsupportsCollection)
         registry.registry.register(Broken)
+        registry.registry.register(AlreadyPresent)
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
         return app
@@ -402,6 +408,11 @@ class TestREST(AsyncHTTPTestCase):
             method="GET")
         self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
+    def test_exists(self):
+        collection_url = "/api/v1/alreadypresents/"
+
+        res = self.fetch(collection_url, method="POST", body="{}")
+        self.assertEqual(res.code, httpstatus.CONFLICT)
 
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):

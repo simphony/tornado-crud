@@ -44,6 +44,14 @@ class NotFound(WebAPIException):
         return None
 
 
+class Exists(WebAPIException):
+    http_code = httpstatus.CONFLICT
+
+    def representation(self):
+        """Exists does not have a representation, just an error status"""
+        return None
+
+
 class BadRepresentation(WebAPIException):
     """Exception raised when the resource representation is
     invalid or does not contain the appropriate keys.
