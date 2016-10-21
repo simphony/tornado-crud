@@ -111,12 +111,13 @@ class CollectionHandler(BaseHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
 
         try:
-            data = escape.json_decode(self.request.body)
-        except ValueError:
+            representation = escape.json_decode(self.request.body)
+            yield res_handler.validate(representation)
+        except Exception:
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
         try:
-            resource_id = yield res_handler.create(data)
+            resource_id = yield res_handler.create(representation)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
@@ -201,8 +202,9 @@ class ResourceHandler(BaseHandler):
 
         try:
             representation = escape.json_decode(self.request.body)
-        except ValueError:
-            raise web.HTTPError(httpstatus.UNSUPPORTED_MEDIA_TYPE)
+            yield res_handler.validate(representation)
+        except Exception:
+            raise web.HTTPError(httpstatus.BAD_REQUEST)
 
         try:
             yield res_handler.update(identifier, representation)

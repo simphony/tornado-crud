@@ -180,3 +180,19 @@ class Resource:
         will be returned.
         """
         return []
+
+    @gen.coroutine
+    def validate(self, representation):
+        """Validates the representation incoming from a request.
+        Any exception occurring in this method will be converted into
+        a BadRepresentation exception.
+
+        This routine is always called before being dispatched to the CRUD
+        method. By default, it does nothing, and accepts any representation.
+
+        Raises
+        ------
+        BadRepresentation:
+            If the resource collection does not support the method.
+        """
+        pass
