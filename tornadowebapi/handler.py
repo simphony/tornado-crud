@@ -102,7 +102,7 @@ class CollectionHandler(BaseHandler):
 
         self.set_status(httpstatus.OK)
         # Need to convert into a dict for security issue tornado/1009
-        self.write({"items": list(items)})
+        self.write({"items": [str(item) for item in items]})
         self.flush()
 
     @gen.coroutine
@@ -134,7 +134,7 @@ class CollectionHandler(BaseHandler):
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         location = with_end_slash(
-            url_path_join(self.request.full_url(), resource_id))
+            url_path_join(self.request.full_url(), str(resource_id)))
 
         self.set_status(httpstatus.CREATED)
         self.set_header("Location", location)

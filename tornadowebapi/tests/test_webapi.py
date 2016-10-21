@@ -26,8 +26,8 @@ class Student(Resource):
 
     @gen.coroutine
     def create(self, representation):
-        id = str(type(self).id)
-        self.collection[id] = representation
+        id = type(self).id
+        self.collection[str(id)] = representation
         type(self).id += 1
         return id
 
@@ -138,7 +138,7 @@ class TestREST(AsyncHTTPTestCase):
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": [1, 2, 3]})
+                         {"items": ["1", "2", "3"]})
 
     def test_create(self):
         res = self.fetch(
