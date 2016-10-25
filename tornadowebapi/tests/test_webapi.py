@@ -107,6 +107,11 @@ class Broken(Resource):
     items = boom
 
 
+class Validated(Resource):
+    def validate(self, representation):
+        raise Exception("woo!")
+
+
 class AlreadyPresent(Resource):
     @gen.coroutine
     def create(self, *args):
@@ -126,6 +131,7 @@ class TestREST(AsyncHTTPTestCase):
         registry.registry.register(Unprocessable)
         registry.registry.register(UnsupportsCollection)
         registry.registry.register(Broken)
+        registry.registry.register(Validated)
         registry.registry.register(AlreadyPresent)
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
@@ -408,6 +414,15 @@ class TestREST(AsyncHTTPTestCase):
             "/api/v1/unsupportscollections/",
             method="GET")
         self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+
+    def test_validated(self):
+        url = "/api/v1/validateds/"
+
+        res = self.fetch(url, method="POST", body="{}")
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        res = self.fetch(url+"0/", method="PUT", body="{}")
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_exists(self):
         collection_url = "/api/v1/alreadypresents/"

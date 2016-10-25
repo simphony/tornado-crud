@@ -48,7 +48,10 @@ class Resource:
 
         Raises
         ------
-        UnprocessableRepresentation:
+        Exists:
+            Raised when the resource cannot be created because of a
+            conflicting already existing resource.
+        BadRepresentation:
             Raised when the representation does not validate according
             to the resource expected representation.
         NotImplementedError:
@@ -104,7 +107,7 @@ class Resource:
         NotFound:
             Raised if the resource with the given identifier cannot
             be found
-        UnprocessableRepresentation:
+        BadRepresentation:
             Raised when the representation does not validate according
             to the resource expected representation.
         NotImplementedError:
@@ -129,8 +132,7 @@ class Resource:
         Raises
         ------
         NotFound:
-            Raised if the resource with the given identifier cannot
-            be found
+            Raised if the resource with the given identifier cannot be found
         NotImplementedError:
             If the resource does not support the method.
         """
@@ -180,3 +182,19 @@ class Resource:
         will be returned.
         """
         return []
+
+    def validate(self, representation):
+        """Validates the representation incoming from a request.
+        Any exception occurring in this method will be converted into
+        a BadRepresentation exception.
+
+        This method is always called before being dispatched to the CRUD
+        methods accepting a representation. By default, it does nothing,
+        and accepts any representation.
+
+        Raises
+        ------
+        BadRepresentation:
+            If the resource collection does not support the method.
+        """
+        pass
