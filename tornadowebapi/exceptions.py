@@ -45,6 +45,11 @@ class NotFound(WebAPIException):
 
 
 class Exists(WebAPIException):
+    """Represents a case where the resource could not be created
+    because it already exists. This is generally raised in the 
+    create() method if the resource has uniqueness constraints on
+    things other than the exposed id."""
+    
     http_code = httpstatus.CONFLICT
 
     def representation(self):
