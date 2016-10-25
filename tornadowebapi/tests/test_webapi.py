@@ -106,6 +106,7 @@ class Broken(Resource):
     delete = boom
     items = boom
 
+
 class AlreadyPresent(Resource):
     @gen.coroutine
     def create(self, *args):
@@ -413,6 +414,7 @@ class TestREST(AsyncHTTPTestCase):
 
         res = self.fetch(collection_url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.CONFLICT)
+
 
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
