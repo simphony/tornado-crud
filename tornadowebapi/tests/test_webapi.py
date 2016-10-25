@@ -107,7 +107,6 @@ class Broken(Resource):
     items = boom
 
 
-<<<<<<< HEAD
 class Validated(Resource):
     def validate(self, representation):
         raise Exception("woo!")
