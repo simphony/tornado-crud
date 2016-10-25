@@ -46,7 +46,7 @@ class TestRegistry(unittest.TestCase):
     def test_api_handlers(self):
         reg = Registry()
         api_handlers = reg.api_handlers("/foo")
-        self.assertEqual(len(api_handlers), 2)
+        self.assertEqual(len(api_handlers), 3)
 
         self.assertEqual(api_handlers[0][2]["registry"], reg)
         self.assertEqual(api_handlers[1][2]["registry"], reg)

@@ -8,9 +8,12 @@ from .utils import url_path_join, with_end_slash
 
 
 class BaseHandler(web.RequestHandler):
-    def initialize(self, registry):
+    def initialize(self, registry, base_urlpath, api_version, api_urlpath):
         """Initialization method for when the class is instantiated."""
         self._registry = registry
+        self.base_urlpath = base_urlpath
+        self.api_version = api_version
+        self.api_urlpath = api_urlpath
 
     @gen.coroutine
     def prepare(self):
@@ -241,3 +244,22 @@ class ResourceHandler(BaseHandler):
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
+
+
+class JSAPIHandler(BaseHandler):
+    @gen.coroutine
+    def get(self):
+        try:
+            resources = []
+            for coll_name, resource in self.registry.registered_types.items():
+                resources.append({
+                    "class_name": resource.__name__,
+                    "collection_name": coll_name,
+                })
+            self.render("templates/jsapi.template.js",
+                        base_urlpath=self.base_urlpath,
+                        api_version=self.api_version,
+                        resources=resources)
+
+        except Exception as e:
+            print(e)

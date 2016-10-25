@@ -1,4 +1,4 @@
-from .handler import ResourceHandler, CollectionHandler
+from .handler import ResourceHandler, CollectionHandler, JSAPIHandler
 from .utils import url_path_join, with_end_slash
 from .resource import Resource
 from .authenticator import NullAuthenticator
@@ -16,6 +16,10 @@ class Registry:
     @authenticator.setter
     def authenticator(self, authenticator):
         self._authenticator = authenticator
+
+    @property
+    def registered_types(self):
+        return self._registered_types
 
     def register(self, typ, collection_name=None):
         """Registers a Resource type with an appropriate
@@ -83,18 +87,32 @@ class Registry:
         The current implementation does not support multiple API versions yet.
         The version option is only provided for futureproofing.
         """
+        api_urlpath = url_path_join(base_urlpath, "api", version)
+
+        init_args = dict(
+            registry=self,
+            base_urlpath=base_urlpath,
+            api_version=version,
+            api_urlpath=api_urlpath
+        )
+
         return [
             (with_end_slash(
-                url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
+                url_path_join(api_urlpath, "(.*)", "(.*)")),
              ResourceHandler,
-             dict(registry=self)
+             init_args
              ),
             (with_end_slash(
-                url_path_join(base_urlpath, "api", version, "(.*)")),
+                url_path_join(api_urlpath, "(.*)")),
              CollectionHandler,
-             dict(registry=self)
+             init_args
+             ),
+            (url_path_join(base_urlpath, "jsapi", version, "resources.js"),
+             JSAPIHandler,
+             init_args
              ),
         ]
+
 
 #: global registry for registration of the classes.
 registry = Registry()
