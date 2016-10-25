@@ -26,8 +26,8 @@ class Student(Resource):
 
     @gen.coroutine
     def create(self, representation):
-        id = str(type(self).id)
-        self.collection[id] = representation
+        id = type(self).id
+        self.collection[str(id)] = representation
         type(self).id += 1
         return id
 
@@ -107,9 +107,16 @@ class Broken(Resource):
     items = boom
 
 
+<<<<<<< HEAD
 class Validated(Resource):
     def validate(self, representation):
         raise Exception("woo!")
+
+
+class AlreadyPresent(Resource):
+    @gen.coroutine
+    def create(self, *args):
+        raise exceptions.Exists()
 
 
 class TestREST(AsyncHTTPTestCase):
@@ -126,6 +133,7 @@ class TestREST(AsyncHTTPTestCase):
         registry.registry.register(UnsupportsCollection)
         registry.registry.register(Broken)
         registry.registry.register(Validated)
+        registry.registry.register(AlreadyPresent)
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
         return app
@@ -144,7 +152,7 @@ class TestREST(AsyncHTTPTestCase):
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": [1, 2, 3]})
+                         {"items": ["1", "2", "3"]})
 
     def test_create(self):
         res = self.fetch(
@@ -416,6 +424,12 @@ class TestREST(AsyncHTTPTestCase):
 
         res = self.fetch(url+"0/", method="PUT", body="{}")
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+    def test_exists(self):
+        collection_url = "/api/v1/alreadypresents/"
+
+        res = self.fetch(collection_url, method="POST", body="{}")
+        self.assertEqual(res.code, httpstatus.CONFLICT)
 
 
 class TestRESTFunctions(unittest.TestCase):
