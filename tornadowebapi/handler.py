@@ -112,7 +112,7 @@ class CollectionHandler(BaseHandler):
 
         try:
             representation = escape.json_decode(self.request.body)
-            yield res_handler.validate(representation)
+            res_handler.validate(representation)
         except Exception:
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
@@ -202,7 +202,7 @@ class ResourceHandler(BaseHandler):
 
         try:
             representation = escape.json_decode(self.request.body)
-            yield res_handler.validate(representation)
+            res_handler.validate(representation)
         except Exception:
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
