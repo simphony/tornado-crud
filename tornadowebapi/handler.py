@@ -258,7 +258,7 @@ class JSAPIHandler(BaseHandler):
                 "collection_name": coll_name,
             })
         self.set_header("Content-Type", "application/javascript")
-        self.render("templates/jsapi.template.js",
+        self.render("templates/resources.template.js",
                     base_urlpath=self.base_urlpath,
                     api_version=self.api_version,
                     resources=resources)
