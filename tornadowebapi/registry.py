@@ -87,23 +87,20 @@ class Registry:
         The current implementation does not support multiple API versions yet.
         The version option is only provided for futureproofing.
         """
-        api_urlpath = url_path_join(base_urlpath, "api", version)
-
         init_args = dict(
             registry=self,
             base_urlpath=base_urlpath,
             api_version=version,
-            api_urlpath=api_urlpath
         )
 
         return [
             (with_end_slash(
-                url_path_join(api_urlpath, "(.*)", "(.*)")),
+                url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
              ResourceHandler,
              init_args
              ),
             (with_end_slash(
-                url_path_join(api_urlpath, "(.*)")),
+                url_path_join(base_urlpath, "api", version, "(.*)")),
              CollectionHandler,
              init_args
              ),

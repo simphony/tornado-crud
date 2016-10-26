@@ -8,12 +8,11 @@ from .utils import url_path_join, with_end_slash
 
 
 class BaseHandler(web.RequestHandler):
-    def initialize(self, registry, base_urlpath, api_version, api_urlpath):
+    def initialize(self, registry, base_urlpath, api_version):
         """Initialization method for when the class is instantiated."""
         self._registry = registry
-        self.base_urlpath = base_urlpath
-        self.api_version = api_version
-        self.api_urlpath = api_urlpath
+        self._base_urlpath = base_urlpath
+        self._api_version = api_version
 
     @gen.coroutine
     def prepare(self):
@@ -25,6 +24,17 @@ class BaseHandler(web.RequestHandler):
     def registry(self):
         """Returns the class vs Resource registry"""
         return self._registry
+
+    @property
+    def base_urlpath(self):
+        """Returns the Base urlpath as from initial setup"""
+        return self._base_urlpath
+
+    @property
+    def api_version(self):
+        """Returns the API version this handler is taking care of
+        """
+        return self._api_version
 
     @property
     def log(self):
