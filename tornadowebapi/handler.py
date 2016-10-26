@@ -1,4 +1,4 @@
-from tornado import gen, web, escape
+from tornado import gen, web, escape, template
 from tornado.log import app_log
 
 from . import exceptions
@@ -8,9 +8,11 @@ from .utils import url_path_join, with_end_slash
 
 
 class BaseHandler(web.RequestHandler):
-    def initialize(self, registry):
+    def initialize(self, registry, base_urlpath, api_version):
         """Initialization method for when the class is instantiated."""
         self._registry = registry
+        self._base_urlpath = base_urlpath
+        self._api_version = api_version
 
     @gen.coroutine
     def prepare(self):
@@ -22,6 +24,17 @@ class BaseHandler(web.RequestHandler):
     def registry(self):
         """Returns the class vs Resource registry"""
         return self._registry
+
+    @property
+    def base_urlpath(self):
+        """Returns the Base urlpath as from initial setup"""
+        return self._base_urlpath
+
+    @property
+    def api_version(self):
+        """Returns the API version this handler is taking care of
+        """
+        return self._api_version
 
     @property
     def log(self):
@@ -114,6 +127,7 @@ class CollectionHandler(BaseHandler):
             representation = escape.json_decode(self.request.body)
             res_handler.validate(representation)
         except Exception:
+            self.log.exception("invalid payload received.")
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
         try:
@@ -241,3 +255,32 @@ class ResourceHandler(BaseHandler):
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
+
+
+class JSAPIHandler(BaseHandler):
+    """Handles the JavaScript API request."""
+    @gen.coroutine
+    def get(self):
+        resources = []
+        for coll_name, resource in self.registry.registered_types.items():
+            resources.append({
+                "class_name": resource.__name__,
+                "collection_name": coll_name,
+            })
+        self.set_header("Content-Type", "application/javascript")
+        self.render("templates/resources.template.js",
+                    base_urlpath=self.base_urlpath,
+                    api_version=self.api_version,
+                    resources=resources)
+
+    def create_template_loader(self, template_path):
+        """Ovberride the default template loader, because if
+        any code overrides the template loader in the settings,
+        we don't want to rely on that. We want to be sure we use
+        the tornado loader."""
+        return template.Loader(template_path, whitespace='all')
+
+    def get_template_path(self):
+        """Override the path to make sure we search relative to this file
+        """
+        return None

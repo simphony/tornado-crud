@@ -4,118 +4,15 @@ from collections import OrderedDict
 from unittest import mock
 
 import tornadowebapi
-from tornadowebapi import registry, exceptions
+from tornadowebapi import registry
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
-from tornadowebapi.resource import Resource
 from tornadowebapi.handler import ResourceHandler, CollectionHandler
+from tornadowebapi.tests.resources import (
+    AlreadyPresent, Validated, Broken, UnsupportsCollection, Unprocessable,
+    UnsupportAll, Student, Teacher)
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
-from tornado import web, gen, escape
-
-
-def prepare_side_effect(*args, **kwargs):
-    user = mock.Mock()
-    user.orm_user = mock.Mock()
-    args[0].current_user = user
-
-
-class Student(Resource):
-
-    collection = OrderedDict()
-    id = 0
-
-    @gen.coroutine
-    def create(self, representation):
-        id = type(self).id
-        self.collection[str(id)] = representation
-        type(self).id += 1
-        return id
-
-    @gen.coroutine
-    def retrieve(self, identifier):
-        if identifier not in self.collection:
-            raise exceptions.NotFound()
-
-        return self.collection[identifier]
-
-    @gen.coroutine
-    def update(self, identifier, representation):
-        if identifier not in self.collection:
-            raise exceptions.NotFound()
-
-        self.collection[identifier] = representation
-
-    @gen.coroutine
-    def delete(self, identifier):
-        if identifier not in self.collection:
-            raise exceptions.NotFound()
-
-        del self.collection[identifier]
-
-    @gen.coroutine
-    def items(self):
-        return list(self.collection.keys())
-
-
-class Teacher(Resource):
-    @gen.coroutine
-    def retrieve(self, identifier):
-        return {}
-
-    @gen.coroutine
-    def items(self):
-        return []
-
-
-class UnsupportAll(Resource):
-    pass
-
-
-class Unprocessable(Resource):
-    @gen.coroutine
-    def create(self, representation):
-        raise exceptions.BadRepresentation("unprocessable", foo="bar")
-
-    @gen.coroutine
-    def update(self, identifier, representation):
-        raise exceptions.BadRepresentation("unprocessable", foo="bar")
-
-    @gen.coroutine
-    def retrieve(self, identifier):
-        raise exceptions.BadRepresentation("unprocessable", foo="bar")
-
-    @gen.coroutine
-    def items(self):
-        raise exceptions.BadRepresentation("unprocessable", foo="bar")
-
-
-class UnsupportsCollection(Resource):
-    @gen.coroutine
-    def items(self):
-        raise NotImplementedError()
-
-
-class Broken(Resource):
-    @gen.coroutine
-    def boom(self, *args):
-        raise Exception("Boom!")
-
-    create = boom
-    retrieve = boom
-    update = boom
-    delete = boom
-    items = boom
-
-
-class Validated(Resource):
-    def validate(self, representation):
-        raise Exception("woo!")
-
-
-class AlreadyPresent(Resource):
-    @gen.coroutine
-    def create(self, *args):
-        raise exceptions.Exists()
+from tornado import web, escape
 
 
 class TestREST(AsyncHTTPTestCase):
