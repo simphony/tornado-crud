@@ -53,7 +53,7 @@ define(['jquery'], function ($) {
             update(options, self.default_options);
             update(options, {
                 type: req_type,
-                body: body,
+                data: body,
                 success: success_cb,
                 fail: fail_cb
             });
@@ -73,7 +73,8 @@ define(['jquery'], function ($) {
         this.type = type;
         
         this.create = function(representation, success_cb, fail_cb) {
-            API.request("POST", type, representation, success_cb, fail_cb);
+            var body = JSON.stringify(representation);
+            API.request("POST", type, body, success_cb, fail_cb);
         };
 
         this.delete = function(id, success_cb, fail_cb) {
