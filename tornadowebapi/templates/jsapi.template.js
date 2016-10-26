@@ -47,15 +47,13 @@ define(['jquery'], function ($) {
             error: null
         };
         
-        self.request = function (req_type, endpoint, body, success_cb, fail_cb) {
+        self.request = function (req_type, endpoint, body) {
             // Performs a request to the final endpoint
             var options = {};
             update(options, self.default_options);
             update(options, {
                 type: req_type,
-                data: body,
-                success: success_cb,
-                fail: fail_cb
+                data: body
             });
             
             var url = url_path_join(
@@ -72,21 +70,21 @@ define(['jquery'], function ($) {
     var Resource = function(type) {
         this.type = type;
         
-        this.create = function(representation, success_cb, fail_cb) {
+        this.create = function(representation) {
             var body = JSON.stringify(representation);
-            API.request("POST", type, body, success_cb, fail_cb);
+            return API.request("POST", type, body);
         };
 
-        this.delete = function(id, success_cb, fail_cb) {
-            API.request("DELETE", url_path_join(type, id), null, success_cb, fail_cb);
+        this.delete = function(id) {
+            return API.request("DELETE", url_path_join(type, id));
         };
 
-        this.retrieve = function(id, success_cb, fail_cb) {
-            API.request("GET", url_path_join(type, id), null, success_cb, fail_cb);
+        this.retrieve = function(id) {
+            return API.request("GET", url_path_join(type, id));
         };
 
-        this.items = function(success_cb, fail_cb) {
-            API.request("GET", type, null, success_cb, fail_cb);
+        this.items = function() {
+            return API.request("GET", type);
         };
     };
 
