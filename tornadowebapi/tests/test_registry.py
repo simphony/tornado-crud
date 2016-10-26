@@ -1,24 +1,7 @@
 import unittest
 
 from tornadowebapi.registry import Registry
-from tornadowebapi.resource import Resource
-
-
-class Student(Resource):
-    """Let the basic pluralization do its job"""
-    pass
-
-
-class Sheep(Resource):
-    """Sheep plural is the same as singular."""
-    __collection_name__ = "sheep"
-    pass
-
-
-class Octopus(Resource):
-    """Octopus plural is a matter of debate."""
-    __collection_name__ = "octopi"
-    pass
+from tornadowebapi.tests.resources import Student, Sheep, Octopus
 
 
 class TestRegistry(unittest.TestCase):

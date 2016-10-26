@@ -77,15 +77,15 @@ define(['jquery'], function ($) {
         };
 
         this.delete = function(id, success_cb, fail_cb) {
-            API.request("DELETE", url_path_join(type, id), success_cb, fail_cb);
+            API.request("DELETE", url_path_join(type, id), null, success_cb, fail_cb);
         };
 
         this.retrieve = function(id, success_cb, fail_cb) {
-            API.request("GET", url_path_join(type, id), success_cb, fail_cb);
+            API.request("GET", url_path_join(type, id), null, success_cb, fail_cb);
         };
 
         this.items = function(success_cb, fail_cb) {
-            API.request("GET", type, success_cb, fail_cb);
+            API.request("GET", type, null, success_cb, fail_cb);
         };
     };
 

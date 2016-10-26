@@ -3,17 +3,9 @@ from unittest import mock
 
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
-from tornadowebapi.resource import Resource
+from tornadowebapi.tests.resources import Student, Teacher
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web
-
-
-class Student(Resource):
-    pass
-
-
-class Teacher(Resource):
-    pass
 
 
 class TestJSAPI(AsyncHTTPTestCase):

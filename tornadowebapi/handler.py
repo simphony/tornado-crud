@@ -117,6 +117,7 @@ class CollectionHandler(BaseHandler):
             representation = escape.json_decode(self.request.body)
             res_handler.validate(representation)
         except Exception:
+            self.log.exception("invalid payload received.")
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
         try:
@@ -273,4 +274,3 @@ class JSAPIHandler(BaseHandler):
         """Override the path to make sure we search relative to this file
         """
         return None
-
