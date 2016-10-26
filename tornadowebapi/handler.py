@@ -1,4 +1,4 @@
-from tornado import gen, web, escape
+from tornado import gen, web, escape, template
 from tornado.log import app_log
 
 from . import exceptions
@@ -247,19 +247,30 @@ class ResourceHandler(BaseHandler):
 
 
 class JSAPIHandler(BaseHandler):
+    """Handles the JavaScript API request."""
     @gen.coroutine
     def get(self):
-        try:
-            resources = []
-            for coll_name, resource in self.registry.registered_types.items():
-                resources.append({
-                    "class_name": resource.__name__,
-                    "collection_name": coll_name,
-                })
-            self.render("templates/jsapi.template.js",
-                        base_urlpath=self.base_urlpath,
-                        api_version=self.api_version,
-                        resources=resources)
+        resources = []
+        for coll_name, resource in self.registry.registered_types.items():
+            resources.append({
+                "class_name": resource.__name__,
+                "collection_name": coll_name,
+            })
+        self.set_header("Content-Type", "application/javascript")
+        self.render("templates/jsapi.template.js",
+                    base_urlpath=self.base_urlpath,
+                    api_version=self.api_version,
+                    resources=resources)
 
-        except Exception as e:
-            print(e)
+    def create_template_loader(self, template_path):
+        """Ovberride the default template loader, because if
+        any code overrides the template loader in the settings,
+        we don't want to rely on that. We want to be sure we use
+        the tornado loader."""
+        return template.Loader(template_path, whitespace='all')
+
+    def get_template_path(self):
+        """Override the path to make sure we search relative to this file
+        """
+        return None
+

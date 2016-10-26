@@ -75,7 +75,7 @@ define(['jquery'], function ($) {
         this.create = function(representation, success_cb, fail_cb) {
             API.request("POST", type, representation, success_cb, fail_cb);
         };
-        
+
         this.delete = function(id, success_cb, fail_cb) {
             API.request("DELETE", url_path_join(type, id), success_cb, fail_cb);
         };
@@ -90,9 +90,7 @@ define(['jquery'], function ($) {
     };
 
     return {
-        {% for res in resources %}
-        "{{ res['class_name'] }}" : new Resource("{{ res['collection_name'] }}"),
-        {% end %}
-    };
+        {% for res in resources %}"{{ res['class_name'] }}" : new Resource("{{ res['collection_name'] }}"),
+        {% end %} };
 });
 
