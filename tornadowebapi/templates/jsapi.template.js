@@ -36,10 +36,9 @@ define(['jquery'], function ($) {
     var API = (function () {
         // Object representing the interface to the Web API.
         // @param base_url : the url at which to find the web API endpoint.
-        var self = this;
-        this.base_urlpath = "{{ base_urlpath }}";
-
-        this.default_options = {
+        var self = {};
+        self.base_urlpath = "{{ base_urlpath }}";
+        self.default_options = {
             contentType: "application/json",
             cache: false,
             dataType : null,
@@ -48,7 +47,7 @@ define(['jquery'], function ($) {
             error: null
         };
         
-        this.request = function (req_type, endpoint, body, success_cb, fail_cb) {
+        self.request = function (req_type, endpoint, body, success_cb, fail_cb) {
             // Performs a request to the final endpoint
             var options = {};
             update(options, self.default_options);
@@ -67,6 +66,7 @@ define(['jquery'], function ($) {
 
             return $.ajax(url, options);
         };
+        return self;
     })();
 
     var Resource = function(type) {
