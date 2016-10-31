@@ -16,4 +16,5 @@ setup(
         "tornado>=4.3"
     ],
     packages=find_packages(),
+    include_package_data=True,
     )
