@@ -1,6 +1,14 @@
 Tornado WebAPI CHANGELOG
 ========================
 
+What's new in Tornado WebAPI 0.4.0
+----------------------------------
+
+Summary
+~~~~~~~
+
+- Automatic creation of JavaScript API to access the resources. (#33)
+
 What's new in Tornado WebAPI 0.3.0
 ----------------------------------
 
