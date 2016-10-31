@@ -11,6 +11,14 @@ Subpackages
 Submodules
 ----------
 
+tornadowebapi.authenticator module
+----------------------------------
+
+.. automodule:: tornadowebapi.authenticator
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tornadowebapi.exceptions module
 -------------------------------
 
