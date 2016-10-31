@@ -1,2 +1,2 @@
 include *requirements.txt
-recursive-include tornadowebapi/templates/ *
+include tornadowebapi/templates/resources.template.js
