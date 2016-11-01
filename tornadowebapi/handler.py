@@ -140,6 +140,8 @@ class CollectionHandler(BaseHandler):
         try:
             decoded_rep = escape.json_decode(self.request.body)
             representation = res_handler.validate_representation(decoded_rep)
+        except exceptions.WebAPIException:
+            raise
         except Exception:
             self.log.exception("invalid payload received.")
             raise web.HTTPError(httpstatus.BAD_REQUEST)
@@ -186,6 +188,8 @@ class ResourceHandler(BaseHandler):
 
         try:
             identifier = res_handler.validate_identifier(identifier)
+        except exceptions.WebAPIException:
+            raise
         except Exception:
             raise web.HTTPError(httpstatus.NOT_FOUND)
 
@@ -217,6 +221,8 @@ class ResourceHandler(BaseHandler):
 
         try:
             identifier = res_handler.validate_identifier(identifier)
+        except exceptions.WebAPIException:
+            raise
         except Exception:
             raise web.HTTPError(httpstatus.NOT_FOUND)
 
@@ -248,6 +254,8 @@ class ResourceHandler(BaseHandler):
         try:
             decoded = escape.json_decode(self.request.body)
             representation = res_handler.validate_representation(decoded)
+        except exceptions.WebAPIException:
+            raise
         except Exception:
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
@@ -257,6 +265,8 @@ class ResourceHandler(BaseHandler):
 
         try:
             identifier = res_handler.validate_identifier(identifier)
+        except exceptions.WebAPIException:
+            raise
         except Exception:
             raise web.HTTPError(httpstatus.NOT_FOUND)
 
@@ -285,6 +295,8 @@ class ResourceHandler(BaseHandler):
 
         try:
             identifier = res_handler.validate_identifier(identifier)
+        except exceptions.WebAPIException:
+            raise
         except Exception:
             raise web.HTTPError(httpstatus.NOT_FOUND)
 
