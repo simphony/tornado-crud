@@ -9,7 +9,8 @@ from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.handler import ResourceHandler, CollectionHandler
 from tornadowebapi.tests.resources import (
-    AlreadyPresent, Validated, Broken, UnsupportsCollection, Unprocessable,
+    AlreadyPresent, ExceptionValidated, NullReturningValidated,
+    CorrectValidated, Broken, UnsupportsCollection, Unprocessable,
     UnsupportAll, Student, Teacher)
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
@@ -28,7 +29,9 @@ class TestREST(AsyncHTTPTestCase):
         registry.registry.register(Unprocessable)
         registry.registry.register(UnsupportsCollection)
         registry.registry.register(Broken)
-        registry.registry.register(Validated)
+        registry.registry.register(ExceptionValidated)
+        registry.registry.register(NullReturningValidated)
+        registry.registry.register(CorrectValidated)
         registry.registry.register(AlreadyPresent)
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
@@ -313,13 +316,29 @@ class TestREST(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
     def test_validated(self):
-        url = "/api/v1/validateds/"
+        url = "/api/v1/exceptionvalidateds/"
 
         res = self.fetch(url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
         res = self.fetch(url+"0/", method="PUT", body="{}")
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        url = "/api/v1/nullreturningvalidateds/"
+
+        res = self.fetch(url, method="POST", body="{}")
+        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+
+        res = self.fetch(url+"0/", method="PUT", body="{}")
+        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+
+        url = "/api/v1/correctvalidateds/"
+
+        res = self.fetch(url, method="POST", body="{}")
+        self.assertEqual(res.code, httpstatus.CREATED)
+
+        res = self.fetch(url+"0/", method="PUT", body="{}")
+        self.assertEqual(res.code, httpstatus.NO_CONTENT)
 
     def test_exists(self):
         collection_url = "/api/v1/alreadypresents/"

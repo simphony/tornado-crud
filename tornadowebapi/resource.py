@@ -183,18 +183,27 @@ class Resource:
         """
         return []
 
-    def validate(self, representation):
-        """Validates the representation incoming from a request.
+    def validate_representation(self, representation):
+        """Validates the representation incoming from a request,
+        after it has been decoded.
         Any exception occurring in this method will be converted into
         a BadRepresentation exception.
 
         This method is always called before being dispatched to the CRUD
         methods accepting a representation. By default, it does nothing,
-        and accepts any representation.
+        accepts any representation, and returns the same representation.
+
+        The method can also be used to modify the incoming representation
+        so that it's compliant with the expectations, or return a new
+        representation.
+
+        Returns
+        -------
+        The representation that will be used.
 
         Raises
         ------
         BadRepresentation:
             If the resource collection does not support the method.
         """
-        pass
+        return representation

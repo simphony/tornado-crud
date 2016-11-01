@@ -124,11 +124,17 @@ class CollectionHandler(BaseHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
 
         try:
-            representation = escape.json_decode(self.request.body)
-            res_handler.validate(representation)
+            decoded_rep = escape.json_decode(self.request.body)
+            representation = res_handler.validate_representation(decoded_rep)
         except Exception:
             self.log.exception("invalid payload received.")
             raise web.HTTPError(httpstatus.BAD_REQUEST)
+
+        if representation is None:
+            self.log.error(
+                "Representation is None. "
+                "is validate_representation not returning anything?")
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         try:
             resource_id = yield res_handler.create(representation)
@@ -215,10 +221,16 @@ class ResourceHandler(BaseHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
 
         try:
-            representation = escape.json_decode(self.request.body)
-            res_handler.validate(representation)
+            decoded = escape.json_decode(self.request.body)
+            representation = res_handler.validate_representation(decoded)
         except Exception:
             raise web.HTTPError(httpstatus.BAD_REQUEST)
+
+        if representation is None:
+            self.log.error(
+                "Representation is None. "
+                "is validate_representation not returning anything?")
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         try:
             yield res_handler.update(identifier, representation)
