@@ -186,8 +186,10 @@ class Resource:
     def validate_representation(self, representation):
         """Validates the representation incoming from a request,
         after it has been decoded.
-        Any exception occurring in this method will be converted into
-        a BadRepresentation exception.
+        Any generic exception occurring in this method will be
+        converted into a BadRepresentation exception.
+        Exceptions that belong to this distribution will be let through to
+        produce the expected response.
 
         This method is always called before being dispatched to the CRUD
         methods accepting a representation. By default, it does nothing,
@@ -207,6 +209,8 @@ class Resource:
         """Validates the identifier from a request.
         Any exception occurring in this method will be converted into
         a NotFound exception.
+        Exceptions that belong to this distribution will be let through to
+        produce the expected response.
 
         Note: We use NotFound (404) because the URL is likely valid.
         If our identifiers are all integers, so that

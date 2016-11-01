@@ -102,6 +102,11 @@ class ExceptionValidated(Resource):
         raise Exception("woo!")
 
 
+class OurExceptionValidated(Resource):
+    def validate_representation(self, representation):
+        raise exceptions.BadRepresentation("woo!")
+
+
 class NullReturningValidated(Resource):
     def validate_representation(self, representation):
         pass
@@ -122,6 +127,11 @@ class AlreadyPresent(Resource):
 class InvalidIdentifier(Resource):
     def validate_identifier(self, identifier):
         raise Exception("woo!")
+
+
+class OurExceptionInvalidIdentifier(Resource):
+    def validate_identifier(self, identifier):
+        raise exceptions.BadRepresentation("woo!")
 
 
 class Sheep(Resource):
