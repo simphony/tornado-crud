@@ -11,7 +11,7 @@ from tornadowebapi.handler import ResourceHandler, CollectionHandler
 from tornadowebapi.tests.resources import (
     AlreadyPresent, ExceptionValidated, NullReturningValidated,
     CorrectValidated, Broken, UnsupportsCollection, Unprocessable,
-    UnsupportAll, Student, Teacher)
+    UnsupportAll, Student, Teacher, InvalidIdentifier)
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
@@ -32,6 +32,7 @@ class TestREST(AsyncHTTPTestCase):
         registry.registry.register(ExceptionValidated)
         registry.registry.register(NullReturningValidated)
         registry.registry.register(CorrectValidated)
+        registry.registry.register(InvalidIdentifier)
         registry.registry.register(AlreadyPresent)
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
@@ -339,6 +340,21 @@ class TestREST(AsyncHTTPTestCase):
 
         res = self.fetch(url+"0/", method="PUT", body="{}")
         self.assertEqual(res.code, httpstatus.NO_CONTENT)
+
+    def test_validate_identifier(self):
+        url = "/api/v1/invalididentifiers/whoo/"
+
+        res = self.fetch(url, method="POST", body="{}")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(url, method="PUT", body="{}")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(url, method="GET")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(url, method="DELETE")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
     def test_exists(self):
         collection_url = "/api/v1/alreadypresents/"
