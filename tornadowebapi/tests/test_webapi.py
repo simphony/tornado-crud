@@ -187,7 +187,7 @@ class TestWebAPI(AsyncHTTPTestCase):
 
     def test_unexistent_resource_type(self):
         res = self.fetch(
-            "/api/v1/teachers/",
+            "/api/v1/notpresent/",
             method="POST",
             body=escape.json_encode({
                 "foo": "bar"
@@ -197,7 +197,7 @@ class TestWebAPI(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
         res = self.fetch(
-            "/api/v1/teachers/",
+            "/api/v1/notpresent/",
             method="GET",
         )
 
