@@ -5,7 +5,7 @@ from tornadowebapi import exceptions
 from tornadowebapi.resource import Resource
 
 
-class Student(Resource):
+class WorkingResource(Resource):
 
     collection = OrderedDict()
     id = 0
@@ -41,6 +41,10 @@ class Student(Resource):
     @gen.coroutine
     def items(self):
         return list(self.collection.keys())
+
+
+class Student(WorkingResource):
+    pass
 
 
 class Teacher(Resource):
@@ -93,9 +97,20 @@ class Broken(Resource):
     items = boom
 
 
-class Validated(Resource):
-    def validate(self, representation):
+class ExceptionValidated(Resource):
+    def validate_representation(self, representation):
         raise Exception("woo!")
+
+
+class NullReturningValidated(Resource):
+    def validate_representation(self, representation):
+        pass
+
+
+class CorrectValidated(WorkingResource):
+    def validate_representation(self, representation):
+        representation["hello"] = 5
+        return representation
 
 
 class AlreadyPresent(Resource):
