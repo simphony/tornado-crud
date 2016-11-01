@@ -8,32 +8,37 @@ from tornadowebapi import registry
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.handler import ResourceHandler, CollectionHandler
-from tornadowebapi.tests.resources import (
-    AlreadyPresent, ExceptionValidated, NullReturningValidated,
-    CorrectValidated, Broken, UnsupportsCollection, Unprocessable,
-    UnsupportAll, Student, Teacher, InvalidIdentifier)
+from tornadowebapi.tests import resources
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
+ALL_RESOURCES = (
+    resources.AlreadyPresent,
+    resources.ExceptionValidated,
+    resources.NullReturningValidated,
+    resources.CorrectValidated,
+    resources.OurExceptionValidated,
+    resources.Broken,
+    resources.UnsupportsCollection,
+    resources.Unprocessable,
+    resources.UnsupportAll,
+    resources.Student,
+    resources.Teacher,
+    resources.InvalidIdentifier,
+    resources.OurExceptionInvalidIdentifier
+)
 
-class TestREST(AsyncHTTPTestCase):
+
+class TestWebAPI(AsyncHTTPTestCase):
     def setUp(self):
         super().setUp()
-        Student.collection = OrderedDict()
-        Student.id = 0
+        resources.Student.collection = OrderedDict()
+        resources.Student.id = 0
 
     def get_app(self):
         handlers = tornadowebapi.api_handlers('/')
-        registry.registry.register(Student)
-        registry.registry.register(UnsupportAll)
-        registry.registry.register(Unprocessable)
-        registry.registry.register(UnsupportsCollection)
-        registry.registry.register(Broken)
-        registry.registry.register(ExceptionValidated)
-        registry.registry.register(NullReturningValidated)
-        registry.registry.register(CorrectValidated)
-        registry.registry.register(InvalidIdentifier)
-        registry.registry.register(AlreadyPresent)
+        for resource in ALL_RESOURCES:
+            registry.registry.register(resource)
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
         return app
@@ -45,9 +50,9 @@ class TestREST(AsyncHTTPTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"items": []})
 
-        Student.collection[1] = ""
-        Student.collection[2] = ""
-        Student.collection[3] = ""
+        resources.Student.collection[1] = ""
+        resources.Student.collection[2] = ""
+        resources.Student.collection[3] = ""
 
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
@@ -341,6 +346,14 @@ class TestREST(AsyncHTTPTestCase):
         res = self.fetch(url+"0/", method="PUT", body="{}")
         self.assertEqual(res.code, httpstatus.NO_CONTENT)
 
+        url = "/api/v1/ourexceptionvalidateds/"
+
+        res = self.fetch(url, method="POST", body="{}")
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        res = self.fetch(url+"0/", method="PUT", body="{}")
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
     def test_validate_identifier(self):
         url = "/api/v1/invalididentifiers/whoo/"
 
@@ -355,6 +368,20 @@ class TestREST(AsyncHTTPTestCase):
 
         res = self.fetch(url, method="DELETE")
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        url = "/api/v1/ourexceptioninvalididentifiers/whoo/"
+
+        res = self.fetch(url, method="POST", body="{}")
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        res = self.fetch(url, method="PUT", body="{}")
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        res = self.fetch(url, method="GET")
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        res = self.fetch(url, method="DELETE")
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_exists(self):
         collection_url = "/api/v1/alreadypresents/"
@@ -375,12 +402,12 @@ class TestRESTFunctions(unittest.TestCase):
 class TestNonGlobalRegistry(AsyncHTTPTestCase):
     def setUp(self):
         super().setUp()
-        Student.collection = OrderedDict()
-        Student.id = 0
+        resources.Student.collection = OrderedDict()
+        resources.Student.id = 0
 
     def get_app(self):
         self.registry = Registry()
-        self.registry.register(Teacher)
+        self.registry.register(resources.Teacher)
         handlers = self.registry.api_handlers('/')
         app = web.Application(handlers=handlers)
         return app
