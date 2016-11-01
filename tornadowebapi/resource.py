@@ -200,10 +200,35 @@ class Resource:
         Returns
         -------
         The representation that will be used.
-
-        Raises
-        ------
-        BadRepresentation:
-            If the resource collection does not support the method.
         """
         return representation
+
+    def validate_identifier(self, identifier):
+        """Validates the identifier from a request.
+        Any exception occurring in this method will be converted into
+        a NotFound exception.
+
+        Note: We use NotFound (404) because the URL is likely valid.
+        If our identifiers are all integers, so that
+
+        /foo/1/
+
+        is a valid URL for identifier 1, and the following url
+
+        /foo/whatever/
+
+        Is simply not present.
+
+        This method is always called before being dispatched to the CRUD
+        methods accepting an identifier. By default, it does nothing,
+        accepts any identifier, and returns the same identifier.
+
+        The method can also be used to modify the incoming identifier
+        so that it's compliant with the expectations, or return a new
+        identifier.
+
+        Returns
+        -------
+        The identifier that will be used.
+        """
+        return identifier

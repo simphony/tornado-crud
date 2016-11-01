@@ -119,6 +119,11 @@ class AlreadyPresent(Resource):
         raise exceptions.Exists()
 
 
+class InvalidIdentifier(Resource):
+    def validate_identifier(self, identifier):
+        raise Exception("woo!")
+
+
 class Sheep(Resource):
     """Sheep plural is the same as singular."""
     __collection_name__ = "sheep"

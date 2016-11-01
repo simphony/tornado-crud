@@ -91,6 +91,20 @@ class BaseHandler(web.RequestHandler):
             content_type=content_type
         )
 
+    def _check_none(self, entity, entity_name, culprit_routine):
+        """Check if entity is None. If it is, raises INTERNAL_SERVER_ERROR.
+        entity_name is the name of the entity for the log message.
+        culprit_routine is the routine that returned None.
+        """
+        if entity is None:
+            self.log.error(
+                "{entity_name} is None. "
+                "Is {culprit_routine} not returning anything?".format(
+                    entity_name=entity_name,
+                    culprit_routine=culprit_routine
+                ))
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+
 
 class CollectionHandler(BaseHandler):
     """Handler for URLs addressing a collection.
@@ -130,11 +144,9 @@ class CollectionHandler(BaseHandler):
             self.log.exception("invalid payload received.")
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
-        if representation is None:
-            self.log.error(
-                "Representation is None. "
-                "is validate_representation not returning anything?")
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+        self._check_none(representation,
+                         "representation",
+                         "validate_representation")
 
         try:
             resource_id = yield res_handler.create(representation)
@@ -149,10 +161,9 @@ class CollectionHandler(BaseHandler):
                 ))
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
-        if resource_id is None:
-            self.log.error(
-                "create method for {} returned None".format(collection_name))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+        self._check_none(resource_id,
+                         "resource_id",
+                         "{}.create()".format(collection_name))
 
         location = with_end_slash(
             url_path_join(self.request.full_url(), str(resource_id)))
@@ -172,6 +183,13 @@ class ResourceHandler(BaseHandler):
     def get(self, collection_name, identifier):
         """Retrieves the resource representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
+
+        try:
+            identifier = res_handler.validate_identifier(identifier)
+        except Exception:
+            raise web.HTTPError(httpstatus.NOT_FOUND)
+
+        self._check_none(identifier, "identifier", "validate_identifier")
 
         try:
             representation = yield res_handler.retrieve(identifier)
@@ -196,6 +214,13 @@ class ResourceHandler(BaseHandler):
         in either Conflict or NotFound, depending on the
         presence of a resource at the given URL"""
         res_handler = self.get_resource_handler_or_404(collection_name)
+
+        try:
+            identifier = res_handler.validate_identifier(identifier)
+        except Exception:
+            raise web.HTTPError(httpstatus.NOT_FOUND)
+
+        self._check_none(identifier, "identifier", "validate_identifier")
 
         try:
             exists = yield res_handler.exists(identifier)
@@ -226,11 +251,16 @@ class ResourceHandler(BaseHandler):
         except Exception:
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
-        if representation is None:
-            self.log.error(
-                "Representation is None. "
-                "is validate_representation not returning anything?")
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+        self._check_none(representation,
+                         "representation",
+                         "validate_representation")
+
+        try:
+            identifier = res_handler.validate_identifier(identifier)
+        except Exception:
+            raise web.HTTPError(httpstatus.NOT_FOUND)
+
+        self._check_none(identifier, "identifier", "validate_identifier")
 
         try:
             yield res_handler.update(identifier, representation)
@@ -252,6 +282,14 @@ class ResourceHandler(BaseHandler):
     def delete(self, collection_name, identifier):
         """Deletes the resource."""
         res_handler = self.get_resource_handler_or_404(collection_name)
+
+        try:
+            identifier = res_handler.validate_identifier(identifier)
+        except Exception:
+            raise web.HTTPError(httpstatus.NOT_FOUND)
+
+        self._check_none(identifier, "identifier", "validate_identifier")
+
         try:
             yield res_handler.delete(identifier)
         except exceptions.WebAPIException as e:
