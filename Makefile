@@ -50,8 +50,7 @@ test:
 jstest:
 	@echo "Running javascript testsuite"
 	@echo "----------------------------"
-	python jstests/application.py &
-	`npm bin`/node-qunit-phantomjs http://127.0.0.1:12345/
+	pushd jstests && sh run.sh && popd
 
 .PHONY: docs
 docs:

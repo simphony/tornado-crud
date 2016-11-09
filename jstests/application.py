@@ -5,6 +5,7 @@ import tornado.ioloop
 from tornadowebapi.registry import Registry
 from tornadowebapi.tests.resources import Student
 
+
 class Application(web.Application):
     def __init__(self):
         self.reg = Registry()
