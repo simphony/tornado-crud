@@ -32,6 +32,20 @@ define(['jquery'], function ($) {
         // leaving '/' separators
         return uri.split('/').map(encodeURIComponent).join('/');
     };
+    
+    var parse_url = function (url) {
+        // an `a` element with an href allows attr-access to the parsed segments of a URL
+        // a = parse_url("http://localhost:8888/path/name#hash")
+        // a.protocol = "http:"
+        // a.host     = "localhost:8888"
+        // a.hostname = "localhost"
+        // a.port     = 8888
+        // a.pathname = "/path/name"
+        // a.hash     = "#hash"
+        var a = document.createElement("a");
+        a.href = url;
+        return a;
+    };
 
     var API = (function () {
         // Object representing the interface to the Web API.
@@ -72,19 +86,182 @@ define(['jquery'], function ($) {
         
         this.create = function(representation) {
             var body = JSON.stringify(representation);
-            return API.request("POST", type, body);
+            var promise = $.Deferred();
+
+            API.request("POST", type, body)
+                .done(function(data, textStatus, jqXHR) {
+                    var status = jqXHR.status;
+                    
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(data);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+
+                    if (status !== 201) {
+                        // Strange situation in which the call succeeded, but
+                        // not with a 201. Just do our best.
+                        console.log(
+                            "Create succeded but response with status " +
+                            status + 
+                            " instead of 201."
+                        );
+                        promise.reject(status, payload);
+                        return;
+                    }
+                    
+                    var id, location;
+                    try {
+                        location = jqXHR.getResponseHeader('Location');
+                        var url = parse_url(location);
+                        var arr = url.pathname.replace(/\/$/, "").split('/');
+                        id = arr[arr.length - 1];
+                    } catch (e) {
+                        console.log("Response had invalid or absent Location header");
+                        promise.reject(status, payload);
+                        return;
+                    }
+                    promise.resolve(id, location);
+                })
+                .fail(function(jqXHR, textStatus, error) {
+                    var status = jqXHR.status;
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(jqXHR.responseText);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+
+                    promise.reject(status, payload);
+                });
+            
+            return promise;
+            
         };
 
         this.delete = function(id) {
-            return API.request("DELETE", url_path_join(type, id));
+            var promise = $.Deferred();
+            
+            API.request("DELETE", url_path_join(type, id))
+                .done(function(data, textStatus, jqXHR) {
+                    var status = jqXHR.status;
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(data);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+                    
+                    if (status !== 204) {
+                        console.log(
+                            "Delete succeded but response with status " +
+                            status +
+                            " instead of 204."
+                        );
+                        promise.reject(status, payload);
+                        return; 
+                    }
+                    promise.resolve();
+                })
+                .fail(function(jqXHR, textStatus, error) { 
+                    var status = jqXHR.status;
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(jqXHR.responseText);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+                    promise.reject(status, payload);
+                });
+            
+            return promise;
         };
 
         this.retrieve = function(id) {
-            return API.request("GET", url_path_join(type, id));
+            var promise = $.Deferred();
+            
+            API.request("GET", url_path_join(type, id))
+                .done(function(data, textStatus, jqXHR) {
+                    var status = jqXHR.status;
+                    
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(jqXHR.responseText);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+
+                    if (status !== 200) {
+                        console.log(
+                            "Retrieve succeded but response with status " +
+                            status +
+                            " instead of 200."
+                        );
+                        promise.reject(status, payload);
+                        return;
+                    }
+                        
+                    if (payload === null) {
+                        console.log(
+                            "Retrieve succeded but empty or invalid payload"
+                        );
+                        promise.reject(status, payload);
+                        return;
+                    }
+                        
+                    promise.resolve(payload);
+                })
+                .fail(function(data, textStatus, jqHXR) {
+                    var status = jqXHR.status;
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(jqXHR.responseText);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+                    promise.reject(status, payload);
+                });
+            
+            return promise;
         };
 
         this.items = function() {
-            return API.request("GET", type);
+            var promise = $.Deferred();
+            
+            API.request("GET", type)
+                .done(function(data, textStatus, jqXHR) {
+                    var status = jqXHR.status;
+
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(jqXHR.responseText);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+
+                    if (status !== 200) {
+                        console.log(
+                            "Items retrieve succeded but response with status " +
+                            status +
+                            " instead of 200."
+                        );
+                        promise.reject(status, payload);
+                        return;
+                    }
+
+                    if (payload === null) {
+                        console.log(
+                            "Items Retrieve succeded but empty or invalid payload"
+                        );
+                        promise.reject(status, payload);
+                        return;
+                    }
+                    promise.resolve(payload.items);
+                    
+                });
+            
+            return promise;
         };
     };
 

@@ -18,7 +18,15 @@ aptdeps:
 pythondeps:
 	@echo "Installing dependencies"
 	@echo "-----------------------"
-	pip3 install -r requirements.txt -r dev-requirements.txt -r doc-requirements.txt
+	pip3 install -r requirements.txt
+
+.PHONY: devdeps
+devdeps:
+	@echo "Installing dependencies"
+	@echo "-----------------------"
+	apt-get install phantomjs
+	pip3 install -r dev-requirements.txt -r doc-requirements.txt
+	npm install node-qunit-phantomjs
 
 .PHONY: develop
 develop: 
@@ -37,6 +45,13 @@ test:
 	@echo "Running testsuite"
 	@echo "-----------------"
 	flake8 . && python -m tornado.testing discover -s tornadowebapi -t . -v
+
+.PHONY: jstest
+jstest:
+	@echo "Running javascript testsuite"
+	@echo "----------------------------"
+	python jstests/application.py &
+	`npm bin`/node-qunit-phantomjs http://127.0.0.1:12345/
 
 .PHONY: docs
 docs:

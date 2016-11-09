@@ -13,8 +13,12 @@ before_install:
 install:
     - make install
 
+before_script:
+    - make devdeps
+
 script:
     - make test
+    - make jstest
     - make docs
 
 after_success:
