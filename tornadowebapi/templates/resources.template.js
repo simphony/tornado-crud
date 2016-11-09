@@ -76,12 +76,34 @@ define(['jquery'], function ($) {
                     encode_uri_components(endpoint)
                 )+'/';
 
-            console.log("requesting "+url);
             return $.ajax(url, options);
         };
         return self;
     })();
 
+    var Error = function(code, message) {
+        console.log("Creating error"+code);
+        this.code = code;
+        this.message = message;
+    };
+    
+    var fail_handler = function(promise, jqXHR, textStatus, error) {
+        console.log("fail handler");
+        var status = jqXHR.status;
+        var payload = null;
+        try {
+            payload = JSON.parse(jqXHR.responseText);
+        } catch (e) {
+            // Suppress any syntax error and discard the payload
+        }
+        
+        var err = new Error(status, "");
+        if (payload !== null) {
+            update(err, payload);
+        }
+        promise.reject(err);
+    };
+    
     var Resource = function(type) {
         this.type = type;
         
@@ -126,21 +148,51 @@ define(['jquery'], function ($) {
                     promise.resolve(id, location);
                 })
                 .fail(function(jqXHR, textStatus, error) {
-                    var status = jqXHR.status;
-                    var payload = null;
-                    try {
-                        payload = JSON.parse(jqXHR.responseText);
-                    } catch (e) {
-                        // Suppress any syntax error and discard the payload
-                    }
-
-                    promise.reject(status, payload);
+                    fail_handler(promise, jqXHR, textStatus, error);
                 });
             
             return promise;
             
         };
+        
+        this.update = function(id, representation) {
+            var body = JSON.stringify(representation);
+            var promise = $.Deferred();
 
+            API.request("PUT", url_path_join(type, id), body)
+                .done(function(data, textStatus, jqXHR) {
+                    var status = jqXHR.status;
+
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(data);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+
+                    if (status !== 204) {
+                        // Strange situation in which the call succeeded, but
+                        // not with a 201. Just do our best.
+                        console.log(
+                            "Update succeded but response with status " +
+                            status +
+                            " instead of 204."
+                        );
+                        promise.reject(status, payload);
+                        return;
+                    }
+
+                    promise.resolve();
+                })
+                .fail(function(jqXHR, textStatus, error) {
+                    fail_handler(promise, jqXHR, textStatus, error);
+                });
+
+            return promise;
+
+
+        };
+        
         this.delete = function(id) {
             var promise = $.Deferred();
             
@@ -165,15 +217,8 @@ define(['jquery'], function ($) {
                     }
                     promise.resolve();
                 })
-                .fail(function(jqXHR, textStatus, error) { 
-                    var status = jqXHR.status;
-                    var payload = null;
-                    try {
-                        payload = JSON.parse(jqXHR.responseText);
-                    } catch (e) {
-                        // Suppress any syntax error and discard the payload
-                    }
-                    promise.reject(status, payload);
+                .fail(function(jqXHR, textStatus, error) {
+                    fail_handler(promise, jqXHR, textStatus, error);
                 });
             
             return promise;
@@ -214,17 +259,7 @@ define(['jquery'], function ($) {
                     promise.resolve(payload);
                 })
                 .fail(function(jqXHR, textStatus, error) {
-                    var status = jqXHR.status;
-                    var payload = null;
-                    console.log(JSON.stringify(jqXHR));
-                    console.log(textStatus);
-                    console.log(error);
-                    try {
-                        payload = JSON.parse(jqXHR.responseText);
-                    } catch (e) {
-                        // Suppress any syntax error and discard the payload
-                    }
-                    promise.reject(status, payload);
+                    fail_handler(promise, jqXHR, textStatus, error);
                 });
             
             return promise;
@@ -265,14 +300,7 @@ define(['jquery'], function ($) {
                     
                 })
                 .fail(function(jqXHR, textStatus, error) {
-                    var status = jqXHR.status;
-                    var payload = null;
-                    try {
-                        payload = JSON.parse(jqXHR.responseText);
-                    } catch (e) {
-                        // Suppress any syntax error and discard the payload
-                    }
-                    promise.reject(status, payload);
+                    fail_handler(promise, jqXHR, textStatus, error);
                 });
             
             return promise;

@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+Testing module that triggers tests in the browser and then extracts
+the results in text form.
+
+Unfortunately we cannot rely on phantomjs for this, because of
+https://github.com/ariya/phantomjs/issues/11195
+that prevents us to use ajax requests appropriately.
+"""
+
 import time
 import os
 import contextlib

@@ -1,3 +1,5 @@
+#!/bin/bash
+# Runs the javascript tests for the CI
 python application.py &
 pid=${!}
 sleep 3
