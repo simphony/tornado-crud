@@ -76,6 +76,7 @@ define(['jquery'], function ($) {
                     encode_uri_components(endpoint)
                 )+'/';
 
+            console.log("requesting "+url);
             return $.ajax(url, options);
         };
         return self;
@@ -212,9 +213,12 @@ define(['jquery'], function ($) {
                         
                     promise.resolve(payload);
                 })
-                .fail(function(data, textStatus, jqHXR) {
+                .fail(function(jqXHR, textStatus, error) {
                     var status = jqXHR.status;
                     var payload = null;
+                    console.log(JSON.stringify(jqXHR));
+                    console.log(textStatus);
+                    console.log(error);
                     try {
                         payload = JSON.parse(jqXHR.responseText);
                     } catch (e) {
@@ -259,6 +263,16 @@ define(['jquery'], function ($) {
                     }
                     promise.resolve(payload.items);
                     
+                })
+                .fail(function(jqXHR, textStatus, error) {
+                    var status = jqXHR.status;
+                    var payload = null;
+                    try {
+                        payload = JSON.parse(jqXHR.responseText);
+                    } catch (e) {
+                        // Suppress any syntax error and discard the payload
+                    }
+                    promise.reject(status, payload);
                 });
             
             return promise;

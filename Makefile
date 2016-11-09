@@ -24,9 +24,7 @@ pythondeps:
 devdeps:
 	@echo "Installing dependencies"
 	@echo "-----------------------"
-	apt-get install phantomjs
 	pip3 install -r dev-requirements.txt -r doc-requirements.txt
-	npm install node-qunit-phantomjs
 
 .PHONY: develop
 develop: 
