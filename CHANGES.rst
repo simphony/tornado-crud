@@ -1,6 +1,20 @@
 Tornado WebAPI CHANGELOG
 ========================
 
+What's new in Tornado WebAPI 0.5.0
+----------------------------------
+
+Summary
+~~~~~~~
+
+- Javascript interface now returns high level results instead of Ajax responses. (#42)
+- WebAPI Exceptions in validation routines are propagated as is, instead of being converted (#41)
+- Added Resource.validate_identifier to validate the identifier. It must return the
+  identifier (#40)
+- Resource.validate() is now Resource.validate_representation(). It must return the
+  representation, either unchanged or after modifications. (#39)
+- Fix: missing files are now correctly released (#37, #38)
+
 What's new in Tornado WebAPI 0.4.0
 ----------------------------------
 

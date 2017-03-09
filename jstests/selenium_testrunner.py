@@ -117,5 +117,6 @@ class TestStart(SeleniumTestBase):
 
         self.assertEqual(result, "qunit-pass")
 
+
 if __name__ == "__main__":
     unittest.main()
