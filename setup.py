@@ -9,6 +9,7 @@ VERSION = '0.6.0.dev0'
 with open('README.rst', 'r') as readme:
     README_TEXT = readme.read()
 
+
 def write_version_py():
     filename = os.path.join(
         os.path.dirname(__file__),
