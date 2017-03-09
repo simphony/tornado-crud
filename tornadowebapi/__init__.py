@@ -1,4 +1,4 @@
-from ._version import __version__, MAJOR, MINOR, MICRO, IS_RELEASED # noqa
+from .version import __version__ # noqa
 
 
 def api_handlers(base_urlpath, version="v1"):

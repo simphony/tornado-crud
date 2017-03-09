@@ -21,7 +21,7 @@ import os
 import sys
 sys.path.append(os.path.abspath('../../'))
 
-from tornadowebapi import __version__, MAJOR, MINOR
+from tornadowebapi import __version__
 
 # -- General configuration ------------------------------------------------
 
@@ -67,7 +67,7 @@ author = 'SimPhoNy Project'
 # built documents.
 #
 # The short X.Y version.
-version = '{}.{}'.format(MAJOR, MINOR)
+version = '{}.{}'.format(*__version__.split(".")[0:2])
 # The full version, including alpha/beta/rc tags.
 release = __version__
 
