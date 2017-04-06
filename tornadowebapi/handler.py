@@ -81,8 +81,15 @@ class BaseHandler(web.RequestHandler):
         payload = None
         content_type = None
 
+        renderer = self._registry.renderer
+        serializer = self._registry.serializer
+
         if representation is not None:
-            payload = self._registry.renderer.render(representation)
+            payload = renderer.render(
+                serializer.serialize_exception(
+                    representation
+                )
+            )
             content_type = self._registry.renderer.content_type
 
         return PayloadedHTTPError(
@@ -129,10 +136,16 @@ class CollectionHandler(BaseHandler):
 
         self.set_status(httpstatus.OK)
         # Need to convert into a dict for security issue tornado/1009
-        self.write(self._registry.renderer.render(
-            {"items": [str(item) for item in items]})
+        renderer = self._registry.renderer
+        serializer = self._registry.serializer
+        self.write(
+            renderer.render(
+                serializer.serialize_collection(
+                    collection_name,
+                    items)
+            )
         )
-        self.set_header("Content-Type", self._registry.renderer.content_type)
+        self.set_header("Content-Type", renderer.content_type)
         self.flush()
 
     @gen.coroutine
@@ -213,7 +226,14 @@ class ResourceHandler(BaseHandler):
 
         self.set_status(httpstatus.OK)
         renderer = self._registry.renderer
-        self.write(renderer.render(representation))
+        serializer = self._registry.serializer
+        self.write(
+            renderer.render(
+                serializer.serialize_resource(
+                    collection_name,
+                    identifier,
+                    representation)
+            ))
         self.set_header("Content-Type", renderer.content_type)
         self.flush()
 
@@ -255,10 +275,14 @@ class ResourceHandler(BaseHandler):
     def put(self, collection_name, identifier):
         """Replaces the resource with a new representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
+        parser = self._registry.parser
+        deserializer = self._registry.deserializer
 
         try:
-            decoded = self._registry.parser.parse(self.request.body)
-            representation = res_handler.validate_representation(decoded)
+            decoded = parser.parse(self.request.body)
+            representation = deserializer.deserialize_resource_data(decoded)
+            representation = res_handler.validate_representation(
+                representation)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except Exception:

@@ -1,5 +1,7 @@
+from tornadowebapi.deserializers import BasicRESTDeserializer
 from tornadowebapi.parsers import JSONParser
 from tornadowebapi.renderer import JSONRenderer
+from tornadowebapi.serializers import BasicRESTSerializer
 from .handler import ResourceHandler, CollectionHandler, JSAPIHandler
 from .utils import url_path_join, with_end_slash
 from .resource import Resource
@@ -24,6 +26,8 @@ class Registry:
         self._authenticator = NullAuthenticator
         self._renderer = JSONRenderer()
         self._parser = JSONParser()
+        self._serializer = BasicRESTSerializer()
+        self._deserializer = BasicRESTDeserializer()
 
     @property
     def authenticator(self):
@@ -42,6 +46,14 @@ class Registry:
     def parser(self):
         """Returns the current parser."""
         return self._parser
+
+    @property
+    def serializer(self):
+        return self._serializer
+
+    @property
+    def deserializer(self):
+        return self._deserializer
 
     @property
     def registered_types(self):
