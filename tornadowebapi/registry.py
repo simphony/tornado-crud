@@ -109,7 +109,3 @@ class Registry:
              init_args
              ),
         ]
-
-
-#: global registry for registration of the classes.
-registry = Registry()

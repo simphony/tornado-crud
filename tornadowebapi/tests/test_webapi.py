@@ -3,8 +3,6 @@ import urllib.parse
 from collections import OrderedDict
 from unittest import mock
 
-import tornadowebapi
-from tornadowebapi import registry
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.handler import ResourceHandler, CollectionHandler
@@ -36,9 +34,10 @@ class TestWebAPI(AsyncHTTPTestCase):
         resources.Student.id = 0
 
     def get_app(self):
-        handlers = tornadowebapi.api_handlers('/')
+        registry = Registry()
+        handlers = registry.api_handlers('/')
         for resource in ALL_RESOURCES:
-            registry.registry.register(resource)
+            registry.register(resource)
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
         return app
@@ -392,7 +391,8 @@ class TestWebAPI(AsyncHTTPTestCase):
 
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
-        handlers = tornadowebapi.api_handlers("/foo")
+        reg = Registry()
+        handlers = reg.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/(.*)/(.*)/")
         self.assertEqual(handlers[0][1], ResourceHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
