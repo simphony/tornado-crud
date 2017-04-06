@@ -1,6 +1,14 @@
 Tornado WebAPI CHANGELOG
 ========================
 
+What's new in Tornado WebAPI 0.6.0
+----------------------------------
+
+Summary
+~~~~~~~
+
+- Removed global registry (#47)
+
 What's new in Tornado WebAPI 0.5.0
 ----------------------------------
 
