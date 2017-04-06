@@ -1,4 +1,4 @@
-from tornado import gen, web, escape, template
+from tornado import gen, web, template
 from tornado.log import app_log
 
 from . import exceptions
@@ -82,8 +82,8 @@ class BaseHandler(web.RequestHandler):
         content_type = None
 
         if representation is not None:
-            payload = escape.json_encode(representation)
-            content_type = "application/json"
+            payload = self._registry.renderer.render(representation)
+            content_type = self._registry.renderer.content_type
 
         return PayloadedHTTPError(
             status_code=exc.http_code,
@@ -129,7 +129,10 @@ class CollectionHandler(BaseHandler):
 
         self.set_status(httpstatus.OK)
         # Need to convert into a dict for security issue tornado/1009
-        self.write({"items": [str(item) for item in items]})
+        self.write(self._registry.renderer.render(
+            {"items": [str(item) for item in items]})
+        )
+        self.set_header("Content-Type", self._registry.renderer.content_type)
         self.flush()
 
     @gen.coroutine
@@ -138,7 +141,7 @@ class CollectionHandler(BaseHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
 
         try:
-            decoded_rep = escape.json_decode(self.request.body)
+            decoded_rep = self._registry.parser.parse(self.request.body)
             representation = res_handler.validate_representation(decoded_rep)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
@@ -209,7 +212,9 @@ class ResourceHandler(BaseHandler):
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         self.set_status(httpstatus.OK)
-        self.write(representation)
+        renderer = self._registry.renderer
+        self.write(renderer.render(representation))
+        self.set_header("Content-Type", renderer.content_type)
         self.flush()
 
     @gen.coroutine
@@ -252,7 +257,7 @@ class ResourceHandler(BaseHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
 
         try:
-            decoded = escape.json_decode(self.request.body)
+            decoded = self._registry.parser.parse(self.request.body)
             representation = res_handler.validate_representation(decoded)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)

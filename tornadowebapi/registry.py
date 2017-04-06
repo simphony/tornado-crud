@@ -1,3 +1,5 @@
+from tornadowebapi.parsers import JSONParser
+from tornadowebapi.renderer import JSONRenderer
 from .handler import ResourceHandler, CollectionHandler, JSAPIHandler
 from .utils import url_path_join, with_end_slash
 from .resource import Resource
@@ -5,9 +7,23 @@ from .authenticator import NullAuthenticator
 
 
 class Registry:
+    """Main class that registers the defined resources,
+    and provides the appropriate handlers for tornado.
+
+    It is also responsible for holding the authenticator,
+    the renderer (converts internal representation to
+    HTTP response payload) and the parser (converts HTTP
+    request payload to internal representation).
+
+    A registry is normally instantiated and held on the
+    Tornado Application.
+    """
+
     def __init__(self):
         self._registered_types = {}
         self._authenticator = NullAuthenticator
+        self._renderer = JSONRenderer()
+        self._parser = JSONParser()
 
     @property
     def authenticator(self):
@@ -16,6 +32,16 @@ class Registry:
     @authenticator.setter
     def authenticator(self, authenticator):
         self._authenticator = authenticator
+
+    @property
+    def renderer(self):
+        """Returns the current renderer."""
+        return self._renderer
+
+    @property
+    def parser(self):
+        """Returns the current parser."""
+        return self._parser
 
     @property
     def registered_types(self):
