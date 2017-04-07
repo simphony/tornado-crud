@@ -5,4 +5,7 @@ from .base_renderer import BaseRenderer
 
 class JSONRenderer(BaseRenderer):
     def render(self, representation):
-        return escape.json_encode(representation)
+        if representation is not None:
+            return escape.json_encode(representation)
+
+        return None
