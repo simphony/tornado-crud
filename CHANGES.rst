@@ -11,7 +11,7 @@ Summary
 
 - Removed global registry (#47)
 - Resource is now called ResourceHandler. Web handlers have been renamed
-  to more appropriate names.
+  to more appropriate names. (#49)
 
 
 What's new in Tornado WebAPI 0.5.0
