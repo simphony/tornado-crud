@@ -1,1 +1,1 @@
-from .basic_rest_transport import BasicRESTTransport
+from .basic_rest_transport import BasicRESTTransport  # noqa
