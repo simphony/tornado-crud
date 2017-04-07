@@ -3,12 +3,13 @@ from unittest import mock
 
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
-from tornadowebapi.tests.resource_handlers import StudentHandler, TeacherHandler
+from tornadowebapi.tests.resource_handlers import (
+    StudentHandler, TeacherHandler)
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web
 
 
-class TestJSAPI(AsyncHTTPTestCase):
+class TestJSAPIHandler(AsyncHTTPTestCase):
     def setUp(self):
         super().setUp()
         StudentHandler.collection = OrderedDict()

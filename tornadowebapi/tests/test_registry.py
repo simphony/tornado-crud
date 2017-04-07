@@ -1,7 +1,8 @@
 import unittest
 
 from tornadowebapi.registry import Registry
-from tornadowebapi.tests.resource_handlers import StudentHandler, SheepHandler, OctopusHandler
+from tornadowebapi.tests.resource_handlers import (
+    StudentHandler, SheepHandler, OctopusHandler)
 
 
 class TestRegistry(unittest.TestCase):
