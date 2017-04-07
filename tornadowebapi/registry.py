@@ -1,4 +1,7 @@
-from .web_handlers import ResourceWebHandler, CollectionWebHandler, JSAPIHandler
+from .web_handlers import (
+    ResourceWebHandler,
+    CollectionWebHandler,
+    JSAPIWebHandler)
 from .utils import url_path_join, with_end_slash
 from .resource_handler import ResourceHandler
 from .authenticator import NullAuthenticator
@@ -105,7 +108,7 @@ class Registry:
              init_args
              ),
             (url_path_join(base_urlpath, "jsapi", version, "resources.js"),
-             JSAPIHandler,
+             JSAPIWebHandler,
              init_args
              ),
         ]

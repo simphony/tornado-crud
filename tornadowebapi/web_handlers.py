@@ -7,7 +7,7 @@ from .http.payloaded_http_error import PayloadedHTTPError
 from .utils import url_path_join, with_end_slash
 
 
-class BaseHandler(web.RequestHandler):
+class BaseWebHandler(web.RequestHandler):
     def initialize(self, registry, base_urlpath, api_version):
         """Initialization method for when the class is instantiated."""
         self._registry = registry
@@ -106,7 +106,7 @@ class BaseHandler(web.RequestHandler):
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
 
-class CollectionWebHandler(BaseHandler):
+class CollectionWebHandler(BaseWebHandler):
     """Handler for URLs addressing a collection.
     """
     @gen.coroutine
@@ -176,7 +176,7 @@ class CollectionWebHandler(BaseHandler):
         self.flush()
 
 
-class ResourceWebHandler(BaseHandler):
+class ResourceWebHandler(BaseWebHandler):
     """Handler for URLs addressing a resource.
     """
     SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
@@ -319,7 +319,7 @@ class ResourceWebHandler(BaseHandler):
         self.set_status(httpstatus.NO_CONTENT)
 
 
-class JSAPIHandler(BaseHandler):
+class JSAPIWebHandler(BaseWebHandler):
     """Handles the JavaScript API request."""
     @gen.coroutine
     def get(self):
