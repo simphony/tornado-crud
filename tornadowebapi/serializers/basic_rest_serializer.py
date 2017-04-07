@@ -2,6 +2,7 @@ from .base_serializer import BaseSerializer
 
 
 class BasicRESTSerializer(BaseSerializer):
+    """Serialize with our own style of REST content."""
     def serialize_collection(self, collection_name, collection_items):
         return {"items": [str(item) for item in collection_items]}
 
