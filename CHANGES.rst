@@ -10,6 +10,8 @@ Summary
 ~~~~~~~
 
 - Removed global registry (#47)
+- Introduced Transport, Parser, Renderer, Serializer and Deserializers to
+  add flexibility to REST protocol (#48)
 - Resource is now called ResourceHandler. Web handlers have been renamed
   to more appropriate names. (#49)
 
