@@ -12,5 +12,6 @@ class BasicRESTTransport(BaseTransport):
         self.serializer = BasicRESTSerializer()
         self.deserializer = BasicRESTDeserializer()
 
+    @property
     def content_type(self):
         return "application/json"

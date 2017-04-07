@@ -1,7 +1,3 @@
-from tornadowebapi.deserializers import BasicRESTDeserializer
-from tornadowebapi.parsers import JSONParser
-from tornadowebapi.renderers import JSONRenderer
-from tornadowebapi.serializers import BasicRESTSerializer
 from .handler import ResourceHandler, CollectionHandler, JSAPIHandler
 
 from tornadowebapi.transports.basic_rest_transport import BasicRESTTransport
@@ -42,24 +38,6 @@ class Registry:
     def transport(self):
         """Returns the current transport."""
         return self._transport
-
-    @property
-    def renderer(self):
-        """Returns the current renderer."""
-        return self._renderer
-
-    @property
-    def parser(self):
-        """Returns the current parser."""
-        return self._parser
-
-    @property
-    def serializer(self):
-        return self._serializer
-
-    @property
-    def deserializer(self):
-        return self._deserializer
 
     @property
     def registered_types(self):
