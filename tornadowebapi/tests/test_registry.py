@@ -37,6 +37,9 @@ class TestRegistry(unittest.TestCase):
         with self.assertRaises(TypeError):
             reg.register("hello")
 
+        with self.assertRaises(TypeError):
+            reg.register(int)
+
     def test_authenticator(self):
         reg = Registry()
 
