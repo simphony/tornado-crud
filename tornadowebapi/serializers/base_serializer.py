@@ -13,14 +13,13 @@ class BaseSerializer(metaclass=abc.ABCMeta):
     the current parameters
     """
     @abc.abstractmethod
-    def serialize_collection(self, collection_name, collection_items):
+    def serialize_items_response(self, items_response):
         """Serializes a collection of items"""
 
     @abc.abstractmethod
-    def serialize_exception(self, exception_representation):
-        """Serializes an exception with a given representation"""
+    def serialize_exception(self, exception):
+        """Serializes an exception"""
 
     @abc.abstractmethod
-    def serialize_resource(self, collection_name, identifier, representation):
-        """Serializes a resource of a given collection name, identifier
-        and given representation"""
+    def serialize_resource(self, resource):
+        """Serializes a resource"""
