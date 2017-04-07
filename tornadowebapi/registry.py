@@ -1,8 +1,10 @@
 from tornadowebapi.deserializers import BasicRESTDeserializer
 from tornadowebapi.parsers import JSONParser
-from tornadowebapi.renderer import JSONRenderer
+from tornadowebapi.renderers import JSONRenderer
 from tornadowebapi.serializers import BasicRESTSerializer
 from .handler import ResourceHandler, CollectionHandler, JSAPIHandler
+
+from tornadowebapi.transports.basic_rest_transport import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
 from .resource import Resource
 from .authenticator import NullAuthenticator
@@ -21,13 +23,12 @@ class Registry:
     Tornado Application.
     """
 
-    def __init__(self):
+    def __init__(self, transport=None):
         self._registered_types = {}
         self._authenticator = NullAuthenticator
-        self._renderer = JSONRenderer()
-        self._parser = JSONParser()
-        self._serializer = BasicRESTSerializer()
-        self._deserializer = BasicRESTDeserializer()
+        if transport is None:
+            transport = BasicRESTTransport()
+        self._transport = transport
 
     @property
     def authenticator(self):
@@ -36,6 +37,11 @@ class Registry:
     @authenticator.setter
     def authenticator(self, authenticator):
         self._authenticator = authenticator
+
+    @property
+    def transport(self):
+        """Returns the current transport."""
+        return self._transport
 
     @property
     def renderer(self):
