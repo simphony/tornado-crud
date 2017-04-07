@@ -1,4 +1,4 @@
-from tornado import gen, web, escape, template
+from tornado import gen, web, template
 from tornado.log import app_log
 
 from . import exceptions
@@ -81,9 +81,15 @@ class BaseHandler(web.RequestHandler):
         payload = None
         content_type = None
 
+        transport = self._registry.transport
+
         if representation is not None:
-            payload = escape.json_encode(representation)
-            content_type = "application/json"
+            payload = transport.renderer.render(
+                transport.serializer.serialize_exception(
+                    representation
+                )
+            )
+            content_type = transport.content_type
 
         return PayloadedHTTPError(
             status_code=exc.http_code,
@@ -129,7 +135,15 @@ class CollectionHandler(BaseHandler):
 
         self.set_status(httpstatus.OK)
         # Need to convert into a dict for security issue tornado/1009
-        self.write({"items": [str(item) for item in items]})
+        transport = self._registry.transport
+        self.write(
+            transport.renderer.render(
+                transport.serializer.serialize_collection(
+                    collection_name,
+                    items)
+            )
+        )
+        self.set_header("Content-Type", transport.content_type)
         self.flush()
 
     @gen.coroutine
@@ -137,8 +151,9 @@ class CollectionHandler(BaseHandler):
         """Creates a new resource in the collection."""
         res_handler = self.get_resource_handler_or_404(collection_name)
 
+        transport = self._registry.transport
         try:
-            decoded_rep = escape.json_decode(self.request.body)
+            decoded_rep = transport.parser.parse(self.request.body)
             representation = res_handler.validate_representation(decoded_rep)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
@@ -209,7 +224,15 @@ class ResourceHandler(BaseHandler):
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         self.set_status(httpstatus.OK)
-        self.write(representation)
+        transport = self._registry.transport
+        self.write(
+            transport.renderer.render(
+                transport.serializer.serialize_resource(
+                    collection_name,
+                    identifier,
+                    representation)
+            ))
+        self.set_header("Content-Type", transport.content_type)
         self.flush()
 
     @gen.coroutine
@@ -250,10 +273,14 @@ class ResourceHandler(BaseHandler):
     def put(self, collection_name, identifier):
         """Replaces the resource with a new representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
+        transport = self._registry.transport
 
         try:
-            decoded = escape.json_decode(self.request.body)
-            representation = res_handler.validate_representation(decoded)
+            decoded = transport.parser.parse(self.request.body)
+            representation = transport.deserializer.deserialize_resource_data(
+                decoded)
+            representation = res_handler.validate_representation(
+                representation)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except Exception:
