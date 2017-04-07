@@ -58,6 +58,8 @@ class Registry:
             collection_name = collection_name
         elif hasattr(typ, "__collection_name__"):
             collection_name = typ.__collection_name__
+        elif typ.__name__.lower().endswith("handler"):
+            collection_name = typ.__name__.lower()[:-7] + "s"
         else:
             collection_name = typ.__name__.lower() + "s"
 
