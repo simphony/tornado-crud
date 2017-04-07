@@ -1,4 +1,4 @@
-from traitlets import HasTraits, Unicode
+from tornadowebapi.traitlets import HasTraits, Unicode
 
 
 class Resource(HasTraits):
