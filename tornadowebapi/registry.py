@@ -6,6 +6,7 @@ from .web_handlers import (
 from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
 from .resource_handler import ResourceHandler
+from .resource import Resource
 from .authenticator import NullAuthenticator
 
 
@@ -23,7 +24,7 @@ class Registry:
     """
 
     def __init__(self, transport=None):
-        self._registered_types = {}
+        self._registered_handlers = {}
         self._authenticator = NullAuthenticator
         if transport is None:
             transport = BasicRESTTransport()
@@ -43,58 +44,55 @@ class Registry:
         return self._transport
 
     @property
-    def registered_types(self):
-        return self._registered_types
+    def registered_handlers(self):
+        return self._registered_handlers
 
-    def register(self, typ, collection_name=None):
-        """Registers a Resource type with an appropriate
-        collection name. A collection name is a pluralized
-        version of the resource, created by lowercasing
-        the class name and adding an "s".
-        The resulting collection name will be used in the URL
-        representing the resource. For example, a resource Image
+    def register(self, handler):
+        """Registers a ResourceHandler.
+        The associated resource will be used to determine the URL
+        representing the resource collections. For example, a resource Image
         will have URLs of the type
 
         http://example.com/api/v1/images/identifier/
 
-        The collection name can always be overridden by specifying
-        __collection_name__ in the resource class, or by specifying
-        the collection_name parameter.
-
         Parameters
         ----------
-        typ: ResourceHandler
-            A subclass of the rest Resource type
-        collection_name: str or None
-            Overrides the resource collection name.
+        handler: ResourceHandler
+            A subclass of the ResourceHandler
 
         Raises
         ------
         TypeError:
             if typ is not a subclass of Resource
         """
-        if not issubclass(typ, ResourceHandler):
-            raise TypeError("typ must be a subclass of ResourceHandler")
+        if not issubclass(handler, ResourceHandler):
+            raise TypeError("handler must be a subclass of ResourceHandler")
 
-        if collection_name is not None:
-            collection_name = collection_name
-        elif hasattr(typ, "__collection_name__"):
-            collection_name = typ.__collection_name__
-        elif typ.__name__.lower().endswith("handler"):
-            collection_name = typ.__name__.lower()[:-7] + "s"
-        else:
-            collection_name = typ.__name__.lower() + "s"
+        resource_class = handler.resource_class
 
-        self._registered_types[collection_name] = typ
+        if not issubclass(resource_class, Resource) is None:
+            raise TypeError("resource_class must be a subtype of Resource")
+
+        collection_name = resource_class.collection_name()
+        if collection_name in self._registered_handlers:
+            raise ValueError(
+                "Collection name {} is already in use by "
+                "class {}, so it cannot be used by class {}".format(
+                    collection_name,
+                    self._registered_handlers[collection_name].__name__,
+                    resource_class.__name__
+                ))
+
+        self._registered_handlers[collection_name] = handler
 
     def __getitem__(self, collection_name):
         """Returns the class from the collection name with the
         indexing operator"""
-        return self._registered_types[collection_name]
+        return self._registered_handlers[collection_name]
 
     def __contains__(self, item):
         """If the registry contains the given item"""
-        return item in self._registered_types
+        return item in self._registered_handlers
 
     def api_handlers(self, base_urlpath, version="v1"):
         """Returns the API handlers for the interface.
