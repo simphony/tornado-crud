@@ -326,7 +326,7 @@ class JSAPIWebHandler(BaseWebHandler):
         resources = []
         for coll_name, resource in self.registry.registered_types.items():
             resources.append({
-                "class_name": resource.__name__,
+                "class_name": coll_name.title(),
                 "collection_name": coll_name,
             })
         self.set_header("Content-Type", "application/javascript")
