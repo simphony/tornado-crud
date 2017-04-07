@@ -1,5 +1,6 @@
 from tornado import gen, web, template
 from tornado.log import app_log
+from tornadowebapi.resource_handler import PartialResponse
 
 from . import exceptions
 from .http import httpstatus
@@ -85,10 +86,7 @@ class BaseWebHandler(web.RequestHandler):
 
         if representation is not None:
             payload = transport.renderer.render(
-                transport.serializer.serialize_exception(
-                    representation
-                )
-            )
+                transport.serializer.serialize_exception(exc))
             content_type = transport.content_type
 
         return PayloadedHTTPError(
@@ -121,7 +119,7 @@ class CollectionWebHandler(BaseWebHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
 
         try:
-            items = yield res_handler.items()
+            items_response = yield res_handler.items()
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
@@ -133,14 +131,40 @@ class CollectionWebHandler(BaseWebHandler):
                 ))
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
+        if not isinstance(items_response, (list, PartialResponse)):
+            self.log.error(
+                "Internal error during get operation on {}."
+                "items() returned {}, not PartialResponse or list".format(
+                    collection_name,
+                    type(items_response)
+            ))
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+
+        # If it's a list, it's the full deal.
+        # Convert it in a trivial PartialResponse for ease of handling
+        if isinstance(items_response, list):
+            response = PartialResponse()
+            response.items = items_response
+            response.index_first = 0
+            response.num_items = response.total_items = len(items_response)
+
+            items_response = response
+
+        if not all(isinstance(entry, res_handler.resource_class)
+                   for entry in items_response.items):
+            self.log.error(
+                "Internal error during get operation on {}."
+                "items() returned objects different from "
+                "the declared type".format(collection_name))
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+
         self.set_status(httpstatus.OK)
         # Need to convert into a dict for security issue tornado/1009
         transport = self._registry.transport
         self.write(
             transport.renderer.render(
-                transport.serializer.serialize_collection(
-                    collection_name,
-                    items)
+                transport.serializer.serialize_items_response(
+                    items_response)
             )
         )
         self.set_header("Content-Type", transport.content_type)
@@ -153,20 +177,18 @@ class CollectionWebHandler(BaseWebHandler):
 
         transport = self._registry.transport
         try:
-            decoded_rep = transport.parser.parse(self.request.body)
-            representation = res_handler.validate_representation(decoded_rep)
+            resource = transport.deserializer(
+                res_handler.resource_class,
+                transport.parser.parse(self.request.body)
+            )
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except Exception:
             self.log.exception("invalid payload received.")
             raise web.HTTPError(httpstatus.BAD_REQUEST)
 
-        self._check_none(representation,
-                         "representation",
-                         "validate_representation")
-
         try:
-            resource_id = yield res_handler.create(representation)
+            resource_id = yield res_handler.create(resource)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:

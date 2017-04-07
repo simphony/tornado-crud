@@ -7,6 +7,6 @@ class BaseDeserializer(metaclass=abc.ABCMeta):
     resource handlers."""
 
     @abc.abstractmethod
-    def deserialize_resource_data(self, data):
+    def deserialize_resource(self, resource_class, data):
         """Deserializes the incoming data and return something that
         the resource handler can accept"""

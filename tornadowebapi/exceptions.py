@@ -16,20 +16,6 @@ class WebAPIException(Exception):
         self.message = message
         self.info = kwargs if len(kwargs) else None
 
-    def representation(self):
-        """Returns a dictionary with the representation of the exception.
-        """
-        data = {
-            "type": type(self).__name__
-        }
-        if self.message is not None:
-            data["message"] = self.message
-
-        if self.info is not None:
-            data.update(self.info)
-
-        return data
-
 
 class NotFound(WebAPIException):
     """Exception raised when the resource is not found.
