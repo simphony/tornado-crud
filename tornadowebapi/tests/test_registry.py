@@ -1,7 +1,7 @@
 import unittest
 
 from tornadowebapi.registry import Registry
-from tornadowebapi.tests.resources import Student, Sheep, Octopus
+from tornadowebapi.tests.resource_handlers import StudentHandler, SheepHandler, OctopusHandler
 
 
 class TestRegistry(unittest.TestCase):
@@ -9,17 +9,23 @@ class TestRegistry(unittest.TestCase):
         reg = Registry()
 
         # Register the classes.
-        reg.register(Student)
-        reg.register(Sheep)
-        reg.register(Octopus, "octopuses")
+        reg.register(StudentHandler)
+        reg.register(SheepHandler)
+        reg.register(OctopusHandler, "octopuses")
 
         # Check if they are there with the appropriate form
         self.assertIn("students", reg)
         self.assertIn("sheep", reg)
         self.assertIn("octopuses", reg)
-        self.assertEqual(reg["students"], Student)
-        self.assertEqual(reg["sheep"], Sheep)
-        self.assertEqual(reg["octopuses"], Octopus)
+        self.assertEqual(reg["students"], StudentHandler)
+        self.assertEqual(reg["sheep"], SheepHandler)
+        self.assertEqual(reg["octopuses"], OctopusHandler)
+
+    def test_incorrect_class_registration(self):
+        reg = Registry()
+
+        with self.assertRaises(TypeError):
+            reg.register("hello")
 
     def test_authenticator(self):
         reg = Registry()

@@ -6,32 +6,32 @@ from unittest import mock
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.web_handlers import ResourceWebHandler, CollectionWebHandler
-from tornadowebapi.tests import resources
+from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
 ALL_RESOURCES = (
-    resources.AlreadyPresent,
-    resources.ExceptionValidated,
-    resources.NullReturningValidated,
-    resources.CorrectValidated,
-    resources.OurExceptionValidated,
-    resources.Broken,
-    resources.UnsupportsCollection,
-    resources.Unprocessable,
-    resources.UnsupportAll,
-    resources.Student,
-    resources.Teacher,
-    resources.InvalidIdentifier,
-    resources.OurExceptionInvalidIdentifier
+    resource_handlers.AlreadyPresentHandler,
+    resource_handlers.ExceptionValidatedHandler,
+    resource_handlers.NullReturningValidatedHandler,
+    resource_handlers.CorrectValidatedHandler,
+    resource_handlers.OurExceptionValidatedHandler,
+    resource_handlers.BrokenHandler,
+    resource_handlers.UnsupportsCollectionHandler,
+    resource_handlers.UnprocessableHandler,
+    resource_handlers.UnsupportAllHandler,
+    resource_handlers.StudentHandler,
+    resource_handlers.TeacherHandler,
+    resource_handlers.InvalidIdentifierHandler,
+    resource_handlers.OurExceptionInvalidIdentifierHandler
 )
 
 
 class TestWebAPI(AsyncHTTPTestCase):
     def setUp(self):
         super().setUp()
-        resources.Student.collection = OrderedDict()
-        resources.Student.id = 0
+        resource_handlers.StudentHandler.collection = OrderedDict()
+        resource_handlers.StudentHandler.id = 0
 
     def get_app(self):
         registry = Registry()
@@ -49,9 +49,9 @@ class TestWebAPI(AsyncHTTPTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"items": []})
 
-        resources.Student.collection[1] = ""
-        resources.Student.collection[2] = ""
-        resources.Student.collection[3] = ""
+        resource_handlers.StudentHandler.collection[1] = ""
+        resource_handlers.StudentHandler.collection[2] = ""
+        resource_handlers.StudentHandler.collection[3] = ""
 
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
@@ -402,12 +402,12 @@ class TestRESTFunctions(unittest.TestCase):
 class TestNonGlobalRegistry(AsyncHTTPTestCase):
     def setUp(self):
         super().setUp()
-        resources.Student.collection = OrderedDict()
-        resources.Student.id = 0
+        resource_handlers.StudentHandler.collection = OrderedDict()
+        resource_handlers.StudentHandler.id = 0
 
     def get_app(self):
         self.registry = Registry()
-        self.registry.register(resources.Teacher)
+        self.registry.register(resource_handlers.TeacherHandler)
         handlers = self.registry.api_handlers('/')
         app = web.Application(handlers=handlers)
         return app

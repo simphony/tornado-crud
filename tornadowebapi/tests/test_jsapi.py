@@ -3,7 +3,7 @@ from unittest import mock
 
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
-from tornadowebapi.tests.resources import Student, Teacher
+from tornadowebapi.tests.resource_handlers import StudentHandler, TeacherHandler
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web
 
@@ -11,13 +11,13 @@ from tornado import web
 class TestJSAPI(AsyncHTTPTestCase):
     def setUp(self):
         super().setUp()
-        Student.collection = OrderedDict()
-        Student.id = 0
+        StudentHandler.collection = OrderedDict()
+        StudentHandler.id = 0
 
     def get_app(self):
         registry = Registry()
-        registry.register(Student)
-        registry.register(Teacher)
+        registry.register(StudentHandler)
+        registry.register(TeacherHandler)
         handlers = registry.api_handlers('/')
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
