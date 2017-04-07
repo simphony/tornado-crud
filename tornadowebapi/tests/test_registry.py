@@ -3,7 +3,7 @@ from unittest import mock
 
 from tornadowebapi.registry import Registry
 from tornadowebapi.tests.resource_handlers import (
-    StudentHandler, SheepHandler, OctopusHandler)
+    StudentHandler, SheepHandler, OctopusHandler, Frobnicator)
 from tornadowebapi.transports.base_transport import BaseTransport
 
 
@@ -23,6 +23,13 @@ class TestRegistry(unittest.TestCase):
         self.assertEqual(reg["students"], StudentHandler)
         self.assertEqual(reg["sheep"], SheepHandler)
         self.assertEqual(reg["octopuses"], OctopusHandler)
+
+    def test_strange_handler_name(self):
+        reg = Registry()
+
+        reg.register(Frobnicator)
+        self.assertIn("frobnicators", reg)
+        self.assertEqual(reg["frobnicators"], Frobnicator)
 
     def test_incorrect_class_registration(self):
         reg = Registry()

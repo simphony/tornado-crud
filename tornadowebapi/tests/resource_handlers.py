@@ -142,3 +142,7 @@ class SheepHandler(ResourceHandler):
 class OctopusHandler(ResourceHandler):
     """Octopus plural is a matter of debate."""
     __collection_name__ = "octopi"
+
+
+class Frobnicator(ResourceHandler):
+    """A weird name to test if it's kept"""
