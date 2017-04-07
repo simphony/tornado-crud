@@ -106,7 +106,7 @@ class BaseHandler(web.RequestHandler):
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
 
-class CollectionHandler(BaseHandler):
+class CollectionWebHandler(BaseHandler):
     """Handler for URLs addressing a collection.
     """
     @gen.coroutine
@@ -176,7 +176,7 @@ class CollectionHandler(BaseHandler):
         self.flush()
 
 
-class ResourceHandler(BaseHandler):
+class ResourceWebHandler(BaseHandler):
     """Handler for URLs addressing a resource.
     """
     SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")

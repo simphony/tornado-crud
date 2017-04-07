@@ -1,6 +1,6 @@
-from .handler import ResourceHandler, CollectionHandler, JSAPIHandler
+from .web_handlers import ResourceWebHandler, CollectionWebHandler, JSAPIHandler
 from .utils import url_path_join, with_end_slash
-from .resource import Resource
+from .resource_handler import ResourceHandler
 from .authenticator import NullAuthenticator
 
 
@@ -38,7 +38,7 @@ class Registry:
 
         Parameters
         ----------
-        typ: Resource
+        typ: ResourceHandler
             A subclass of the rest Resource type
         collection_name: str or None
             Overrides the resource collection name.
@@ -48,7 +48,7 @@ class Registry:
         TypeError:
             if typ is not a subclass of Resource
         """
-        if not issubclass(typ, Resource):
+        if not issubclass(typ, ResourceHandler):
             raise TypeError("typ must be a subclass of Resource")
 
         if collection_name is not None:
@@ -96,12 +96,12 @@ class Registry:
         return [
             (with_end_slash(
                 url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
-             ResourceHandler,
+             ResourceWebHandler,
              init_args
              ),
             (with_end_slash(
                 url_path_join(base_urlpath, "api", version, "(.*)")),
-             CollectionHandler,
+             CollectionWebHandler,
              init_args
              ),
             (url_path_join(base_urlpath, "jsapi", version, "resources.js"),

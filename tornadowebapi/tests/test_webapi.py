@@ -5,7 +5,7 @@ from unittest import mock
 
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
-from tornadowebapi.handler import ResourceHandler, CollectionHandler
+from tornadowebapi.web_handlers import ResourceWebHandler, CollectionWebHandler
 from tornadowebapi.tests import resources
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
@@ -394,9 +394,9 @@ class TestRESTFunctions(unittest.TestCase):
         reg = Registry()
         handlers = reg.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/(.*)/(.*)/")
-        self.assertEqual(handlers[0][1], ResourceHandler)
+        self.assertEqual(handlers[0][1], ResourceWebHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
-        self.assertEqual(handlers[1][1], CollectionHandler)
+        self.assertEqual(handlers[1][1], CollectionWebHandler)
 
 
 class TestNonGlobalRegistry(AsyncHTTPTestCase):

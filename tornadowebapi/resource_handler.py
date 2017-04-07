@@ -3,7 +3,7 @@ from tornado import gen, log
 from . import exceptions
 
 
-class Resource:
+class ResourceHandler:
     """Base class for resources.
     To implement a new Resource class, inherit from this subclass
     and reimplement the CRUD class methods with the appropriate

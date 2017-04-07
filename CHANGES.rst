@@ -4,10 +4,15 @@ Tornado WebAPI CHANGELOG
 What's new in Tornado WebAPI 0.6.0
 ----------------------------------
 
+This releases introduces backward incompatible changes.
+
 Summary
 ~~~~~~~
 
 - Removed global registry (#47)
+- Resource is now called ResourceHandler. Web handlers have been renamed
+  to more appropriate names.
+
 
 What's new in Tornado WebAPI 0.5.0
 ----------------------------------
