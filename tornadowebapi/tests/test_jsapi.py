@@ -3,21 +3,23 @@ from unittest import mock
 
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
-from tornadowebapi.tests.resources import Student, Teacher
+from tornadowebapi.tests.resource_handlers import (
+    StudentHandler, TeacherHandler, Frobnicator)
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web
 
 
-class TestJSAPI(AsyncHTTPTestCase):
+class TestJSAPIHandler(AsyncHTTPTestCase):
     def setUp(self):
         super().setUp()
-        Student.collection = OrderedDict()
-        Student.id = 0
+        StudentHandler.collection = OrderedDict()
+        StudentHandler.id = 0
 
     def get_app(self):
         registry = Registry()
-        registry.register(Student)
-        registry.register(Teacher)
+        registry.register(StudentHandler)
+        registry.register(TeacherHandler)
+        registry.register(Frobnicator)
         handlers = registry.api_handlers('/')
         app = web.Application(handlers=handlers)
         app.hub = mock.Mock()
@@ -29,4 +31,6 @@ class TestJSAPI(AsyncHTTPTestCase):
         self.assertIn(b'"Student" : new Resource("students")',
                       res.body)
         self.assertIn(b'"Teacher" : new Resource("teachers")',
+                      res.body)
+        self.assertIn(b'"Frobnicator" : new Resource("frobnicators")',
                       res.body)

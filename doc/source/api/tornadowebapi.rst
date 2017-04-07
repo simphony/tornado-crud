@@ -27,14 +27,6 @@ tornadowebapi.exceptions module
     :undoc-members:
     :show-inheritance:
 
-tornadowebapi.handler module
-----------------------------
-
-.. automodule:: tornadowebapi.handler
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tornadowebapi.registry module
 -----------------------------
 
@@ -43,10 +35,10 @@ tornadowebapi.registry module
     :undoc-members:
     :show-inheritance:
 
-tornadowebapi.resource module
------------------------------
+tornadowebapi.resource_handler module
+-------------------------------------
 
-.. automodule:: tornadowebapi.resource
+.. automodule:: tornadowebapi.resource_handler
     :members:
     :undoc-members:
     :show-inheritance:
@@ -55,6 +47,22 @@ tornadowebapi.utils module
 --------------------------
 
 .. automodule:: tornadowebapi.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tornadowebapi.version module
+----------------------------
+
+.. automodule:: tornadowebapi.version
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tornadowebapi.web_handlers module
+---------------------------------
+
+.. automodule:: tornadowebapi.web_handlers
     :members:
     :undoc-members:
     :show-inheritance:

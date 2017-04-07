@@ -7,7 +7,7 @@ from .http.payloaded_http_error import PayloadedHTTPError
 from .utils import url_path_join, with_end_slash
 
 
-class BaseHandler(web.RequestHandler):
+class BaseWebHandler(web.RequestHandler):
     def initialize(self, registry, base_urlpath, api_version):
         """Initialization method for when the class is instantiated."""
         self._registry = registry
@@ -112,7 +112,7 @@ class BaseHandler(web.RequestHandler):
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
 
-class CollectionHandler(BaseHandler):
+class CollectionWebHandler(BaseWebHandler):
     """Handler for URLs addressing a collection.
     """
     @gen.coroutine
@@ -191,7 +191,7 @@ class CollectionHandler(BaseHandler):
         self.flush()
 
 
-class ResourceHandler(BaseHandler):
+class ResourceWebHandler(BaseWebHandler):
     """Handler for URLs addressing a resource.
     """
     SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
@@ -346,14 +346,19 @@ class ResourceHandler(BaseHandler):
         self.set_status(httpstatus.NO_CONTENT)
 
 
-class JSAPIHandler(BaseHandler):
+class JSAPIWebHandler(BaseWebHandler):
     """Handles the JavaScript API request."""
     @gen.coroutine
     def get(self):
         resources = []
-        for coll_name, resource in self.registry.registered_types.items():
+        reg = self.registry
+        for coll_name, resource_handler in reg.registered_types.items():
+            class_name = resource_handler.__name__
+            if class_name.endswith("Handler"):
+                class_name = class_name[:-7]
+
             resources.append({
-                "class_name": resource.__name__,
+                "class_name": class_name,
                 "collection_name": coll_name,
             })
         self.set_header("Content-Type", "application/javascript")

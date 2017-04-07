@@ -1,8 +1,11 @@
-from .handler import ResourceHandler, CollectionHandler, JSAPIHandler
+from .web_handlers import (
+    ResourceWebHandler,
+    CollectionWebHandler,
+    JSAPIWebHandler)
 
-from tornadowebapi.transports.basic_rest_transport import BasicRESTTransport
+from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
-from .resource import Resource
+from .resource_handler import ResourceHandler
 from .authenticator import NullAuthenticator
 
 
@@ -60,7 +63,7 @@ class Registry:
 
         Parameters
         ----------
-        typ: Resource
+        typ: ResourceHandler
             A subclass of the rest Resource type
         collection_name: str or None
             Overrides the resource collection name.
@@ -70,13 +73,15 @@ class Registry:
         TypeError:
             if typ is not a subclass of Resource
         """
-        if not issubclass(typ, Resource):
-            raise TypeError("typ must be a subclass of Resource")
+        if not issubclass(typ, ResourceHandler):
+            raise TypeError("typ must be a subclass of ResourceHandler")
 
         if collection_name is not None:
             collection_name = collection_name
         elif hasattr(typ, "__collection_name__"):
             collection_name = typ.__collection_name__
+        elif typ.__name__.lower().endswith("handler"):
+            collection_name = typ.__name__.lower()[:-7] + "s"
         else:
             collection_name = typ.__name__.lower() + "s"
 
@@ -118,16 +123,16 @@ class Registry:
         return [
             (with_end_slash(
                 url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
-             ResourceHandler,
+             ResourceWebHandler,
              init_args
              ),
             (with_end_slash(
                 url_path_join(base_urlpath, "api", version, "(.*)")),
-             CollectionHandler,
+             CollectionWebHandler,
              init_args
              ),
             (url_path_join(base_urlpath, "jsapi", version, "resources.js"),
-             JSAPIHandler,
+             JSAPIWebHandler,
              init_args
              ),
         ]

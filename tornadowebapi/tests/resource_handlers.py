@@ -2,10 +2,10 @@ from collections import OrderedDict
 
 from tornado import gen
 from tornadowebapi import exceptions
-from tornadowebapi.resource import Resource
+from tornadowebapi.resource_handler import ResourceHandler
 
 
-class WorkingResource(Resource):
+class WorkingResourceHandler(ResourceHandler):
 
     collection = OrderedDict()
     id = 0
@@ -43,11 +43,11 @@ class WorkingResource(Resource):
         return list(self.collection.keys())
 
 
-class Student(WorkingResource):
+class StudentHandler(WorkingResourceHandler):
     pass
 
 
-class Teacher(Resource):
+class TeacherHandler(ResourceHandler):
     @gen.coroutine
     def retrieve(self, identifier):
         return {}
@@ -57,11 +57,11 @@ class Teacher(Resource):
         return []
 
 
-class UnsupportAll(Resource):
+class UnsupportAllHandler(ResourceHandler):
     pass
 
 
-class Unprocessable(Resource):
+class UnprocessableHandler(ResourceHandler):
     @gen.coroutine
     def create(self, representation):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
@@ -79,13 +79,13 @@ class Unprocessable(Resource):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
 
-class UnsupportsCollection(Resource):
+class UnsupportsCollectionHandler(ResourceHandler):
     @gen.coroutine
     def items(self):
         raise NotImplementedError()
 
 
-class Broken(Resource):
+class BrokenHandler(ResourceHandler):
     @gen.coroutine
     def boom(self, *args):
         raise Exception("Boom!")
@@ -97,50 +97,52 @@ class Broken(Resource):
     items = boom
 
 
-class ExceptionValidated(Resource):
+class ExceptionValidatedHandler(ResourceHandler):
     def validate_representation(self, representation):
         raise Exception("woo!")
 
 
-class OurExceptionValidated(Resource):
+class OurExceptionValidatedHandler(ResourceHandler):
     def validate_representation(self, representation):
         raise exceptions.BadRepresentation("woo!")
 
 
-class NullReturningValidated(Resource):
+class NullReturningValidatedHandler(ResourceHandler):
     def validate_representation(self, representation):
         pass
 
 
-class CorrectValidated(WorkingResource):
+class CorrectValidatedHandler(WorkingResourceHandler):
     def validate_representation(self, representation):
         representation["hello"] = 5
         return representation
 
 
-class AlreadyPresent(Resource):
+class AlreadyPresentHandler(ResourceHandler):
     @gen.coroutine
     def create(self, *args):
         raise exceptions.Exists()
 
 
-class InvalidIdentifier(Resource):
+class InvalidIdentifierHandler(ResourceHandler):
     def validate_identifier(self, identifier):
         raise Exception("woo!")
 
 
-class OurExceptionInvalidIdentifier(Resource):
+class OurExceptionInvalidIdentifierHandler(ResourceHandler):
     def validate_identifier(self, identifier):
         raise exceptions.BadRepresentation("woo!")
 
 
-class Sheep(Resource):
+class SheepHandler(ResourceHandler):
     """Sheep plural is the same as singular."""
     __collection_name__ = "sheep"
-    pass
 
 
-class Octopus(Resource):
+class OctopusHandler(ResourceHandler):
     """Octopus plural is a matter of debate."""
     __collection_name__ = "octopi"
-    pass
+
+
+class Frobnicator(ResourceHandler):
+    """A weird name to test if it's kept"""
