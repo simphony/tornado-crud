@@ -52,7 +52,7 @@ class Registry:
             if typ is not a subclass of Resource
         """
         if not issubclass(typ, ResourceHandler):
-            raise TypeError("typ must be a subclass of Resource")
+            raise TypeError("typ must be a subclass of ResourceHandler")
 
         if collection_name is not None:
             collection_name = collection_name
