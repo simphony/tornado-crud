@@ -324,9 +324,14 @@ class JSAPIWebHandler(BaseWebHandler):
     @gen.coroutine
     def get(self):
         resources = []
-        for coll_name, resource in self.registry.registered_types.items():
+        reg = self.registry
+        for coll_name, resource_handler in reg.registered_types.items():
+            class_name = resource_handler.__name__
+            if class_name.endswith("Handler"):
+                class_name = class_name[:-7]
+
             resources.append({
-                "class_name": coll_name.title(),
+                "class_name": class_name,
                 "collection_name": coll_name,
             })
         self.set_header("Content-Type", "application/javascript")
