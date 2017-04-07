@@ -1,8 +1,10 @@
 import unittest
+from unittest import mock
 
 from tornadowebapi.registry import Registry
 from tornadowebapi.tests.resource_handlers import (
     StudentHandler, SheepHandler, OctopusHandler)
+from tornadowebapi.transports.base_transport import BaseTransport
 
 
 class TestRegistry(unittest.TestCase):
@@ -40,3 +42,11 @@ class TestRegistry(unittest.TestCase):
 
         self.assertEqual(api_handlers[0][2]["registry"], reg)
         self.assertEqual(api_handlers[1][2]["registry"], reg)
+
+    def test_transport(self):
+        reg = Registry()
+        self.assertIsInstance(reg.transport, BaseTransport)
+
+        mock_transport = mock.Mock(spec=BaseTransport)
+        reg = Registry(transport=mock_transport)
+        self.assertEqual(reg.transport, mock_transport)

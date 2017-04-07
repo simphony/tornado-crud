@@ -2,15 +2,32 @@ from .web_handlers import (
     ResourceWebHandler,
     CollectionWebHandler,
     JSAPIWebHandler)
+
+from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
 from .resource_handler import ResourceHandler
 from .authenticator import NullAuthenticator
 
 
 class Registry:
-    def __init__(self):
+    """Main class that registers the defined resources,
+    and provides the appropriate handlers for tornado.
+
+    It is also responsible for holding the authenticator,
+    the renderer (converts internal representation to
+    HTTP response payload) and the parser (converts HTTP
+    request payload to internal representation).
+
+    A registry is normally instantiated and held on the
+    Tornado Application.
+    """
+
+    def __init__(self, transport=None):
         self._registered_types = {}
         self._authenticator = NullAuthenticator
+        if transport is None:
+            transport = BasicRESTTransport()
+        self._transport = transport
 
     @property
     def authenticator(self):
@@ -19,6 +36,11 @@ class Registry:
     @authenticator.setter
     def authenticator(self, authenticator):
         self._authenticator = authenticator
+
+    @property
+    def transport(self):
+        """Returns the current transport."""
+        return self._transport
 
     @property
     def registered_types(self):
