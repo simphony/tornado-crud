@@ -1,4 +1,6 @@
+from collections import namedtuple
 from tornado import gen, log
+from traitlets import HasTraits, List, Int
 
 from . import exceptions
 
@@ -12,6 +14,10 @@ class ResourceHandler:
     The Resource exports two member vars: application and current_user.
     They are equivalent to the members in the tornado web handler.
     """
+
+    #: Override this to describe the Resource subtype this handler manipulates
+    resource_class = None
+
     def __init__(self, application, current_user):
         """Initializes the Resource with a given application and user instance
 
@@ -27,7 +33,7 @@ class ResourceHandler:
         self.log = log.app_log
 
     @gen.coroutine
-    def create(self, representation):
+    def create(self, instance):
         """Called to create a resource with a given representation
         The representation is a dictionary containing keys. The
         reimplementing code is responsible for checking the validity
@@ -71,7 +77,7 @@ class ResourceHandler:
 
         Returns
         -------
-        representation: dict
+        Resource representation: dict
             a dict representation of the resource.
 
         Raises
@@ -85,7 +91,7 @@ class ResourceHandler:
         raise NotImplementedError()
 
     @gen.coroutine
-    def update(self, identifier, representation):
+    def update(self, instance):
         """Called to update a specific resource given its
         identifier with a new representation.
         The method is responsible for validating the representation
@@ -236,3 +242,24 @@ class ResourceHandler:
         The identifier that will be used.
         """
         return identifier
+
+
+class PartialResponse(HasTraits):
+    """This class can be returned by items() to inform about the nature of
+    the partial response, e.g. how many total items actually exist, and which
+    ones are returned."""
+
+    #: A list of the items
+    items = List()
+
+    #: The index of the first item in the above list in the complete data
+    #: store. None is allowed and means Unknown
+    index_first = Int(min=0, allow_none=True)
+
+    #: The number of items in the above list. Generally trivial but available
+    #: for future expansion to using a generator.
+    num_items = Int(min=0)
+
+    #: The total number of items available. None is allowed and means unknown.
+    total_items = Int(min=0, allow_none=True)
+
