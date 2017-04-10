@@ -255,10 +255,7 @@ class ResourceWebHandler(BaseWebHandler):
         transport = self._registry.transport
         self.write(
             transport.renderer.render(
-                transport.serializer.serialize_resource(
-                    collection_name,
-                    identifier,
-                    resource)
+                transport.serializer.serialize_resource(resource)
             ))
         self.set_header("Content-Type", transport.content_type)
         self.flush()

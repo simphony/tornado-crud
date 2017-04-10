@@ -92,7 +92,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -102,7 +103,7 @@ class TestWebAPI(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.OK)
 
         self.assertEqual(escape.json_decode(res.body),
-                         {"foo": "bar"}
+                         {"name": "john wick"}
                          )
 
         res = self.fetch("/api/v1/students/1/")
@@ -114,7 +115,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -123,7 +125,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             location,
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -134,7 +137,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -144,21 +148,25 @@ class TestWebAPI(AsyncHTTPTestCase):
             location,
             method="PUT",
             body=escape.json_encode({
-                "foo": "baz"
+                "name": "john wick",
+                "age": 19,
             })
         )
         self.assertEqual(res.code, httpstatus.NO_CONTENT)
 
         res = self.fetch(location)
         self.assertEqual(escape.json_decode(res.body),
-                         {"foo": "baz"}
-                         )
+                         {
+                             "name": "john wick",
+                             "age": 19,
+                         })
 
         res = self.fetch(
             "/api/v1/students/1/",
             method="PUT",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
@@ -168,7 +176,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -191,7 +200,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/notpresent/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
