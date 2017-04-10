@@ -4,7 +4,7 @@ from .base_deserializer import BaseDeserializer
 
 class BasicRESTDeserializer(BaseDeserializer):
     """Deserializes data from our own flavor of REST data"""
-    def deserialize_resource(self, resource_class, data):
+    def deserialize_resource(self, resource_class, data, enforce_mandatory):
         instance = resource_class()
         optional = []
         for trait_name, trait_class in instance.traits().items():
@@ -15,7 +15,7 @@ class BasicRESTDeserializer(BaseDeserializer):
             try:
                 value = data[trait_name]
             except KeyError:
-                if trait_name not in optional:
+                if trait_name not in optional and enforce_mandatory:
                     raise BadRepresentation(
                         message="Missing mandatory element: {}".format(
                             trait_name))
