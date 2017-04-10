@@ -70,7 +70,7 @@ class Registry:
 
         resource_class = handler.resource_class
 
-        if not issubclass(resource_class, Resource) is None:
+        if not issubclass(resource_class, Resource):
             raise TypeError("resource_class must be a subtype of Resource")
 
         collection_name = resource_class.collection_name()
