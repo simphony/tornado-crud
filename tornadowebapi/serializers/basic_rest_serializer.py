@@ -9,12 +9,12 @@ class BasicRESTSerializer(BaseSerializer):
         # Instead, a dictionary with the key "items" and value as this list
         # will be returned.
         return {"items": [
-            str(item.id) for item in items_response
+            str(item.identifier) for item in items_response.items
             ]}
 
     def serialize_exception(self, exception):
         data = {
-            "type": exception.__name__
+            "type": exception.__class__.__name__
         }
 
         message = getattr(exception, "message")

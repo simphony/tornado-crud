@@ -3,9 +3,15 @@ from .base_deserializer import BaseDeserializer
 
 
 class BasicRESTDeserializer(BaseDeserializer):
-    """Deserializes data from our own flavor of REST data"""
-    def deserialize_resource(self, resource_class, data, enforce_mandatory):
-        instance = resource_class()
+    """Deserializes data from our own flavor of REST data.
+    Our flavor does not contain the identifier in the payload,
+    so we have to rely on what is passed"""
+    def deserialize_resource(self,
+                             resource_class,
+                             identifier,
+                             data,
+                             enforce_mandatory):
+        instance = resource_class(identifier=identifier)
         optional = []
         for trait_name, trait_class in instance.traits().items():
             if trait_class.metadata.get("optional") is True:

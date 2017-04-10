@@ -15,9 +15,10 @@ class WorkingResourceHandler(ResourceHandler):
     id = 0
 
     @gen.coroutine
-    def create(self, representation):
+    def create(self, instance):
         id = type(self).id
-        self.collection[str(id)] = representation
+        self.collection[str(id)] = instance
+        instance.identifier = str(id)
         type(self).id += 1
         return id
 
@@ -29,7 +30,7 @@ class WorkingResourceHandler(ResourceHandler):
         return self.collection[identifier]
 
     @gen.coroutine
-    def update(self, identifier, representation):
+    def update(self, instance):
         if identifier not in self.collection:
             raise exceptions.NotFound()
 
@@ -44,7 +45,7 @@ class WorkingResourceHandler(ResourceHandler):
 
     @gen.coroutine
     def items(self):
-        return list(self.collection.keys())
+        return list(self.collection.values())
 
 
 class Student(Resource):
@@ -52,18 +53,14 @@ class Student(Resource):
     age = Int()
 
 
+class StudentHandler(WorkingResourceHandler):
+    resource_class = Student
+
+
 class Teacher(Resource):
     name = Unicode()
     age = Int(optional=True)
     discipline = List()
-
-
-class GenericResource(Resource):
-    pass
-
-
-class StudentHandler(WorkingResourceHandler):
-    resource_class = Student
 
 
 class TeacherHandler(ResourceHandler):
@@ -78,12 +75,20 @@ class TeacherHandler(ResourceHandler):
         return []
 
 
+class UnsupportAll(Resource):
+    pass
+
+
 class UnsupportAllHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = UnsupportAll
+
+
+class Unprocessable(Resource):
+    pass
 
 
 class UnprocessableHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = Unprocessable
 
     @gen.coroutine
     def create(self, representation):
@@ -102,16 +107,24 @@ class UnprocessableHandler(ResourceHandler):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
 
+class UnsupportsCollection(Resource):
+    pass
+
+
 class UnsupportsCollectionHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = UnsupportsCollection
 
     @gen.coroutine
     def items(self):
         raise NotImplementedError()
 
 
+class Broken(Resource):
+    pass
+
+
 class BrokenHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = Broken
 
     @gen.coroutine
     def boom(self, *args):
@@ -124,52 +137,80 @@ class BrokenHandler(ResourceHandler):
     items = boom
 
 
+class ExceptionValidated(Resource):
+    pass
+
+
 class ExceptionValidatedHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = ExceptionValidated
 
     def validate_representation(self, representation):
         raise Exception("woo!")
 
 
+class OurExceptionValidated(Resource):
+    pass
+
+
 class OurExceptionValidatedHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = OurExceptionValidated
 
     def validate_representation(self, representation):
         raise exceptions.BadRepresentation("woo!")
 
 
+class NullReturningValidated(Resource):
+    pass
+
+
 class NullReturningValidatedHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = NullReturningValidated
 
     def validate_representation(self, representation):
         pass
 
 
+class CorrectValidated(Resource):
+    pass
+
+
 class CorrectValidatedHandler(WorkingResourceHandler):
-    resource_class = GenericResource
+    resource_class = CorrectValidated
 
     def validate_representation(self, representation):
         representation["hello"] = 5
         return representation
 
 
+class AlreadyPresent(Resource):
+    pass
+
+
 class AlreadyPresentHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = AlreadyPresent
 
     @gen.coroutine
     def create(self, *args):
         raise exceptions.Exists()
 
 
+class InvalidIdentifier(Resource):
+    pass
+
+
 class InvalidIdentifierHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = InvalidIdentifier
 
     def validate_identifier(self, identifier):
         raise Exception("woo!")
 
 
+class OurExceptionInvalidIdentifier(Resource):
+    pass
+
+
 class OurExceptionInvalidIdentifierHandler(ResourceHandler):
-    resource_class = GenericResource
+    resource_class = OurExceptionInvalidIdentifier
 
     def validate_identifier(self, identifier):
         raise exceptions.BadRepresentation("woo!")

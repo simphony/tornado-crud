@@ -7,7 +7,11 @@ class BaseDeserializer(metaclass=abc.ABCMeta):
     resource handlers."""
 
     @abc.abstractmethod
-    def deserialize_resource(self, resource_class, data, enforce_mandatory):
+    def deserialize_resource(self,
+                             resource_class,
+                             identifier,
+                             data,
+                             enforce_mandatory):
         """Deserializes the incoming data and return something that
         the resource handler can accept
 
@@ -15,6 +19,12 @@ class BaseDeserializer(metaclass=abc.ABCMeta):
         ----------
         resource_class:
             The class of the resource to deserialize
+
+        identifier: string or None
+            The identifier of the requested resource. This can also be
+            present in the data, so particular care must be taken to check
+            if they are equal.
+            Identifier can also be None
 
         data: dict
             The data obtained from the parsing of the payload

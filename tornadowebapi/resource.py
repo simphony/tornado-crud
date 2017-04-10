@@ -1,4 +1,4 @@
-from tornadowebapi.traitlets import HasTraits, Unicode
+from tornadowebapi.traitlets import HasTraits
 
 
 class Resource(HasTraits):
@@ -21,9 +21,10 @@ class Resource(HasTraits):
     /collection_name/identifier/
 
     """
+    def __init__(self, identifier, *args, **kwargs):
+        self.identifier = identifier
 
-    # The identifier associated to the specific instance of the resource.
-    identifier = Unicode()
+        super(Resource, self).__init__(*args, **kwargs)
 
     @classmethod
     def collection_name(cls):
@@ -34,3 +35,14 @@ class Resource(HasTraits):
         Override this method to return a better pluralization.
         """
         return cls.__name__.lower() + "s"
+
+    @property
+    def identifier(self):
+        return self._identifier
+
+    @identifier.setter
+    def identifier(self, value):
+        if object is not None and isinstance(object, str):
+            raise ValueError("Identifier must be a string")
+
+        self._identifier = value

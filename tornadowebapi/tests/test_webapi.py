@@ -63,7 +63,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -74,7 +75,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick 2",
+                "age": 19,
             })
         )
         self.assertEqual(res.code, httpstatus.CREATED)
@@ -397,23 +399,3 @@ class TestRESTFunctions(unittest.TestCase):
         self.assertEqual(handlers[0][1], ResourceWebHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
         self.assertEqual(handlers[1][1], CollectionWebHandler)
-
-
-class TestNonGlobalRegistry(AsyncHTTPTestCase):
-    def setUp(self):
-        super().setUp()
-        resource_handlers.StudentHandler.collection = OrderedDict()
-        resource_handlers.StudentHandler.id = 0
-
-    def get_app(self):
-        self.registry = Registry()
-        self.registry.register(resource_handlers.TeacherHandler)
-        handlers = self.registry.api_handlers('/')
-        app = web.Application(handlers=handlers)
-        return app
-
-    def test_non_global_registry(self):
-        res = self.fetch("/api/v1/teachers/")
-        self.assertEqual(res.code, httpstatus.OK)
-        self.assertEqual(escape.json_decode(res.body),
-                         {"items": []})

@@ -145,13 +145,17 @@ class CollectionWebHandler(BaseWebHandler):
 
             items_response = response
 
-        if not all(isinstance(entry, res_handler.resource_class)
-                   for entry in items_response.items):
-            self.log.error(
-                "Internal error during get operation on {}."
-                "items() returned objects different from "
-                "the declared type".format(collection_name))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+        for entry in items_response.items:
+            if not isinstance(entry, res_handler.resource_class):
+                self.log.error(
+                    "Internal error during get operation on {}."
+                    "items() returned objects different from "
+                    "the declared type. Got {} instead of {}".format(
+                        collection_name,
+                        entry.__class__,
+                        res_handler.resource_class
+                    ))
+                raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         self.set_status(httpstatus.OK)
         # Need to convert into a dict for security issue tornado/1009
@@ -172,23 +176,21 @@ class CollectionWebHandler(BaseWebHandler):
 
         transport = self._registry.transport
         try:
-            resource = transport.deserializer(
+            resource = transport.deserializer.deserialize_resource(
                 res_handler.resource_class,
+                None,
                 transport.parser.parse(self.request.body),
                 True
             )
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except Exception:
-            self.log.exception("invalid payload received.")
-            raise web.HTTPError(httpstatus.BAD_REQUEST)
-
-        try:
             resource_id = yield res_handler.create(resource)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+        except exceptions.WebAPIException as e:
+            self.log.error(
+                "Web API exception post operation on {}: {}".format(
+                    collection_name, e.message
+                ))
+            raise self.to_http_exception(e)
         except Exception:
             self.log.exception(
                 "Internal error during post operation on {}".format(
