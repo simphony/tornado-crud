@@ -3,9 +3,14 @@ from collections import OrderedDict
 from tornado import gen
 from tornadowebapi import exceptions
 from tornadowebapi.resource_handler import ResourceHandler
+from tornadowebapi.resource import Resource
+
+from traitlets import Unicode, Int
 
 
 class WorkingResourceHandler(ResourceHandler):
+    """Base class for tests. Still missing the resource_class
+    that must be set in the derived class."""
 
     collection = OrderedDict()
     id = 0
@@ -43,11 +48,26 @@ class WorkingResourceHandler(ResourceHandler):
         return list(self.collection.keys())
 
 
-class StudentHandler(WorkingResourceHandler):
+class Student(Resource):
+    name = Unicode()
+    age = Int()
+
+
+class Teacher(Resource):
     pass
 
 
+class GenericResource(Resource):
+    pass
+
+
+class StudentHandler(WorkingResourceHandler):
+    resource_class = Student
+
+
 class TeacherHandler(ResourceHandler):
+    resource_class = Teacher
+
     @gen.coroutine
     def retrieve(self, identifier):
         return {}
@@ -58,10 +78,12 @@ class TeacherHandler(ResourceHandler):
 
 
 class UnsupportAllHandler(ResourceHandler):
-    pass
+    resource_class = GenericResource
 
 
 class UnprocessableHandler(ResourceHandler):
+    resource_class = GenericResource
+
     @gen.coroutine
     def create(self, representation):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
@@ -80,12 +102,16 @@ class UnprocessableHandler(ResourceHandler):
 
 
 class UnsupportsCollectionHandler(ResourceHandler):
+    resource_class = GenericResource
+
     @gen.coroutine
     def items(self):
         raise NotImplementedError()
 
 
 class BrokenHandler(ResourceHandler):
+    resource_class = GenericResource
+
     @gen.coroutine
     def boom(self, *args):
         raise Exception("Boom!")
@@ -98,51 +124,82 @@ class BrokenHandler(ResourceHandler):
 
 
 class ExceptionValidatedHandler(ResourceHandler):
+    resource_class = GenericResource
+
     def validate_representation(self, representation):
         raise Exception("woo!")
 
 
 class OurExceptionValidatedHandler(ResourceHandler):
+    resource_class = GenericResource
+
     def validate_representation(self, representation):
         raise exceptions.BadRepresentation("woo!")
 
 
 class NullReturningValidatedHandler(ResourceHandler):
+    resource_class = GenericResource
+
     def validate_representation(self, representation):
         pass
 
 
 class CorrectValidatedHandler(WorkingResourceHandler):
+    resource_class = GenericResource
+
     def validate_representation(self, representation):
         representation["hello"] = 5
         return representation
 
 
 class AlreadyPresentHandler(ResourceHandler):
+    resource_class = GenericResource
+
     @gen.coroutine
     def create(self, *args):
         raise exceptions.Exists()
 
 
 class InvalidIdentifierHandler(ResourceHandler):
+    resource_class = GenericResource
+
     def validate_identifier(self, identifier):
         raise Exception("woo!")
 
 
 class OurExceptionInvalidIdentifierHandler(ResourceHandler):
+    resource_class = GenericResource
+
     def validate_identifier(self, identifier):
         raise exceptions.BadRepresentation("woo!")
 
 
+class Sheep(Resource):
+    @classmethod
+    def collection_name(cls):
+        return "sheep"
+
+
 class SheepHandler(ResourceHandler):
     """Sheep plural is the same as singular."""
-    __collection_name__ = "sheep"
+    resource_class = Sheep
+
+
+class Octopus(Resource):
+    @classmethod
+    def collection_name(cls):
+        return "octopi"
 
 
 class OctopusHandler(ResourceHandler):
     """Octopus plural is a matter of debate."""
-    __collection_name__ = "octopi"
+    resource_class = Octopus
 
 
-class Frobnicator(ResourceHandler):
+class Frobnicator(Resource):
+    pass
+
+
+class FrobnicatorHandler(ResourceHandler):
     """A weird name to test if it's kept"""
+    resource_class = Frobnicator
