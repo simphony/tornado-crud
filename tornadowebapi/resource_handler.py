@@ -97,10 +97,8 @@ class ResourceHandler:
 
         Parameters
         ----------
-        identifier: str
-            A string identifying the resource
-        representation: dict
-            a dict representation of the resource.
+        instance: dict
+            An instance of the resource_class.
 
         Returns
         -------
@@ -236,5 +234,3 @@ class ResourceHandler:
         The identifier that will be used.
         """
         return identifier
-
-

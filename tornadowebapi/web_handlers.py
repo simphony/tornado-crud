@@ -78,22 +78,18 @@ class BaseWebHandler(web.RequestHandler):
     def to_http_exception(self, exc):
         """Converts a REST exception into the appropriate HTTP one."""
 
-        representation = exc.representation()
-        payload = None
-        content_type = None
-
         transport = self._registry.transport
+        payload = transport.renderer.render(
+            transport.serializer.serialize_exception(exc))
 
-        if representation is not None:
-            payload = transport.renderer.render(
-                transport.serializer.serialize_exception(exc))
-            content_type = transport.content_type
-
-        return PayloadedHTTPError(
-            status_code=exc.http_code,
-            payload=payload,
-            content_type=content_type
-        )
+        if payload is not None:
+            return PayloadedHTTPError(
+                status_code=exc.http_code,
+                payload=payload,
+                content_type=transport.content_type
+            )
+        else:
+            raise web.HTTPError(exc.http_code)
 
     def _check_none(self, entity, entity_name, culprit_routine):
         """Check if entity is None. If it is, raises INTERNAL_SERVER_ERROR.
@@ -178,7 +174,8 @@ class CollectionWebHandler(BaseWebHandler):
         try:
             resource = transport.deserializer(
                 res_handler.resource_class,
-                transport.parser.parse(self.request.body)
+                transport.parser.parse(self.request.body),
+                True
             )
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
@@ -232,7 +229,7 @@ class ResourceWebHandler(BaseWebHandler):
         self._check_none(identifier, "identifier", "validate_identifier")
 
         try:
-            representation = yield res_handler.retrieve(identifier)
+            resource = yield res_handler.retrieve(identifier)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
@@ -244,6 +241,14 @@ class ResourceWebHandler(BaseWebHandler):
                     identifier))
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
+        if not isinstance(resource, res_handler.resource_class):
+            self.log.error(
+                "Returned resource type was different from "
+                "handler type in get".format(
+                    collection_name,
+                    identifier))
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+
         self.set_status(httpstatus.OK)
         transport = self._registry.transport
         self.write(
@@ -251,7 +256,7 @@ class ResourceWebHandler(BaseWebHandler):
                 transport.serializer.serialize_resource(
                     collection_name,
                     identifier,
-                    representation)
+                    resource)
             ))
         self.set_header("Content-Type", transport.content_type)
         self.flush()
@@ -297,21 +302,6 @@ class ResourceWebHandler(BaseWebHandler):
         transport = self._registry.transport
 
         try:
-            decoded = transport.parser.parse(self.request.body)
-            representation = transport.deserializer.deserialize_resource_data(
-                decoded)
-            representation = res_handler.validate_representation(
-                representation)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except Exception:
-            raise web.HTTPError(httpstatus.BAD_REQUEST)
-
-        self._check_none(representation,
-                         "representation",
-                         "validate_representation")
-
-        try:
             identifier = res_handler.validate_identifier(identifier)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
@@ -321,7 +311,21 @@ class ResourceWebHandler(BaseWebHandler):
         self._check_none(identifier, "identifier", "validate_identifier")
 
         try:
-            yield res_handler.update(identifier, representation)
+            resource = transport.deserializer.deserialize_resource(
+                res_handler.resource_class,
+                transport.parser.parse(self.request.body),
+                True)
+        except exceptions.WebAPIException as e:
+            raise self.to_http_exception(e)
+        except Exception:
+            raise web.HTTPError(httpstatus.BAD_REQUEST)
+
+        self._check_none(resource,
+                         "representation",
+                         "validate_representation")
+
+        try:
+            yield res_handler.update(resource)
         except exceptions.WebAPIException as e:
             raise self.to_http_exception(e)
         except NotImplementedError:
