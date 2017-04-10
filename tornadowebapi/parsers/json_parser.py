@@ -3,10 +3,9 @@ from .base_parser import BaseParser
 
 
 class JSONParser(BaseParser):
-    """Parser is responsible for converting whatever
-    is delivered as a payload into an appropriate
-    internal representation that can continue.
-    This representation is a dictionary"""
 
     def parse(self, payload):
+        if payload is None:
+            return None
+
         return escape.json_decode(payload)
