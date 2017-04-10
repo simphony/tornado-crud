@@ -4,8 +4,7 @@ from tornado import gen
 from tornadowebapi import exceptions
 from tornadowebapi.resource_handler import ResourceHandler
 from tornadowebapi.resource import Resource
-
-from traitlets import Unicode, Int
+from tornadowebapi.traitlets import Unicode, Int, List
 
 
 class WorkingResourceHandler(ResourceHandler):
@@ -54,7 +53,9 @@ class Student(Resource):
 
 
 class Teacher(Resource):
-    pass
+    name = Unicode()
+    age = Int(optional=True)
+    discipline = List()
 
 
 class GenericResource(Resource):
