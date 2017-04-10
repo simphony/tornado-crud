@@ -24,11 +24,6 @@ class NotFound(WebAPIException):
     """
     http_code = httpstatus.NOT_FOUND
 
-    def representation(self):
-        """NotFound is special as it does not have a representation,
-        just an error status"""
-        return None
-
 
 class Exists(WebAPIException):
     """Represents a case where the resource could not be created
@@ -37,10 +32,6 @@ class Exists(WebAPIException):
     things other than the exposed id."""
 
     http_code = httpstatus.CONFLICT
-
-    def representation(self):
-        """Exists does not have a representation, just an error status"""
-        return None
 
 
 class BadRepresentation(WebAPIException):
