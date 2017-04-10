@@ -1,6 +1,5 @@
 import unittest
 
-from tornadowebapi.exceptions import NotFound
 from tornadowebapi.serializers import BasicRESTSerializer
 from tornadowebapi.tests.resource_handlers import Student
 
