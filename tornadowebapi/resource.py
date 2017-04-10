@@ -23,7 +23,7 @@ class Resource(HasTraits):
     """
 
     # The identifier associated to the specific instance of the resource.
-    identifier = Unicode()
+    id = Unicode()
 
     @classmethod
     def collection_name(cls):

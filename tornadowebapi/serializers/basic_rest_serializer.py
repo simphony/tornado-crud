@@ -6,7 +6,7 @@ class BasicRESTSerializer(BaseSerializer):
     def serialize_items_response(self, items_response):
 
         return {"items": [
-            str(item.identifier) for item in items_response.items
+            str(item.id) for item in items_response
             ]}
 
     def serialize_exception(self, exception):
@@ -28,7 +28,7 @@ class BasicRESTSerializer(BaseSerializer):
     def serialize_resource(self, resource):
         d = {}
 
-        for trait_name, trait_class in resource.traits:
+        for trait_name, trait_class in resource.traits().items():
             d[trait_name] = getattr(resource, trait_name)
 
         return d
