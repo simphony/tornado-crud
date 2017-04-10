@@ -1,4 +1,3 @@
-from collections import namedtuple
 from tornado import gen, log
 from traitlets import HasTraits, List, Int
 
@@ -262,4 +261,3 @@ class PartialResponse(HasTraits):
 
     #: The total number of items available. None is allowed and means unknown.
     total_items = Int(min=0, allow_none=True)
-

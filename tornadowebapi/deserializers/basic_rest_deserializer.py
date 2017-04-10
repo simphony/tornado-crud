@@ -8,7 +8,7 @@ class BasicRESTDeserializer(BaseDeserializer):
         instance = resource_class()
         optional = []
         for trait_name, trait_class in instance.traits().items():
-            if trait_class.metadata.get("optional") == True:
+            if trait_class.metadata.get("optional") is True:
                 optional.append(trait_name)
 
         for trait_name, trait_class in instance.traits().items():

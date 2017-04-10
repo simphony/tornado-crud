@@ -136,8 +136,7 @@ class CollectionWebHandler(BaseWebHandler):
                 "Internal error during get operation on {}."
                 "items() returned {}, not PartialResponse or list".format(
                     collection_name,
-                    type(items_response)
-            ))
+                    type(items_response)))
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         # If it's a list, it's the full deal.
