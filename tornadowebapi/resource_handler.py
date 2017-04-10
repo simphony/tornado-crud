@@ -1,5 +1,4 @@
 from tornado import gen, log
-from traitlets import HasTraits, List, Int
 
 from . import exceptions
 
@@ -167,24 +166,20 @@ class ResourceHandler:
     @gen.coroutine
     def items(self):
         """Invoked when a request is performed to the collection
-        URL. Returns a list of identifiers available.
+        URL. Returns a list of items, or a subset of the available
+        items as a ItemsResponse instance.
         Corresponds to a GET operation on the collection URL.
 
         Returns
         -------
-        list: The list of available identifiers.
+        list or ItemsResponse
+            The list of available items, or an ItemsResponse instance
+            with the details of the sublist of presented items.
 
         Raises
         ------
         NotImplementedError:
             If the resource collection does not support the method.
-
-        Notes
-        -----
-        For security reasons stemming from cross site execution,
-        this list will not be rendered as a list in a json representation.
-        Instead, a dictionary with the key "items" and value as this list
-        will be returned.
         """
         return []
 
@@ -243,21 +238,3 @@ class ResourceHandler:
         return identifier
 
 
-class PartialResponse(HasTraits):
-    """This class can be returned by items() to inform about the nature of
-    the partial response, e.g. how many total items actually exist, and which
-    ones are returned."""
-
-    #: A list of the items
-    items = List()
-
-    #: The index of the first item in the above list in the complete data
-    #: store. None is allowed and means Unknown
-    index_first = Int(min=0, allow_none=True)
-
-    #: The number of items in the above list. Generally trivial but available
-    #: for future expansion to using a generator.
-    num_items = Int(min=0)
-
-    #: The total number of items available. None is allowed and means unknown.
-    total_items = Int(min=0, allow_none=True)

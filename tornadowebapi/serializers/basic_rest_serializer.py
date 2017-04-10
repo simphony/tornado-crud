@@ -4,7 +4,10 @@ from .base_serializer import BaseSerializer
 class BasicRESTSerializer(BaseSerializer):
     """Serialize with our own style of REST content."""
     def serialize_items_response(self, items_response):
-
+        # For security reasons stemming from cross site execution,
+        # this list will not be rendered as a list in a json representation.
+        # Instead, a dictionary with the key "items" and value as this list
+        # will be returned.
         return {"items": [
             str(item.id) for item in items_response
             ]}

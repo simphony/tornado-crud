@@ -14,7 +14,15 @@ class BaseSerializer(metaclass=abc.ABCMeta):
     """
     @abc.abstractmethod
     def serialize_items_response(self, items_response):
-        """Serializes a collection of items"""
+        """Serializes a collection of items
+
+        Parameters
+        ----------
+        items_response: ItemsResponse
+
+
+
+        """
 
     @abc.abstractmethod
     def serialize_exception(self, exception):

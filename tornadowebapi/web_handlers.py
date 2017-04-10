@@ -1,6 +1,6 @@
 from tornado import gen, web, template
 from tornado.log import app_log
-from tornadowebapi.resource_handler import PartialResponse
+from tornadowebapi.items_response import ItemsResponse
 
 from . import exceptions
 from .http import httpstatus
@@ -131,18 +131,18 @@ class CollectionWebHandler(BaseWebHandler):
                 ))
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
-        if not isinstance(items_response, (list, PartialResponse)):
+        if not isinstance(items_response, (list, ItemsResponse)):
             self.log.error(
                 "Internal error during get operation on {}."
-                "items() returned {}, not PartialResponse or list".format(
+                "items() returned {}, not ItemsResponse or list".format(
                     collection_name,
                     type(items_response)))
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         # If it's a list, it's the full deal.
-        # Convert it in a trivial PartialResponse for ease of handling
+        # Convert it in a trivial ItemsResponse for ease of handling
         if isinstance(items_response, list):
-            response = PartialResponse()
+            response = ItemsResponse()
             response.items = items_response
             response.index_first = 0
             response.num_items = response.total_items = len(items_response)
