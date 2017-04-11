@@ -91,7 +91,7 @@ class BaseWebHandler(web.RequestHandler):
                 content_type=transport.content_type
             )
         else:
-            raise web.HTTPError(exc.http_code)
+            return web.HTTPError(exc.http_code)
 
     def _check_none(self, entity, entity_name, culprit_routine):
         """Check if entity is None. If it is, raises INTERNAL_SERVER_ERROR.
@@ -107,6 +107,35 @@ class BaseWebHandler(web.RequestHandler):
                 ))
             raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
+    @contextlib.contextmanager
+    def exceptions_to_http(self,
+                           handler_method,
+                           collection_name,
+                           identifier=None,
+                           on_generic_raise=None):
+        try:
+            yield
+        except web.HTTPError:
+            raise
+        except exceptions.WebAPIException as e:
+            self.log.error("Web API exception on {} {} {}: {}".format(
+                collection_name, identifier, handler_method, e.message
+            ))
+            raise self.to_http_exception(e)
+        except NotImplementedError:
+            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+        except Exception:
+            self.log.exception(
+                "Internal error during {} on {} {}".format(
+                    handler_method,
+                    collection_name,
+                    identifier
+                ))
+            if on_generic_raise is None:
+                raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            else:
+                raise on_generic_raise
+
 
 class CollectionWebHandler(BaseWebHandler):
     """Handler for URLs addressing a collection.
@@ -116,18 +145,8 @@ class CollectionWebHandler(BaseWebHandler):
         """Returns the collection of available items"""
         res_handler = self.get_resource_handler_or_404(collection_name)
 
-        try:
+        with self.exceptions_to_http("get", collection_name):
             items_response = yield res_handler.items()
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-        except Exception:
-            self.log.exception(
-                "Internal error during get operation on {}".format(
-                    collection_name,
-                ))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         if not isinstance(items_response, (list, ItemsResponse)):
             self.log.error(
@@ -175,35 +194,35 @@ class CollectionWebHandler(BaseWebHandler):
     def post(self, collection_name):
         """Creates a new resource in the collection."""
         res_handler = self.get_resource_handler_or_404(collection_name)
+        transport = self._registry.transport
+        payload = self.request.body
 
-        representation = self._parse_payload(collection_name,
-                                             self.request.body)
+        with self.exceptions_to_http("post", collection_name):
+            representation = transport.parser.parse(payload)
 
-        representation = self._preprocess_representation(
-            collection_name,
-            res_handler,
-            representation)
+        on_generic_raise = self.to_http_exception(
+            exceptions.BadRepresentation(
+                "Generic exception during preprocessing of {}".format(
+                    collection_name)))
 
-        resource = self._deserialize_resource(
-            collection_name,
-            res_handler,
-            representation)
+        with self.exceptions_to_http("post", collection_name,
+                                     on_generic_raise=on_generic_raise):
+            representation = res_handler.preprocess_representation(
+                representation)
 
-        try:
+        self._check_none(representation,
+                         "representation",
+                         "{}.preprocess_representation".format(
+                             collection_name))
+
+        with self.exceptions_to_http("post", collection_name):
+            resource = transport.deserializer.deserialize_resource(
+                res_handler.resource_class,
+                None,
+                representation,
+                True
+            )
             resource_id = yield res_handler.create(resource)
-        except exceptions.WebAPIException as e:
-            self.log.error("Web API exception on {}: {}".format(
-                collection_name, e.message
-            ))
-            raise self.to_http_exception(e)
-        except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-        except Exception:
-            self.log.exception(
-                "Internal error during post operation on {}".format(
-                    collection_name,
-                ))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         self._check_none(resource_id,
                          "resource_id",
@@ -217,76 +236,6 @@ class CollectionWebHandler(BaseWebHandler):
         self.clear_header('Content-Type')
         self.flush()
 
-    def _parse_payload(self, collection_name, payload):
-        try:
-            representation = self._registry.transport.parser.parse(payload)
-        except exceptions.WebAPIException as e:
-            self.log.error("Web API exception on {}: {}".format(
-                collection_name, e.message
-            ))
-            raise self.to_http_exception(e)
-        except Exception:
-            self.log.exception(
-                "Internal error during post operation on {}".format(
-                    collection_name,
-                ))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
-
-        return representation
-
-    def _preprocess_representation(self,
-                                   collection_name,
-                                   res_handler,
-                                   representation):
-        try:
-            representation = res_handler.preprocess_representation(
-                representation)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-        except Exception:
-            self.log.exception(
-                "Generic Exception during preprocess_representation {}".format(
-                    res_handler,
-                ))
-            raise self.to_http_exception(exceptions.BadRepresentation(
-                "Preprocessing failure for collection {}".format(
-                    collection_name)))
-
-        self._check_none(representation,
-                         "representation",
-                         "{}.preprocess_representation".format(
-                             collection_name))
-
-    def _deserialize_resource(self,
-                              collection_name,
-                              res_handler,
-                              representation):
-        deserializer = self._registry.transport.deserializer
-
-        try:
-            resource = deserializer.deserialize_resource(
-                res_handler.resource_class,
-                None,
-                representation,
-                True
-            )
-        except exceptions.WebAPIException as e:
-            self.log.error(
-                "Web API exception post operation on {}: {}".format(
-                    collection_name, e.message
-                ))
-            raise self.to_http_exception(e)
-        except Exception:
-            self.log.exception(
-                "Internal error during post operation on {}".format(
-                    collection_name,
-                ))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
-
-        return resource
-
 
 class ResourceWebHandler(BaseWebHandler):
     """Handler for URLs addressing a resource.
@@ -298,27 +247,16 @@ class ResourceWebHandler(BaseWebHandler):
         """Retrieves the resource representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
 
-        try:
+        with self.exceptions_to_http("get",
+                                     collection_name,
+                                     identifier,
+                                     on_generic_raise=web.HTTPError(
+                                         httpstatus.NOT_FOUND)):
             identifier = res_handler.validate_identifier(identifier)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except Exception:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
 
-        self._check_none(identifier, "identifier", "validate_identifier")
+            self._check_none(identifier, "identifier", "validate_identifier")
 
-        try:
             resource = yield res_handler.retrieve(identifier)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-        except Exception:
-            self.log.exception(
-                "Internal error during get of {}/{}".format(
-                    collection_name,
-                    identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         if not isinstance(resource, res_handler.resource_class):
             self.log.error(
@@ -344,27 +282,17 @@ class ResourceWebHandler(BaseWebHandler):
         presence of a resource at the given URL"""
         res_handler = self.get_resource_handler_or_404(collection_name)
 
-        try:
+        with self.exceptions_to_http("post",
+                                     collection_name,
+                                     identifier,
+                                     on_generic_raise=web.HTTPError(
+                                         httpstatus.NOT_FOUND)):
             identifier = res_handler.validate_identifier(identifier)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except Exception:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
 
         self._check_none(identifier, "identifier", "validate_identifier")
 
-        try:
+        with self.exceptions_to_http("post", collection_name, identifier):
             exists = yield res_handler.exists(identifier)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-        except Exception:
-            self.log.exception(
-                "Internal error during post of {}/{}".format(
-                    collection_name,
-                    identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         if exists:
             raise web.HTTPError(httpstatus.CONFLICT)
@@ -377,41 +305,36 @@ class ResourceWebHandler(BaseWebHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
 
-        try:
+        with self.exceptions_to_http("put",
+                                     collection_name,
+                                     identifier,
+                                     on_generic_raise=web.HTTPError(
+                                         httpstatus.NOT_FOUND)):
             identifier = res_handler.validate_identifier(identifier)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except Exception:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
 
         self._check_none(identifier, "identifier", "validate_identifier")
 
-        try:
+        on_generic_raise = self.to_http_exception(
+            exceptions.BadRepresentation(
+                "Generic exception during preprocessing of {}".format(
+                    collection_name)))
+        with self.exceptions_to_http("put",
+                                     collection_name,
+                                     identifier,
+                                     on_generic_raise=on_generic_raise):
             resource = transport.deserializer.deserialize_resource(
                 res_handler.resource_class,
                 transport.parser.parse(self.request.body),
                 True)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except Exception:
-            raise web.HTTPError(httpstatus.BAD_REQUEST)
 
         self._check_none(resource,
                          "representation",
                          "validate_representation")
 
-        try:
+        with self.exceptions_to_http("put",
+                                     collection_name,
+                                     identifier):
             yield res_handler.update(resource)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-        except Exception:
-            self.log.exception(
-                "Internal error during put of {}/{}".format(
-                    collection_name,
-                    identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
@@ -421,27 +344,19 @@ class ResourceWebHandler(BaseWebHandler):
         """Deletes the resource."""
         res_handler = self.get_resource_handler_or_404(collection_name)
 
-        try:
+        with self.exceptions_to_http("delete",
+                                     collection_name,
+                                     identifier,
+                                     on_generic_raise=web.HTTPError(
+                                         httpstatus.NOT_FOUND)):
             identifier = res_handler.validate_identifier(identifier)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except Exception:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
 
         self._check_none(identifier, "identifier", "validate_identifier")
 
-        try:
+        with self.exceptions_to_http("delete",
+                                     collection_name,
+                                     identifier):
             yield res_handler.delete(identifier)
-        except exceptions.WebAPIException as e:
-            raise self.to_http_exception(e)
-        except NotImplementedError:
-            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-        except Exception:
-            self.log.exception(
-                "Internal error during delete of {}/{}".format(
-                    collection_name,
-                    identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
