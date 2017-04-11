@@ -113,6 +113,12 @@ class BaseWebHandler(web.RequestHandler):
                            collection_name,
                            identifier=None,
                            on_generic_raise=None):
+        """Convenience method to reduce clutter due to exception handling.
+        On a generic exception (e.g. KeyError, IndexError, etc...), raises
+        on_generic_raise, or if not defined, a simple internal server error.
+        Any exception created within this context manager will eventually
+        be converted into a HTTPError or PayloadedHTTPError.
+        """
         try:
             yield
         except web.HTTPError:

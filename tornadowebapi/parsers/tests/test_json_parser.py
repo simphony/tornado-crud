@@ -1,5 +1,6 @@
 import unittest
 
+from tornadowebapi.exceptions import BadRepresentation
 from tornadowebapi.parsers import JSONParser
 from tornadowebapi.renderers import JSONRenderer
 
@@ -9,6 +10,11 @@ class TestJSONParser(unittest.TestCase):
         parser = JSONParser()
         self.assertEqual(parser.parse("{}"), {})
         self.assertEqual(parser.parse(None), None)
+        with self.assertRaises(BadRepresentation):
+            parser.parse("hello")
+
+        with self.assertRaises(BadRepresentation):
+            parser.parse(3)
 
     def test_parser_renderer(self):
         parser = JSONParser()

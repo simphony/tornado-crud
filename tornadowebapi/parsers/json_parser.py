@@ -11,4 +11,4 @@ class JSONParser(BaseParser):
         try:
             return escape.json_decode(payload)
         except Exception:
-            raise BadRepresentation()
+            raise BadRepresentation("Passed payload is not valid JSON")

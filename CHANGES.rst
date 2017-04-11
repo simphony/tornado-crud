@@ -14,7 +14,12 @@ Summary
   add flexibility to REST protocol (#48)
 - Resource is now called ResourceHandler. Web handlers have been renamed
   to more appropriate names. (#49)
-
+- The following changes have been introduced as a result of Pull Request #50
+  - Introduced traitlets-based declarative definition of resources.
+  - ``registry.registered_types`` is now ``registered_handlers``
+  - register() now accepts only one parameter: the handler.
+  - pluralization are now declared at the Resource level, rather than at
+    registration time.
 
 What's new in Tornado WebAPI 0.5.0
 ----------------------------------

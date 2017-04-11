@@ -4,16 +4,17 @@ from . import exceptions
 
 
 class ResourceHandler:
-    """Base class for resources.
-    To implement a new Resource class, inherit from this subclass
+    """Base class for resource handlers.
+    To implement a new ResourceHandler class, inherit from this subclass
     and reimplement the CRUD class methods with the appropriate
-    logic.
+    logic. Additionaly, specify a resource_class of type Resource.
 
-    The Resource exports two member vars: application and current_user.
+    The ResourceHandler exports two member vars: application and current_user.
     They are equivalent to the members in the tornado web handler.
     """
 
-    #: Override this to describe the Resource subtype this handler manipulates
+    #: Specify the Resource subtype this handler manipulates.
+    #: Must be overridden in the derived class.
     resource_class = None
 
     def __init__(self, application, current_user):
@@ -32,21 +33,25 @@ class ResourceHandler:
 
     @gen.coroutine
     def create(self, instance):
-        """Called to create a resource with a given representation
-        The representation is a dictionary containing keys. The
-        reimplementing code is responsible for checking the validity
-        of the representation. Correspond to a POST operation on the
-        resource collection.
+        """Called to create a resource with the given data.
+        The member is passed with an instance of Resource, pre-filled
+        with the data from the passed (and decoded) payload.
+        This member should be responsible for storing or acting on the
+        request and returning an identifier for persistence of the
+        resource.
+
+        Correspond to a POST operation on the resource collection.
 
         Parameters
         ----------
-        representation: dict
-            A dictionary containing the representation as from the
-            HTTP request.
+        instance: Resource
+            An instance of the associated resource_class, pre-filled
+            with the data from the payload of the HTTP request.
+            The identifier of this resource will be None.
 
         Returns
         -------
-        id: str
+        identifier: str
             An identifier identifying the newly created resource.
             It must be unique within the collection.
 
@@ -55,9 +60,6 @@ class ResourceHandler:
         Exists:
             Raised when the resource cannot be created because of a
             conflicting already existing resource.
-        BadRepresentation:
-            Raised when the representation does not validate according
-            to the resource expected representation.
         NotImplementedError:
             If the resource does not support the method.
         """
@@ -75,8 +77,8 @@ class ResourceHandler:
 
         Returns
         -------
-        Resource representation: dict
-            a dict representation of the resource.
+        Resource
+            a Resource instance with the appropriate data.
 
         Raises
         ------
@@ -90,15 +92,17 @@ class ResourceHandler:
 
     @gen.coroutine
     def update(self, instance):
-        """Called to update a specific resource given its
-        identifier with a new representation.
-        The method is responsible for validating the representation
-        content. Correspond to a PUT operation on the resource URL.
+        """Called to update (fully) a specific Resource given its
+        identifier with new data. Correspond to a PUT operation on the
+        Resource URL.
+
+        The resource must already exist.
 
         Parameters
         ----------
         instance: dict
-            An instance of the resource_class.
+            An instance of the resource_class. This instance will be filled
+            with data from the payload.
 
         Returns
         -------
@@ -109,9 +113,6 @@ class ResourceHandler:
         NotFound:
             Raised if the resource with the given identifier cannot
             be found
-        BadRepresentation:
-            Raised when the representation does not validate according
-            to the resource expected representation.
         NotImplementedError:
             If the resource does not support the method.
         """
