@@ -245,3 +245,7 @@ class Frobnicator(Resource):
 class FrobnicatorHandler(ResourceHandler):
     """A weird name to test if it's kept"""
     resource_class = Frobnicator
+
+
+class WrongClassHandler(ResourceHandler):
+    resource_class = str

@@ -379,9 +379,7 @@ class JSAPIWebHandler(BaseWebHandler):
         resources = []
         reg = self.registry
         for coll_name, resource_handler in reg.registered_handlers.items():
-            class_name = resource_handler.__name__
-            if class_name.endswith("Handler"):
-                class_name = class_name[:-7]
+            class_name = resource_handler.resource_class.__name__
 
             resources.append({
                 "class_name": class_name,
