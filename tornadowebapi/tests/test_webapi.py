@@ -339,15 +339,9 @@ class TestWebAPI(AsyncHTTPTestCase):
         res = self.fetch(url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
-        res = self.fetch(url+"0/", method="PUT", body="{}")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
         url = "/api/v1/nullreturningvalidateds/"
 
         res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
-
-        res = self.fetch(url+"0/", method="PUT", body="{}")
         self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
         url = "/api/v1/correctvalidateds/"
@@ -355,15 +349,9 @@ class TestWebAPI(AsyncHTTPTestCase):
         res = self.fetch(url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.CREATED)
 
-        res = self.fetch(url+"0/", method="PUT", body="{}")
-        self.assertEqual(res.code, httpstatus.NO_CONTENT)
-
         url = "/api/v1/ourexceptionvalidateds/"
 
         res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
-        res = self.fetch(url+"0/", method="PUT", body="{}")
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_validate_identifier(self):

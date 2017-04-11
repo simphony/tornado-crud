@@ -181,17 +181,22 @@ class ResourceHandler:
         """
         return []
 
-    def validate_representation(self, representation):
-        """Validates the representation incoming from a request,
-        after it has been decoded.
-        Any generic exception occurring in this method will be
-        converted into a BadRepresentation exception.
+    def preprocess_representation(self, representation):
+        """Hook that inserts after the parsing and before the deserializer.
+        Gives a chance to manipulate the representation incoming from a
+        request.
+        Be aware that the concrete content of this representation depends on
+        the transport type (specifically, the deserializer).
+
+        If you change serializer/deserializer, the format passing through this
+        method will be different and therefore its code may not be appropriate
+        anymore. For this reason, any generic exception occurring in this
+        method will be converted into a BadRepresentation exception.
         Exceptions that belong to this distribution will be let through to
         produce the expected response.
 
-        This method is always called before being dispatched to the CRUD
-        methods accepting a representation. By default, it does nothing,
-        accepts any representation, and returns the same representation.
+        By default, this method does nothing, accepts any representation,
+        and returns the same representation.
 
         The method can also be used to modify the incoming representation
         so that it's compliant with the expectations, or return a new
@@ -203,7 +208,7 @@ class ResourceHandler:
         """
         return representation
 
-    def validate_identifier(self, identifier):
+    def preprocess_identifier(self, identifier):
         """Validates the identifier from a request.
         Any exception occurring in this method will be converted into
         a NotFound exception.
@@ -221,8 +226,8 @@ class ResourceHandler:
 
         Is simply not present.
 
-        This method is always called before being dispatched to the CRUD
-        methods accepting an identifier. By default, it does nothing,
+        This method is always called first in the request chain of methods
+        accepting an identifier. By default, it does nothing,
         accepts any identifier, and returns the same identifier.
 
         The method can also be used to modify the incoming identifier

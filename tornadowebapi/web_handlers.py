@@ -1,3 +1,5 @@
+import contextlib
+
 from tornado import gen, web, template
 from tornado.log import app_log
 from tornadowebapi.items_response import ItemsResponse
@@ -174,23 +176,28 @@ class CollectionWebHandler(BaseWebHandler):
         """Creates a new resource in the collection."""
         res_handler = self.get_resource_handler_or_404(collection_name)
 
-        transport = self._registry.transport
+        representation = self._parse_payload(collection_name,
+                                             self.request.body)
+
+        representation = self._preprocess_representation(
+            collection_name,
+            res_handler,
+            representation)
+
+        resource = self._deserialize_resource(
+            collection_name,
+            res_handler,
+            representation)
+
         try:
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                None,
-                transport.parser.parse(self.request.body),
-                True
-            )
             resource_id = yield res_handler.create(resource)
+        except exceptions.WebAPIException as e:
+            self.log.error("Web API exception on {}: {}".format(
+                collection_name, e.message
+            ))
+            raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-        except exceptions.WebAPIException as e:
-            self.log.error(
-                "Web API exception post operation on {}: {}".format(
-                    collection_name, e.message
-                ))
-            raise self.to_http_exception(e)
         except Exception:
             self.log.exception(
                 "Internal error during post operation on {}".format(
@@ -209,6 +216,76 @@ class CollectionWebHandler(BaseWebHandler):
         self.set_header("Location", location)
         self.clear_header('Content-Type')
         self.flush()
+
+    def _parse_payload(self, collection_name, payload):
+        try:
+            representation = self._registry.transport.parser.parse(payload)
+        except exceptions.WebAPIException as e:
+            self.log.error("Web API exception on {}: {}".format(
+                collection_name, e.message
+            ))
+            raise self.to_http_exception(e)
+        except Exception:
+            self.log.exception(
+                "Internal error during post operation on {}".format(
+                    collection_name,
+                ))
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+
+        return representation
+
+    def _preprocess_representation(self,
+                                   collection_name,
+                                   res_handler,
+                                   representation):
+        try:
+            representation = res_handler.preprocess_representation(
+                representation)
+        except exceptions.WebAPIException as e:
+            raise self.to_http_exception(e)
+        except NotImplementedError:
+            raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+        except Exception:
+            self.log.exception(
+                "Generic Exception during preprocess_representation {}".format(
+                    res_handler,
+                ))
+            raise self.to_http_exception(exceptions.BadRepresentation(
+                "Preprocessing failure for collection {}".format(
+                    collection_name)))
+
+        self._check_none(representation,
+                         "representation",
+                         "{}.preprocess_representation".format(
+                             collection_name))
+
+    def _deserialize_resource(self,
+                              collection_name,
+                              res_handler,
+                              representation):
+        deserializer = self._registry.transport.deserializer
+
+        try:
+            resource = deserializer.deserialize_resource(
+                res_handler.resource_class,
+                None,
+                representation,
+                True
+            )
+        except exceptions.WebAPIException as e:
+            self.log.error(
+                "Web API exception post operation on {}: {}".format(
+                    collection_name, e.message
+                ))
+            raise self.to_http_exception(e)
+        except Exception:
+            self.log.exception(
+                "Internal error during post operation on {}".format(
+                    collection_name,
+                ))
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+
+        return resource
 
 
 class ResourceWebHandler(BaseWebHandler):

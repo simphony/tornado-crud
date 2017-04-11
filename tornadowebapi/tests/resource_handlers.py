@@ -144,7 +144,7 @@ class ExceptionValidated(Resource):
 class ExceptionValidatedHandler(ResourceHandler):
     resource_class = ExceptionValidated
 
-    def validate_representation(self, representation):
+    def preprocess_representation(self, representation):
         raise Exception("woo!")
 
 
@@ -155,7 +155,7 @@ class OurExceptionValidated(Resource):
 class OurExceptionValidatedHandler(ResourceHandler):
     resource_class = OurExceptionValidated
 
-    def validate_representation(self, representation):
+    def preprocess_representation(self, representation):
         raise exceptions.BadRepresentation("woo!")
 
 
@@ -166,7 +166,7 @@ class NullReturningValidated(Resource):
 class NullReturningValidatedHandler(ResourceHandler):
     resource_class = NullReturningValidated
 
-    def validate_representation(self, representation):
+    def preprocess_representation(self, representation):
         pass
 
 
@@ -177,7 +177,7 @@ class CorrectValidated(Resource):
 class CorrectValidatedHandler(WorkingResourceHandler):
     resource_class = CorrectValidated
 
-    def validate_representation(self, representation):
+    def preprocess_representation(self, representation):
         representation["hello"] = 5
         return representation
 
