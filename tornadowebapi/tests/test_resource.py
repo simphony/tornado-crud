@@ -11,5 +11,5 @@ class Student(Resource):
 
 class TestResource(unittest.TestCase):
     def test_instantiation(self):
-        s = Student()
+        s = Student("1")
         self.assertEqual(s.collection_name(), "students")

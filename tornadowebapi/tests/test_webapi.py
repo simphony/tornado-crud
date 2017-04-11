@@ -103,7 +103,8 @@ class TestWebAPI(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.OK)
 
         self.assertEqual(escape.json_decode(res.body),
-                         {"name": "john wick"}
+                         {"name": "john wick",
+                          "age": 19}
                          )
 
         res = self.fetch("/api/v1/students/1/")

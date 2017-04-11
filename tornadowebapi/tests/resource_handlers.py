@@ -31,10 +31,10 @@ class WorkingResourceHandler(ResourceHandler):
 
     @gen.coroutine
     def update(self, instance):
-        if identifier not in self.collection:
+        if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
-        self.collection[identifier] = representation
+        self.collection[instance.identifier] = instance
 
     @gen.coroutine
     def delete(self, identifier):
