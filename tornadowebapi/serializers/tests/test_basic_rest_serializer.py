@@ -1,16 +1,22 @@
 import unittest
 
+from tornadowebapi.items_response import ItemsResponse
 from tornadowebapi.serializers import BasicRESTSerializer
 from tornadowebapi.tests.resource_handlers import Student
 
 
 class TestBasicRESTSerializer(unittest.TestCase):
     def test_serialize_items_response(self):
-        students = [
-            Student(identifier="1"),
-            Student(identifier="2"),
-            Student(identifier="3")
-        ]
+        students = ItemsResponse(
+            items=[
+                Student(identifier="1"),
+                Student(identifier="2"),
+                Student(identifier="3")
+            ],
+            items_first=0,
+            num_items=3,
+            total_items=30
+        )
 
         serializer = BasicRESTSerializer()
         self.assertEqual(
