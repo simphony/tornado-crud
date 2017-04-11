@@ -42,7 +42,7 @@ class Resource(HasTraits):
 
     @identifier.setter
     def identifier(self, value):
-        if not isinstance(value, str):
+        if not (value is None or isinstance(value, str)):
             raise ValueError("Identifier must be a string. Got {}".format(
                 type(value)
             ))
