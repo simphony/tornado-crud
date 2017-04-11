@@ -21,7 +21,7 @@ define([
     QUnit.test("create", function (assert) {
         var done = assert.async();
         resources.Student.create(
-            {name: "Student", surname: "McStudentface"}
+            {name: "john wick", age: 19}
         ).done(function(id) {
             assert.equal(id, "0");
             done();
@@ -40,20 +40,20 @@ define([
     QUnit.test("retrieve", function (assert) {
         var done = assert.async();
         resources.Student.retrieve("0").done(function(student) {
-            assert.equal(student.name, "Student");
-            assert.equal(student.surname, "McStudentface");
+            assert.equal(student.name, "john wick");
+            assert.equal(student.age, 19);
             done();
         });
     });
     
     QUnit.test("update", function (assert) {
         var done = assert.async();
-        resources.Student.update("0", {name: "Whatever", surname: "McWhateverface"})
+        resources.Student.update("0", {name: "Whatever", age: 24})
             .done(function() {
                 resources.Student.retrieve("0").done(
                     function(student) {
                         assert.equal(student.name, "Whatever");
-                        assert.equal(student.surname, "McWhateverface");
+                        assert.equal(student.age, 24);
                         done();
                     }
                 );
@@ -62,7 +62,7 @@ define([
     
     QUnit.test("update unexistent", function (assert) {
         var done = assert.async();
-        resources.Student.update("1", {name: "Whatever", surname: "McWhateverface"})
+        resources.Student.update("1", {name: "Whatever", age: 19})
             .fail(function(error) {
                 assert.equal(error.code, 404);
                 done();
