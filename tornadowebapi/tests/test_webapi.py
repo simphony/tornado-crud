@@ -49,9 +49,10 @@ class TestWebAPI(AsyncHTTPTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"items": []})
 
-        resource_handlers.StudentHandler.collection[1] = ""
-        resource_handlers.StudentHandler.collection[2] = ""
-        resource_handlers.StudentHandler.collection[3] = ""
+        handler = resource_handlers.StudentHandler
+        handler.collection[1] = handler.resource_class(identifier="1")
+        handler.collection[2] = handler.resource_class(identifier="2")
+        handler.collection[3] = handler.resource_class(identifier="3")
 
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
@@ -144,7 +145,7 @@ class TestWebAPI(AsyncHTTPTestCase):
         )
 
         location = urllib.parse.urlparse(res.headers["Location"]).path
-
+        print(location)
         res = self.fetch(
             location,
             method="PUT",

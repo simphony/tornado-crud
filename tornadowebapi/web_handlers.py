@@ -118,8 +118,8 @@ class BaseWebHandler(web.RequestHandler):
         except web.HTTPError:
             raise
         except exceptions.WebAPIException as e:
-            self.log.error("Web API exception on {} {} {}: {}".format(
-                collection_name, identifier, handler_method, e.message
+            self.log.error("Web API exception on {} {} {}: {} {}".format(
+                collection_name, identifier, handler_method, type(e), str(e)
             ))
             raise self.to_http_exception(e)
         except NotImplementedError:
@@ -252,10 +252,13 @@ class ResourceWebHandler(BaseWebHandler):
                                      identifier,
                                      on_generic_raise=web.HTTPError(
                                          httpstatus.NOT_FOUND)):
-            identifier = res_handler.validate_identifier(identifier)
+            identifier = res_handler.preprocess_identifier(identifier)
 
-            self._check_none(identifier, "identifier", "validate_identifier")
+        self._check_none(identifier, "identifier", "preprocess_identifier")
 
+        with self.exceptions_to_http("get",
+                                     collection_name,
+                                     identifier):
             resource = yield res_handler.retrieve(identifier)
 
         if not isinstance(resource, res_handler.resource_class):
@@ -287,9 +290,9 @@ class ResourceWebHandler(BaseWebHandler):
                                      identifier,
                                      on_generic_raise=web.HTTPError(
                                          httpstatus.NOT_FOUND)):
-            identifier = res_handler.validate_identifier(identifier)
+            identifier = res_handler.preprocess_identifier(identifier)
 
-        self._check_none(identifier, "identifier", "validate_identifier")
+        self._check_none(identifier, "identifier", "preprocess_identifier")
 
         with self.exceptions_to_http("post", collection_name, identifier):
             exists = yield res_handler.exists(identifier)
@@ -310,9 +313,9 @@ class ResourceWebHandler(BaseWebHandler):
                                      identifier,
                                      on_generic_raise=web.HTTPError(
                                          httpstatus.NOT_FOUND)):
-            identifier = res_handler.validate_identifier(identifier)
+            identifier = res_handler.preprocess_identifier(identifier)
 
-        self._check_none(identifier, "identifier", "validate_identifier")
+        self._check_none(identifier, "identifier", "preprocess_identifier")
 
         on_generic_raise = self.to_http_exception(
             exceptions.BadRepresentation(
@@ -324,12 +327,13 @@ class ResourceWebHandler(BaseWebHandler):
                                      on_generic_raise=on_generic_raise):
             resource = transport.deserializer.deserialize_resource(
                 res_handler.resource_class,
+                identifier,
                 transport.parser.parse(self.request.body),
                 True)
 
         self._check_none(resource,
                          "representation",
-                         "validate_representation")
+                         "preprocess_representation")
 
         with self.exceptions_to_http("put",
                                      collection_name,
@@ -349,9 +353,9 @@ class ResourceWebHandler(BaseWebHandler):
                                      identifier,
                                      on_generic_raise=web.HTTPError(
                                          httpstatus.NOT_FOUND)):
-            identifier = res_handler.validate_identifier(identifier)
+            identifier = res_handler.preprocess_identifier(identifier)
 
-        self._check_none(identifier, "identifier", "validate_identifier")
+        self._check_none(identifier, "identifier", "preprocess_identifier")
 
         with self.exceptions_to_http("delete",
                                      collection_name,
@@ -368,7 +372,7 @@ class JSAPIWebHandler(BaseWebHandler):
     def get(self):
         resources = []
         reg = self.registry
-        for coll_name, resource_handler in reg.registered_types.items():
+        for coll_name, resource_handler in reg.registered_handlers.items():
             class_name = resource_handler.__name__
             if class_name.endswith("Handler"):
                 class_name = class_name[:-7]

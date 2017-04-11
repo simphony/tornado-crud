@@ -91,11 +91,11 @@ class UnprocessableHandler(ResourceHandler):
     resource_class = Unprocessable
 
     @gen.coroutine
-    def create(self, representation):
+    def create(self, instance):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def update(self, identifier, representation):
+    def update(self, instance):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
@@ -201,7 +201,7 @@ class InvalidIdentifier(Resource):
 class InvalidIdentifierHandler(ResourceHandler):
     resource_class = InvalidIdentifier
 
-    def validate_identifier(self, identifier):
+    def preprocess_identifier(self, identifier):
         raise Exception("woo!")
 
 
@@ -212,7 +212,7 @@ class OurExceptionInvalidIdentifier(Resource):
 class OurExceptionInvalidIdentifierHandler(ResourceHandler):
     resource_class = OurExceptionInvalidIdentifier
 
-    def validate_identifier(self, identifier):
+    def preprocess_identifier(self, identifier):
         raise exceptions.BadRepresentation("woo!")
 
 
