@@ -2,9 +2,10 @@ import contextlib
 
 from tornado import gen, web, template
 from tornado.log import app_log
-from tornadowebapi.items_response import ItemsResponse
 
+from . import resource as resource_mod
 from . import exceptions
+from .items_response import ItemsResponse
 from .http import httpstatus
 from .http.payloaded_http_error import PayloadedHTTPError
 from .utils import url_path_join, with_end_slash
@@ -175,8 +176,8 @@ class CollectionWebHandler(BaseWebHandler):
         for entry in items_response.items:
             if not isinstance(entry, res_handler.resource_class):
                 self.log.error(
-                    "Internal error during get operation on {}."
-                    "items() returned objects different from "
+                    "Internal error during get operation on {}. "
+                    "items() returned a list with objects different from "
                     "the declared type. Got {} instead of {}".format(
                         collection_name,
                         entry.__class__,
@@ -226,8 +227,13 @@ class CollectionWebHandler(BaseWebHandler):
                 res_handler.resource_class,
                 None,
                 representation,
-                True
             )
+
+            absents = resource_mod.mandatory_absents(resource)
+            if len(absents) != 0:
+                raise exceptions.BadRepresentation(
+                    message="Missing mandatory elements: {}".format(absents))
+
             resource_id = yield res_handler.create(resource)
 
         self._check_none(resource_id,
@@ -252,6 +258,7 @@ class ResourceWebHandler(BaseWebHandler):
     def get(self, collection_name, identifier):
         """Retrieves the resource representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
+        transport = self._registry.transport
 
         with self.exceptions_to_http("get",
                                      collection_name,
@@ -265,7 +272,22 @@ class ResourceWebHandler(BaseWebHandler):
         with self.exceptions_to_http("get",
                                      collection_name,
                                      identifier):
-            resource = yield res_handler.retrieve(identifier)
+            resource = transport.deserializer.deserialize_resource(
+                res_handler.resource_class,
+                identifier,
+                None)
+            yield res_handler.retrieve(resource)
+
+            absents = resource_mod.mandatory_absents(resource)
+            if len(absents) != 0:
+                self.log.error(
+                    "Returned resource {} {} had missing mandatory elements "
+                    "in get: {}".format(
+                        collection_name,
+                        identifier,
+                        absents
+                    ))
+                raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         if not isinstance(resource, res_handler.resource_class):
             self.log.error(
@@ -290,6 +312,7 @@ class ResourceWebHandler(BaseWebHandler):
         in either Conflict or NotFound, depending on the
         presence of a resource at the given URL"""
         res_handler = self.get_resource_handler_or_404(collection_name)
+        transport = self._registry.transport
 
         with self.exceptions_to_http("post",
                                      collection_name,
@@ -301,7 +324,11 @@ class ResourceWebHandler(BaseWebHandler):
         self._check_none(identifier, "identifier", "preprocess_identifier")
 
         with self.exceptions_to_http("post", collection_name, identifier):
-            exists = yield res_handler.exists(identifier)
+            resource = transport.deserializer.deserialize_resource(
+                res_handler.resource_class,
+                identifier,
+                None)
+            exists = yield res_handler.exists(resource)
 
         if exists:
             raise web.HTTPError(httpstatus.CONFLICT)
@@ -334,8 +361,7 @@ class ResourceWebHandler(BaseWebHandler):
             resource = transport.deserializer.deserialize_resource(
                 res_handler.resource_class,
                 identifier,
-                transport.parser.parse(self.request.body),
-                True)
+                transport.parser.parse(self.request.body))
 
         self._check_none(resource,
                          "representation",
@@ -344,6 +370,11 @@ class ResourceWebHandler(BaseWebHandler):
         with self.exceptions_to_http("put",
                                      collection_name,
                                      identifier):
+            absents = resource_mod.mandatory_absents(resource)
+            if len(absents) != 0:
+                raise exceptions.BadRepresentation(
+                    message="Missing mandatory elements: {}".format(absents))
+
             yield res_handler.update(resource)
 
         self.clear_header('Content-Type')
@@ -353,6 +384,7 @@ class ResourceWebHandler(BaseWebHandler):
     def delete(self, collection_name, identifier):
         """Deletes the resource."""
         res_handler = self.get_resource_handler_or_404(collection_name)
+        transport = self._registry.transport
 
         with self.exceptions_to_http("delete",
                                      collection_name,
@@ -366,7 +398,11 @@ class ResourceWebHandler(BaseWebHandler):
         with self.exceptions_to_http("delete",
                                      collection_name,
                                      identifier):
-            yield res_handler.delete(identifier)
+            resource = transport.deserializer.deserialize_resource(
+                res_handler.resource_class,
+                identifier,
+                None)
+            yield res_handler.delete(resource)
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)

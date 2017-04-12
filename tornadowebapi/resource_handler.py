@@ -66,19 +66,26 @@ class ResourceHandler:
         raise NotImplementedError()
 
     @gen.coroutine
-    def retrieve(self, identifier):
+    def retrieve(self, instance):
         """Called to retrieve a specific resource given its
         identifier. Correspond to a GET operation on the resource URL.
 
+        The method is called with an empty instance of the resource_class
+        (except for the identifier). At the end of the method, it must have
+        been filled with all the non-optional information.
+
+        This routine returns nothing.
+
         Parameters
         ----------
-        identifier: str
-            A string identifying the resource
+        instance:
+            An instance of the resource_class.
+            This instance has only the identifier filled. The rest
+            must be filled by this routine.
 
         Returns
         -------
-        Resource
-            a Resource instance with the appropriate data.
+        None
 
         Raises
         ------
@@ -96,11 +103,9 @@ class ResourceHandler:
         identifier with new data. Correspond to a PUT operation on the
         Resource URL.
 
-        The resource must already exist.
-
         Parameters
         ----------
-        instance: dict
+        instance:
             An instance of the resource_class. This instance will be filled
             with data from the payload.
 
@@ -119,14 +124,17 @@ class ResourceHandler:
         raise NotImplementedError()
 
     @gen.coroutine
-    def delete(self, identifier):
+    def delete(self, instance):
         """Called to delete a specific resource given its identifier.
         Corresponds to a DELETE operation on the resource URL.
 
+        The passed i
+
         Parameters
         ----------
-        identifier: str
-            A string identifying the resource
+        instance:
+            An instance of the Resource type. Only the identifier will
+            be filled.
 
         Returns
         -------
@@ -142,21 +150,21 @@ class ResourceHandler:
         raise NotImplementedError()
 
     @gen.coroutine
-    def exists(self, identifier):
+    def exists(self, instance):
         """Returns True if the resource with a given identifier
         exists. False otherwise.
 
         Parameters
         ----------
-        identifier: str
-            A string identifying the resource
+        instance: Resource
+            A Resource instance. Only the identifier will be filled.
 
         Returns
         -------
         bool: True if found, False otherwise.
         """
         try:
-            yield self.retrieve(identifier)
+            yield self.retrieve(instance)
         except exceptions.NotFound:
             return False
 

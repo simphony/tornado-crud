@@ -1,4 +1,4 @@
-from tornadowebapi.traitlets import HasTraits
+from tornadowebapi.traitlets import HasTraits, Absent
 
 
 class Resource(HasTraits):
@@ -48,3 +48,27 @@ class Resource(HasTraits):
             ))
 
         self._identifier = value
+
+
+# Not as members because we want to prevent collisions with actual
+# resource subclass traits.
+def mandatory_absents(resource):
+    """Returns a set of the trait names that are mandatory, but do not
+    have a specified value (i.e. they are Absent)."""
+    res = set()
+    for trait_name, trait_class in resource.traits().items():
+        if (getattr(resource, trait_name) == Absent and not
+                trait_class.metadata.get("optional", False)):
+            res.add(trait_name)
+
+    return res
+
+
+def is_valid(resource):
+    """Returns True if the resource is valid, False otherwise.
+    Validity is defined as follows:
+        - identifier is not None
+        - mandatory_absents is empty
+    """
+    return (resource.identifier is not None and
+            len(mandatory_absents(resource)) == 0)

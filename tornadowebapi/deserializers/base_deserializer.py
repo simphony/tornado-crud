@@ -10,8 +10,7 @@ class BaseDeserializer(metaclass=abc.ABCMeta):
     def deserialize_resource(self,
                              resource_class,
                              identifier,
-                             data,
-                             enforce_mandatory):
+                             data=None):
         """Deserializes the incoming data and return something that
         the resource handler can accept
 
@@ -24,16 +23,12 @@ class BaseDeserializer(metaclass=abc.ABCMeta):
             The identifier of the requested resource. This can also be
             present in the data, so particular care must be taken to check
             if they are equal.
-            Identifier can also be None
+            Identifier can also be None.
 
-        data: dict
-            The data obtained from the parsing of the payload
-
-        enforce_mandatory: bool
-            If True, when the resource is instantiated, the mandatory
-            traitlets will be enforced to be presend.
-            If False, there will be no enforcement. This is set when a
-            PATCH operation is requested.
+        data: dict or None
+            The data obtained from the parsing of the payload.
+            If the data is None, the deserialization will produce an instance
+            with only the identifier defined.
 
         Returns
         -------

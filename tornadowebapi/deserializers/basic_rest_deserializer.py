@@ -1,4 +1,3 @@
-from tornadowebapi.exceptions import BadRepresentation
 from .base_deserializer import BaseDeserializer
 
 
@@ -9,25 +8,13 @@ class BasicRESTDeserializer(BaseDeserializer):
     def deserialize_resource(self,
                              resource_class,
                              identifier,
-                             data,
-                             enforce_mandatory):
+                             data=None):
         instance = resource_class(identifier=identifier)
-        optional = []
-        for trait_name, trait_class in instance.traits().items():
-            if trait_class.metadata.get("optional") is True:
-                optional.append(trait_name)
 
-        for trait_name, trait_class in instance.traits().items():
-            try:
-                value = data[trait_name]
-            except KeyError:
-                if trait_name not in optional and enforce_mandatory:
-                    raise BadRepresentation(
-                        message="Missing mandatory element: {}".format(
-                            trait_name))
-                else:
-                    continue
+        if data is None:
+            return instance
 
-            setattr(instance, trait_name, value)
+        for key, value in data.items():
+            setattr(instance, key, value)
 
         return instance

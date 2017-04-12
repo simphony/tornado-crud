@@ -401,11 +401,11 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
     def test_items_returns_incorrect_type(self):
-        collection_url = "/api/v1/returnsincorrecttypes/0/"
+        collection_url = "/api/v1/returnsincorrecttypes/"
 
         with ExpectLog(
                 "tornado.application",
-                ".*Returned resource type was different from handler type.*"):
+                ".*returned a list with objects different from.*"):
             res = self.fetch(collection_url, method="GET")
 
         self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)

@@ -23,11 +23,13 @@ class WorkingResourceHandler(ResourceHandler):
         return id
 
     @gen.coroutine
-    def retrieve(self, identifier):
-        if identifier not in self.collection:
+    def retrieve(self, instance):
+        if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
-        return self.collection[identifier]
+        stored_item = self.collection[instance.identifier]
+        for trait_name, trait_class in instance.traits().items():
+            setattr(instance, trait_name, getattr(stored_item, trait_name))
 
     @gen.coroutine
     def update(self, instance):
@@ -37,11 +39,11 @@ class WorkingResourceHandler(ResourceHandler):
         self.collection[instance.identifier] = instance
 
     @gen.coroutine
-    def delete(self, identifier):
-        if identifier not in self.collection:
+    def delete(self, instance):
+        if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
-        del self.collection[identifier]
+        del self.collection[instance.identifier]
 
     @gen.coroutine
     def items(self):
@@ -67,8 +69,8 @@ class TeacherHandler(ResourceHandler):
     resource_class = Teacher
 
     @gen.coroutine
-    def retrieve(self, identifier):
-        return {}
+    def retrieve(self, instance):
+        pass
 
     @gen.coroutine
     def items(self):
@@ -99,7 +101,7 @@ class UnprocessableHandler(ResourceHandler):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def retrieve(self, identifier):
+    def retrieve(self, instance):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
@@ -273,7 +275,3 @@ class ReturnsIncorrectTypeHandler(ResourceHandler):
     @gen.coroutine
     def items(self):
         return ["hello"]
-
-    @gen.coroutine
-    def retrieve(self, identifier):
-        return "hello"
