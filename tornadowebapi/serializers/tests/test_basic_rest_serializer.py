@@ -46,3 +46,9 @@ class TestBasicRESTSerializer(unittest.TestCase):
             serializer.serialize_resource(teacher),
             {"name": "john wick",
              "age": 39})
+
+    def test_serialize_non_webapi_exception(self):
+        serializer = BasicRESTSerializer()
+
+        with self.assertRaises(TypeError):
+            serializer.serialize_exception(KeyError())

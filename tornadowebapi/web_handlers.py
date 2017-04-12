@@ -155,14 +155,6 @@ class CollectionWebHandler(BaseWebHandler):
         with self.exceptions_to_http("get", collection_name):
             items_response = yield res_handler.items()
 
-        if not isinstance(items_response, (list, ItemsResponse)):
-            self.log.error(
-                "Internal error during get operation on {}."
-                "items() returned {}, not ItemsResponse or list".format(
-                    collection_name,
-                    type(items_response)))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
-
         # If it's a list, it's the full deal.
         # Convert it in a trivial ItemsResponse for ease of handling
         if isinstance(items_response, list):
@@ -172,6 +164,14 @@ class CollectionWebHandler(BaseWebHandler):
             response.num_items = response.total_items = len(items_response)
 
             items_response = response
+
+        if not isinstance(items_response, ItemsResponse):
+            self.log.error(
+                "Internal error during get operation on {}."
+                "items() returned {}, not ItemsResponse or list".format(
+                    collection_name,
+                    type(items_response)))
+            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         for entry in items_response.items:
             if not isinstance(entry, res_handler.resource_class):
@@ -288,14 +288,6 @@ class ResourceWebHandler(BaseWebHandler):
                         absents
                     ))
                 raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
-
-        if not isinstance(resource, res_handler.resource_class):
-            self.log.error(
-                "Returned resource type was different from "
-                "handler type in get".format(
-                    collection_name,
-                    identifier))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         self.set_status(httpstatus.OK)
         transport = self._registry.transport

@@ -68,14 +68,6 @@ class Teacher(Resource):
 class TeacherHandler(ResourceHandler):
     resource_class = Teacher
 
-    @gen.coroutine
-    def retrieve(self, instance):
-        pass
-
-    @gen.coroutine
-    def items(self):
-        return []
-
 
 class UnsupportAll(Resource):
     pass
