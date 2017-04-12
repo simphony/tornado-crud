@@ -249,3 +249,31 @@ class FrobnicatorHandler(ResourceHandler):
 
 class WrongClassHandler(ResourceHandler):
     resource_class = str
+
+
+class ItemsReturnsString(Resource):
+    pass
+
+
+class ItemsReturnsStringHandler(ResourceHandler):
+    resource_class = ItemsReturnsString
+
+    @gen.coroutine
+    def items(self):
+        return "hello"
+
+
+class ReturnsIncorrectType(Resource):
+    pass
+
+
+class ReturnsIncorrectTypeHandler(ResourceHandler):
+    resource_class = ReturnsIncorrectType
+
+    @gen.coroutine
+    def items(self):
+        return ["hello"]
+
+    @gen.coroutine
+    def retrieve(self, identifier):
+        return "hello"

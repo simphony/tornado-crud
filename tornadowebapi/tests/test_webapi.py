@@ -3,6 +3,7 @@ import urllib.parse
 from collections import OrderedDict
 from unittest import mock
 
+from tornado.testing import LogTrapTestCase, ExpectLog
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.web_handlers import ResourceWebHandler, CollectionWebHandler
@@ -23,11 +24,13 @@ ALL_RESOURCES = (
     resource_handlers.StudentHandler,
     resource_handlers.TeacherHandler,
     resource_handlers.InvalidIdentifierHandler,
-    resource_handlers.OurExceptionInvalidIdentifierHandler
+    resource_handlers.OurExceptionInvalidIdentifierHandler,
+    resource_handlers.ItemsReturnsStringHandler,
+    resource_handlers.ReturnsIncorrectTypeHandler
 )
 
 
-class TestWebAPI(AsyncHTTPTestCase):
+class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
         resource_handlers.StudentHandler.collection = OrderedDict()
@@ -145,7 +148,6 @@ class TestWebAPI(AsyncHTTPTestCase):
         )
 
         location = urllib.parse.urlparse(res.headers["Location"]).path
-        print(location)
         res = self.fetch(
             location,
             method="PUT",
@@ -389,6 +391,24 @@ class TestWebAPI(AsyncHTTPTestCase):
 
         res = self.fetch(collection_url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.CONFLICT)
+
+    def test_items_returns_non_list(self):
+        collection_url = "/api/v1/itemsreturnsstrings/"
+
+        with ExpectLog("tornado.application", ".*not ItemsResponse or list.*"):
+            res = self.fetch(collection_url, method="GET")
+
+        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+
+    def test_items_returns_incorrect_type(self):
+        collection_url = "/api/v1/returnsincorrecttypes/0/"
+
+        with ExpectLog(
+                "tornado.application",
+                ".*Returned resource type was different from handler type.*"):
+            res = self.fetch(collection_url, method="GET")
+
+        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
 
 class TestRESTFunctions(unittest.TestCase):
