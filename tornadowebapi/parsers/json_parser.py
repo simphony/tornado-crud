@@ -1,12 +1,14 @@
 from tornado import escape
+from tornadowebapi.exceptions import BadRepresentation
 from .base_parser import BaseParser
 
 
 class JSONParser(BaseParser):
-    """Parser is responsible for converting whatever
-    is delivered as a payload into an appropriate
-    internal representation that can continue.
-    This representation is a dictionary"""
-
     def parse(self, payload):
-        return escape.json_decode(payload)
+        if payload is None:
+            return None
+
+        try:
+            return escape.json_decode(payload)
+        except Exception:
+            raise BadRepresentation("Passed payload is not valid JSON")

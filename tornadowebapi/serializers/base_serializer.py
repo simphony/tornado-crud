@@ -8,19 +8,50 @@ class BaseSerializer(metaclass=abc.ABCMeta):
 
     This dictionary will then be passed to the renderer to be
     converted into something that is shown on the web.
-
-    NOTE: These methods will eventually accept a model object, rather than
-    the current parameters
     """
     @abc.abstractmethod
-    def serialize_collection(self, collection_name, collection_items):
-        """Serializes a collection of items"""
+    def serialize_items_response(self, items_response):
+        """Serializes a collection of items.
+
+        Parameters
+        ----------
+        items_response: ItemsResponse
+            The ItemsResponse to serialize.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the serialized version of the ItemsResponse
+        """
 
     @abc.abstractmethod
-    def serialize_exception(self, exception_representation):
-        """Serializes an exception with a given representation"""
+    def serialize_exception(self, exception):
+        """Given a WebAPIException occurred during the processing of a request,
+        this method produces a serialization of the exception to be carried as
+        payload in the error response.
+
+        Parameters
+        ----------
+        exception: WebAPIException
+            The exception to serialize
+
+        Returns
+        -------
+        dict
+            A dict representing the exception
+        """
 
     @abc.abstractmethod
-    def serialize_resource(self, collection_name, identifier, representation):
-        """Serializes a resource of a given collection name, identifier
-        and given representation"""
+    def serialize_resource(self, resource):
+        """Serializes a resource.
+
+        Parameters
+        ----------
+        resource: Resource
+            The resource to serialize
+
+        Returns
+        -------
+        dict
+            A dict representing the resource.
+        """

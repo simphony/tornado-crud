@@ -16,20 +16,6 @@ class WebAPIException(Exception):
         self.message = message
         self.info = kwargs if len(kwargs) else None
 
-    def representation(self):
-        """Returns a dictionary with the representation of the exception.
-        """
-        data = {
-            "type": type(self).__name__
-        }
-        if self.message is not None:
-            data["message"] = self.message
-
-        if self.info is not None:
-            data.update(self.info)
-
-        return data
-
 
 class NotFound(WebAPIException):
     """Exception raised when the resource is not found.
@@ -37,11 +23,6 @@ class NotFound(WebAPIException):
     find the resource the identifier refers to.
     """
     http_code = httpstatus.NOT_FOUND
-
-    def representation(self):
-        """NotFound is special as it does not have a representation,
-        just an error status"""
-        return None
 
 
 class Exists(WebAPIException):
@@ -51,10 +32,6 @@ class Exists(WebAPIException):
     things other than the exposed id."""
 
     http_code = httpstatus.CONFLICT
-
-    def representation(self):
-        """Exists does not have a representation, just an error status"""
-        return None
 
 
 class BadRepresentation(WebAPIException):

@@ -3,6 +3,7 @@ import urllib.parse
 from collections import OrderedDict
 from unittest import mock
 
+from tornado.testing import LogTrapTestCase, ExpectLog
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.web_handlers import ResourceWebHandler, CollectionWebHandler
@@ -23,11 +24,13 @@ ALL_RESOURCES = (
     resource_handlers.StudentHandler,
     resource_handlers.TeacherHandler,
     resource_handlers.InvalidIdentifierHandler,
-    resource_handlers.OurExceptionInvalidIdentifierHandler
+    resource_handlers.OurExceptionInvalidIdentifierHandler,
+    resource_handlers.ItemsReturnsStringHandler,
+    resource_handlers.ReturnsIncorrectTypeHandler
 )
 
 
-class TestWebAPI(AsyncHTTPTestCase):
+class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
         resource_handlers.StudentHandler.collection = OrderedDict()
@@ -49,9 +52,10 @@ class TestWebAPI(AsyncHTTPTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"items": []})
 
-        resource_handlers.StudentHandler.collection[1] = ""
-        resource_handlers.StudentHandler.collection[2] = ""
-        resource_handlers.StudentHandler.collection[3] = ""
+        handler = resource_handlers.StudentHandler
+        handler.collection[1] = handler.resource_class(identifier="1")
+        handler.collection[2] = handler.resource_class(identifier="2")
+        handler.collection[3] = handler.resource_class(identifier="3")
 
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
@@ -63,7 +67,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -74,7 +79,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick 2",
+                "age": 19,
             })
         )
         self.assertEqual(res.code, httpstatus.CREATED)
@@ -90,7 +96,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -100,7 +107,8 @@ class TestWebAPI(AsyncHTTPTestCase):
         self.assertEqual(res.code, httpstatus.OK)
 
         self.assertEqual(escape.json_decode(res.body),
-                         {"foo": "bar"}
+                         {"name": "john wick",
+                          "age": 19}
                          )
 
         res = self.fetch("/api/v1/students/1/")
@@ -112,7 +120,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -121,7 +130,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             location,
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -132,31 +142,35 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
         location = urllib.parse.urlparse(res.headers["Location"]).path
-
         res = self.fetch(
             location,
             method="PUT",
             body=escape.json_encode({
-                "foo": "baz"
+                "name": "john wick",
+                "age": 19,
             })
         )
         self.assertEqual(res.code, httpstatus.NO_CONTENT)
 
         res = self.fetch(location)
         self.assertEqual(escape.json_decode(res.body),
-                         {"foo": "baz"}
-                         )
+                         {
+                             "name": "john wick",
+                             "age": 19,
+                         })
 
         res = self.fetch(
             "/api/v1/students/1/",
             method="PUT",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
@@ -166,7 +180,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -189,7 +204,8 @@ class TestWebAPI(AsyncHTTPTestCase):
             "/api/v1/notpresent/",
             method="POST",
             body=escape.json_encode({
-                "foo": "bar"
+                "name": "john wick",
+                "age": 19,
             })
         )
 
@@ -326,15 +342,9 @@ class TestWebAPI(AsyncHTTPTestCase):
         res = self.fetch(url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
-        res = self.fetch(url+"0/", method="PUT", body="{}")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
         url = "/api/v1/nullreturningvalidateds/"
 
         res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
-
-        res = self.fetch(url+"0/", method="PUT", body="{}")
         self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
         url = "/api/v1/correctvalidateds/"
@@ -342,15 +352,9 @@ class TestWebAPI(AsyncHTTPTestCase):
         res = self.fetch(url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.CREATED)
 
-        res = self.fetch(url+"0/", method="PUT", body="{}")
-        self.assertEqual(res.code, httpstatus.NO_CONTENT)
-
         url = "/api/v1/ourexceptionvalidateds/"
 
         res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
-        res = self.fetch(url+"0/", method="PUT", body="{}")
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_validate_identifier(self):
@@ -388,6 +392,24 @@ class TestWebAPI(AsyncHTTPTestCase):
         res = self.fetch(collection_url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.CONFLICT)
 
+    def test_items_returns_non_list(self):
+        collection_url = "/api/v1/itemsreturnsstrings/"
+
+        with ExpectLog("tornado.application", ".*not ItemsResponse or list.*"):
+            res = self.fetch(collection_url, method="GET")
+
+        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+
+    def test_items_returns_incorrect_type(self):
+        collection_url = "/api/v1/returnsincorrecttypes/"
+
+        with ExpectLog(
+                "tornado.application",
+                ".*returned a list with objects different from.*"):
+            res = self.fetch(collection_url, method="GET")
+
+        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+
 
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
@@ -397,23 +419,3 @@ class TestRESTFunctions(unittest.TestCase):
         self.assertEqual(handlers[0][1], ResourceWebHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
         self.assertEqual(handlers[1][1], CollectionWebHandler)
-
-
-class TestNonGlobalRegistry(AsyncHTTPTestCase):
-    def setUp(self):
-        super().setUp()
-        resource_handlers.StudentHandler.collection = OrderedDict()
-        resource_handlers.StudentHandler.id = 0
-
-    def get_app(self):
-        self.registry = Registry()
-        self.registry.register(resource_handlers.TeacherHandler)
-        handlers = self.registry.api_handlers('/')
-        app = web.Application(handlers=handlers)
-        return app
-
-    def test_non_global_registry(self):
-        res = self.fetch("/api/v1/teachers/")
-        self.assertEqual(res.code, httpstatus.OK)
-        self.assertEqual(escape.json_decode(res.body),
-                         {"items": []})
