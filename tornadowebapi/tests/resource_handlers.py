@@ -15,7 +15,7 @@ class WorkingResourceHandler(ResourceHandler):
     id = 0
 
     @gen.coroutine
-    def create(self, instance):
+    def create(self, instance, **kwargs):
         id = type(self).id
         self.collection[str(id)] = instance
         instance.identifier = str(id)
@@ -23,7 +23,7 @@ class WorkingResourceHandler(ResourceHandler):
         return id
 
     @gen.coroutine
-    def retrieve(self, instance):
+    def retrieve(self, instance, **kwargs):
         if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
@@ -32,23 +32,36 @@ class WorkingResourceHandler(ResourceHandler):
             setattr(instance, trait_name, getattr(stored_item, trait_name))
 
     @gen.coroutine
-    def update(self, instance):
+    def update(self, instance, **kwargs):
         if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
         self.collection[instance.identifier] = instance
 
     @gen.coroutine
-    def delete(self, instance):
+    def delete(self, instance, **kwargs):
         if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
         del self.collection[instance.identifier]
 
     @gen.coroutine
-    def items(self, args):
-        print(args)
-        return list(self.collection.values())
+    def items(self, offset=None, limit=None, **kwargs):
+        if offset is None:
+            offset = 0
+
+        start = int(offset)
+
+        if limit is None:
+            end = None
+        else:
+            end = start + int(limit)
+
+        interval = slice(start, end)
+        values = list(self.collection.values())
+        print(interval)
+        print(len(values))
+        return values[interval]
 
 
 class Student(Resource):
@@ -86,19 +99,19 @@ class UnprocessableHandler(ResourceHandler):
     resource_class = Unprocessable
 
     @gen.coroutine
-    def create(self, instance):
+    def create(self, instance, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def update(self, instance):
+    def update(self, instance, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def retrieve(self, instance):
+    def retrieve(self, instance, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def items(self):
+    def items(self, offset=None, limit=None, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
 
@@ -110,7 +123,7 @@ class UnsupportsCollectionHandler(ResourceHandler):
     resource_class = UnsupportsCollection
 
     @gen.coroutine
-    def items(self):
+    def items(self, offset=None, limit=None, **kwargs):
         raise NotImplementedError()
 
 
@@ -185,7 +198,7 @@ class AlreadyPresentHandler(ResourceHandler):
     resource_class = AlreadyPresent
 
     @gen.coroutine
-    def create(self, *args):
+    def create(self, *args, **kwargs):
         raise exceptions.Exists()
 
 
@@ -254,7 +267,7 @@ class ItemsReturnsStringHandler(ResourceHandler):
     resource_class = ItemsReturnsString
 
     @gen.coroutine
-    def items(self):
+    def items(self, **kwargs):
         return "hello"
 
 
@@ -266,5 +279,5 @@ class ReturnsIncorrectTypeHandler(ResourceHandler):
     resource_class = ReturnsIncorrectType
 
     @gen.coroutine
-    def items(self):
+    def items(self, **kwargs):
         return ["hello"]

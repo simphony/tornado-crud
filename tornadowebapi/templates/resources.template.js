@@ -34,13 +34,14 @@ define(['jquery'], function ($) {
     };
 
     var object_to_query_args = function (obj) {
-        var keys = obj.keys();
+        var keys = Object.keys(obj);
         if (keys.length === 0) {
             return "";
         }
 
         var result = [];
-        for (var key in keys) {
+        for (var idx in keys) {
+            var key = keys[idx];
             var value = obj[key];
             var key_enc = encodeURIComponent(key);
             if ($.isArray(value)) {
@@ -98,6 +99,7 @@ define(['jquery'], function ($) {
                     "api", "{{ api_version }}",
                     encode_uri_components(endpoint)
                 )+'/';
+
             if (query_args) {
                 url = url + "?" + object_to_query_args(query_args)
             }
@@ -107,13 +109,12 @@ define(['jquery'], function ($) {
     })();
 
     var Error = function(code, message) {
-        console.log("Creating error"+code);
+        console.log("Creating error "+code+" message: "+message);
         this.code = code;
         this.message = message;
     };
     
     var fail_handler = function(promise, jqXHR, textStatus, error) {
-        console.log("fail handler");
         var status = jqXHR.status;
         var payload = null;
         try {
@@ -132,11 +133,11 @@ define(['jquery'], function ($) {
     var Resource = function(type) {
         this.type = type;
         
-        this.create = function(representation) {
+        this.create = function(representation, query_args) {
             var body = JSON.stringify(representation);
             var promise = $.Deferred();
 
-            API.request("POST", type, body)
+            API.request("POST", type, body, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
                     
@@ -180,11 +181,11 @@ define(['jquery'], function ($) {
             
         };
         
-        this.update = function(id, representation) {
+        this.update = function(id, representation, query_args) {
             var body = JSON.stringify(representation);
             var promise = $.Deferred();
 
-            API.request("PUT", url_path_join(type, id), body)
+            API.request("PUT", url_path_join(type, id), body, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
 
@@ -218,10 +219,10 @@ define(['jquery'], function ($) {
 
         };
         
-        this.delete = function(id) {
+        this.delete = function(id, query_args) {
             var promise = $.Deferred();
             
-            API.request("DELETE", url_path_join(type, id))
+            API.request("DELETE", url_path_join(type, id), null, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
                     var payload = null;
@@ -249,10 +250,10 @@ define(['jquery'], function ($) {
             return promise;
         };
 
-        this.retrieve = function(id) {
+        this.retrieve = function(id, query_args) {
             var promise = $.Deferred();
             
-            API.request("GET", url_path_join(type, id))
+            API.request("GET", url_path_join(type, id), null, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
                     
@@ -290,10 +291,10 @@ define(['jquery'], function ($) {
             return promise;
         };
 
-        this.items = function() {
+        this.items = function(query_args) {
             var promise = $.Deferred();
             
-            API.request("GET", type)
+            API.request("GET", type, null, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
 
@@ -334,6 +335,7 @@ define(['jquery'], function ($) {
 
     return {
         {% for res in resources %}"{{ res['class_name'] }}" : new Resource("{{ res['collection_name'] }}"),
-        {% end %} };
+        {% end %} 
+    };
 });
 

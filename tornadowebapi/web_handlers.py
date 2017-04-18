@@ -149,12 +149,21 @@ class BaseWebHandler(web.RequestHandler):
         to this service.
         """
         ret = {}
-        arguments = self.request.arguments
+        arguments = self.request.query_arguments
 
         for key in arguments.keys():
-            ret[key] = self.get_query_arguments(key)
+            value = self.get_query_arguments(key)
+            # They are all lists. If they have one element, extract it
+            # and put it as the value. If they are empty, remove the key
+            if len(value) == 0:
+                continue
+            elif len(value) == 1:
+                ret[key] = value[0]
+            else:
+                ret[key] = value
 
         return ret
+
 
 
 class CollectionWebHandler(BaseWebHandler):
@@ -167,7 +176,7 @@ class CollectionWebHandler(BaseWebHandler):
         args = self._query_arguments_as_dict()
 
         with self.exceptions_to_http("get", collection_name):
-            items_response = yield res_handler.items(args)
+            items_response = yield res_handler.items(**args)
 
         # If it's a list, it's the full deal.
         # Convert it in a trivial ItemsResponse for ease of handling
@@ -249,7 +258,7 @@ class CollectionWebHandler(BaseWebHandler):
                 raise exceptions.BadRepresentation(
                     message="Missing mandatory elements: {}".format(absents))
 
-            resource_id = yield res_handler.create(resource, args)
+            resource_id = yield res_handler.create(resource, **args)
 
         self._check_none(resource_id,
                          "resource_id",
@@ -292,7 +301,7 @@ class ResourceWebHandler(BaseWebHandler):
                 res_handler.resource_class,
                 identifier,
                 None)
-            yield res_handler.retrieve(resource, args)
+            yield res_handler.retrieve(resource, **args)
 
             absents = resource_mod.mandatory_absents(resource)
             if len(absents) != 0:
@@ -337,7 +346,7 @@ class ResourceWebHandler(BaseWebHandler):
                 res_handler.resource_class,
                 identifier,
                 None)
-            exists = yield res_handler.exists(resource, args)
+            exists = yield res_handler.exists(resource, **args)
 
         if exists:
             raise web.HTTPError(httpstatus.CONFLICT)
@@ -385,7 +394,7 @@ class ResourceWebHandler(BaseWebHandler):
                 raise exceptions.BadRepresentation(
                     message="Missing mandatory elements: {}".format(absents))
 
-            yield res_handler.update(resource, args)
+            yield res_handler.update(resource, **args)
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
@@ -413,7 +422,7 @@ class ResourceWebHandler(BaseWebHandler):
                 res_handler.resource_class,
                 identifier,
                 None)
-            yield res_handler.delete(resource, args)
+            yield res_handler.delete(resource, **args)
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
