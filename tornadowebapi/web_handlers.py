@@ -165,7 +165,6 @@ class BaseWebHandler(web.RequestHandler):
         return ret
 
 
-
 class CollectionWebHandler(BaseWebHandler):
     """Handler for URLs addressing a collection.
     """
