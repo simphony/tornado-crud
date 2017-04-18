@@ -3,7 +3,7 @@ import urllib.parse
 from collections import OrderedDict
 from unittest import mock
 
-from tornado.testing import LogTrapTestCase, ExpectLog
+from tornado.testing import LogTrapTestCase
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.web_handlers import ResourceWebHandler, CollectionWebHandler
@@ -25,8 +25,6 @@ ALL_RESOURCES = (
     resource_handlers.TeacherHandler,
     resource_handlers.InvalidIdentifierHandler,
     resource_handlers.OurExceptionInvalidIdentifierHandler,
-    resource_handlers.ItemsReturnsStringHandler,
-    resource_handlers.ReturnsIncorrectTypeHandler
 )
 
 
@@ -430,24 +428,6 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
         res = self.fetch(collection_url, method="POST", body="{}")
         self.assertEqual(res.code, httpstatus.CONFLICT)
-
-    def test_items_returns_non_list(self):
-        collection_url = "/api/v1/itemsreturnsstrings/"
-
-        with ExpectLog("tornado.application", ".*not ItemsResponse or list.*"):
-            res = self.fetch(collection_url, method="GET")
-
-        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
-
-    def test_items_returns_incorrect_type(self):
-        collection_url = "/api/v1/returnsincorrecttypes/"
-
-        with ExpectLog(
-                "tornado.application",
-                ".*returned a list with objects different from.*"):
-            res = self.fetch(collection_url, method="GET")
-
-        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
     def test_items_with_arguments(self):
         collection_url = "/api/v1/students/?foo=bar&bar=baz&foo=meh"

@@ -20,4 +20,5 @@ class TestResourceHandler(AsyncTestCase):
         with self.assertRaises(NotImplementedError):
             yield handler.delete("")
 
-        self.assertEqual((yield handler.items()), [])
+        with self.assertRaises(NotImplementedError):
+            yield handler.items(Mock())

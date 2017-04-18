@@ -179,26 +179,9 @@ class CollectionWebHandler(BaseWebHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
         args = self.parsed_query_arguments()
 
+        items_response = ItemsResponse()
         with self.exceptions_to_http("get", collection_name):
-            items_response = yield res_handler.items(**args)
-
-        # If it's a list, it's the full deal.
-        # Convert it in a trivial ItemsResponse for ease of handling
-        if isinstance(items_response, list):
-            response = ItemsResponse()
-            response.items = items_response
-            response.index_first = 0
-            response.num_items = response.total_items = len(items_response)
-
-            items_response = response
-
-        if not isinstance(items_response, ItemsResponse):
-            self.log.error(
-                "Internal error during get operation on {}."
-                "items() returned {}, not ItemsResponse or list".format(
-                    collection_name,
-                    type(items_response)))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            yield res_handler.items(items_response, **args)
 
         for entry in items_response.items:
             if not isinstance(entry, res_handler.resource_class):
