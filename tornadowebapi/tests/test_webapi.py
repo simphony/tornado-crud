@@ -410,6 +410,12 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
         self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
+    def test_items_with_arguments(self):
+        collection_url = "/api/v1/students/?foo=bar&bar=baz&foo=meh"
+
+        res = self.fetch(collection_url, method="GET")
+        self.assertEqual(res.code, httpstatus.OK)
+
 
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):

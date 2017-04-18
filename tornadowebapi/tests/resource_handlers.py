@@ -46,7 +46,8 @@ class WorkingResourceHandler(ResourceHandler):
         del self.collection[instance.identifier]
 
     @gen.coroutine
-    def items(self):
+    def items(self, args):
+        print(args)
         return list(self.collection.values())
 
 

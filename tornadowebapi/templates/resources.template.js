@@ -32,6 +32,29 @@ define(['jquery'], function ($) {
         // leaving '/' separators
         return uri.split('/').map(encodeURIComponent).join('/');
     };
+
+    var object_to_query_args = function (obj) {
+        var keys = obj.keys();
+        if (keys.length === 0) {
+            return "";
+        }
+
+        var result = [];
+        for (var key in keys) {
+            var value = obj[key];
+            var key_enc = encodeURIComponent(key);
+            if ($.isArray(value)) {
+                for (var v in value) {
+                    result.push(key_enc+"="+encodeURIComponent(v))
+                }
+            } else {
+                result.push(key_enc+"="+encodeURIComponent(value))
+            }
+
+        }
+
+        return result.join("&");
+    };
     
     var parse_url = function (url) {
         // an `a` element with an href allows attr-access to the parsed segments of a URL
@@ -61,7 +84,7 @@ define(['jquery'], function ($) {
             error: null
         };
         
-        self.request = function (req_type, endpoint, body) {
+        self.request = function (req_type, endpoint, body, query_args) {
             // Performs a request to the final endpoint
             var options = {};
             update(options, self.default_options);
@@ -75,7 +98,9 @@ define(['jquery'], function ($) {
                     "api", "{{ api_version }}",
                     encode_uri_components(endpoint)
                 )+'/';
-
+            if (query_args) {
+                url = url + "?" + object_to_query_args(query_args)
+            }
             return $.ajax(url, options);
         };
         return self;
