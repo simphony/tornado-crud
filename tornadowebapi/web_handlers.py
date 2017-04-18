@@ -143,7 +143,7 @@ class BaseWebHandler(web.RequestHandler):
             else:
                 raise on_generic_raise
 
-    def _query_arguments_as_dict(self):
+    def parsed_query_arguments(self):
         """Converts the query arguments to a dict. This works around
         a limitation of tornado that does not provide a direct interface
         to this service.
@@ -162,6 +162,11 @@ class BaseWebHandler(web.RequestHandler):
             else:
                 ret[key] = value
 
+            # We consider these specials (as they are passed to items())
+            # and convert them to integers
+            if key in ["limit", "offset"]:
+                ret[key] = int(ret[key])
+
         return ret
 
 
@@ -172,7 +177,7 @@ class CollectionWebHandler(BaseWebHandler):
     def get(self, collection_name):
         """Returns the collection of available items"""
         res_handler = self.get_resource_handler_or_404(collection_name)
-        args = self._query_arguments_as_dict()
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("get", collection_name):
             items_response = yield res_handler.items(**args)
@@ -225,7 +230,7 @@ class CollectionWebHandler(BaseWebHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
         payload = self.request.body
-        args = self._query_arguments_as_dict()
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("post", collection_name):
             representation = transport.parser.parse(payload)
@@ -282,7 +287,7 @@ class ResourceWebHandler(BaseWebHandler):
         """Retrieves the resource representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
-        args = self._query_arguments_as_dict()
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("get",
                                      collection_name,
@@ -329,7 +334,7 @@ class ResourceWebHandler(BaseWebHandler):
         presence of a resource at the given URL"""
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
-        args = self._query_arguments_as_dict()
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("post",
                                      collection_name,
@@ -357,7 +362,7 @@ class ResourceWebHandler(BaseWebHandler):
         """Replaces the resource with a new representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
-        args = self._query_arguments_as_dict()
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("put",
                                      collection_name,
@@ -403,7 +408,7 @@ class ResourceWebHandler(BaseWebHandler):
         """Deletes the resource."""
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
-        args = self._query_arguments_as_dict()
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("delete",
                                      collection_name,

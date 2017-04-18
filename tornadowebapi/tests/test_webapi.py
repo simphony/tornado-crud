@@ -62,6 +62,45 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"items": ["1", "2", "3"]})
 
+    def test_items_with_query_params(self):
+        res = self.fetch("/api/v1/students/?limit=1")
+
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": []})
+
+        res = self.fetch("/api/v1/students/?offset=1")
+
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": []})
+
+        res = self.fetch("/api/v1/students/?offset=1&limit=1")
+
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": []})
+
+        handler = resource_handlers.StudentHandler
+        handler.collection[1] = handler.resource_class(identifier="1")
+        handler.collection[2] = handler.resource_class(identifier="2")
+        handler.collection[3] = handler.resource_class(identifier="3")
+
+        res = self.fetch("/api/v1/students/?limit=2")
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": ["1", "2"]})
+
+        res = self.fetch("/api/v1/students/?offset=1")
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": ["2", "3"]})
+
+        res = self.fetch("/api/v1/students/?offset=1&limit=1")
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"items": ["2"]})
+
     def test_create(self):
         res = self.fetch(
             "/api/v1/students/",
