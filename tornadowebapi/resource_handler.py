@@ -32,7 +32,7 @@ class ResourceHandler:
         self.log = log.app_log
 
     @gen.coroutine
-    def create(self, instance):
+    def create(self, instance, **kwargs):
         """Called to create a resource with the given data.
         The member is passed with an instance of Resource, pre-filled
         with the data from the passed (and decoded) payload.
@@ -66,7 +66,7 @@ class ResourceHandler:
         raise NotImplementedError()
 
     @gen.coroutine
-    def retrieve(self, instance):
+    def retrieve(self, instance, **kwargs):
         """Called to retrieve a specific resource given its
         identifier. Correspond to a GET operation on the resource URL.
 
@@ -98,7 +98,7 @@ class ResourceHandler:
         raise NotImplementedError()
 
     @gen.coroutine
-    def update(self, instance):
+    def update(self, instance, **kwargs):
         """Called to update (fully) a specific Resource given its
         identifier with new data. Correspond to a PUT operation on the
         Resource URL.
@@ -124,7 +124,7 @@ class ResourceHandler:
         raise NotImplementedError()
 
     @gen.coroutine
-    def delete(self, instance):
+    def delete(self, instance, **kwargs):
         """Called to delete a specific resource given its identifier.
         Corresponds to a DELETE operation on the resource URL.
 
@@ -150,7 +150,7 @@ class ResourceHandler:
         raise NotImplementedError()
 
     @gen.coroutine
-    def exists(self, instance):
+    def exists(self, instance, **kwargs):
         """Returns True if the resource with a given identifier
         exists. False otherwise.
 
@@ -171,7 +171,7 @@ class ResourceHandler:
         return True
 
     @gen.coroutine
-    def items(self):
+    def items(self, offset=None, limit=None, **kwargs):
         """Invoked when a request is performed to the collection
         URL. Returns a list of items, or a subset of the available
         items as a ItemsResponse instance.

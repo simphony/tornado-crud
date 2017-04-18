@@ -32,6 +32,30 @@ define(['jquery'], function ($) {
         // leaving '/' separators
         return uri.split('/').map(encodeURIComponent).join('/');
     };
+
+    var object_to_query_args = function (obj) {
+        var keys = Object.keys(obj);
+        if (keys.length === 0) {
+            return "";
+        }
+
+        var result = [];
+        for (var idx in keys) {
+            var key = keys[idx];
+            var value = obj[key];
+            var key_enc = encodeURIComponent(key);
+            if ($.isArray(value)) {
+                for (var v in value) {
+                    result.push(key_enc+"="+encodeURIComponent(v))
+                }
+            } else {
+                result.push(key_enc+"="+encodeURIComponent(value))
+            }
+
+        }
+
+        return result.join("&");
+    };
     
     var parse_url = function (url) {
         // an `a` element with an href allows attr-access to the parsed segments of a URL
@@ -61,7 +85,7 @@ define(['jquery'], function ($) {
             error: null
         };
         
-        self.request = function (req_type, endpoint, body) {
+        self.request = function (req_type, endpoint, body, query_args) {
             // Performs a request to the final endpoint
             var options = {};
             update(options, self.default_options);
@@ -76,19 +100,21 @@ define(['jquery'], function ($) {
                     encode_uri_components(endpoint)
                 )+'/';
 
+            if (query_args) {
+                url = url + "?" + object_to_query_args(query_args)
+            }
             return $.ajax(url, options);
         };
         return self;
     })();
 
     var Error = function(code, message) {
-        console.log("Creating error"+code);
+        console.log("Creating error "+code+" message: "+message);
         this.code = code;
         this.message = message;
     };
     
     var fail_handler = function(promise, jqXHR, textStatus, error) {
-        console.log("fail handler");
         var status = jqXHR.status;
         var payload = null;
         try {
@@ -107,11 +133,11 @@ define(['jquery'], function ($) {
     var Resource = function(type) {
         this.type = type;
         
-        this.create = function(representation) {
+        this.create = function(representation, query_args) {
             var body = JSON.stringify(representation);
             var promise = $.Deferred();
 
-            API.request("POST", type, body)
+            API.request("POST", type, body, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
                     
@@ -155,11 +181,11 @@ define(['jquery'], function ($) {
             
         };
         
-        this.update = function(id, representation) {
+        this.update = function(id, representation, query_args) {
             var body = JSON.stringify(representation);
             var promise = $.Deferred();
 
-            API.request("PUT", url_path_join(type, id), body)
+            API.request("PUT", url_path_join(type, id), body, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
 
@@ -193,10 +219,10 @@ define(['jquery'], function ($) {
 
         };
         
-        this.delete = function(id) {
+        this.delete = function(id, query_args) {
             var promise = $.Deferred();
             
-            API.request("DELETE", url_path_join(type, id))
+            API.request("DELETE", url_path_join(type, id), null, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
                     var payload = null;
@@ -224,10 +250,10 @@ define(['jquery'], function ($) {
             return promise;
         };
 
-        this.retrieve = function(id) {
+        this.retrieve = function(id, query_args) {
             var promise = $.Deferred();
             
-            API.request("GET", url_path_join(type, id))
+            API.request("GET", url_path_join(type, id), null, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
                     
@@ -265,10 +291,10 @@ define(['jquery'], function ($) {
             return promise;
         };
 
-        this.items = function() {
+        this.items = function(query_args) {
             var promise = $.Deferred();
             
-            API.request("GET", type)
+            API.request("GET", type, null, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
 
@@ -309,6 +335,7 @@ define(['jquery'], function ($) {
 
     return {
         {% for res in resources %}"{{ res['class_name'] }}" : new Resource("{{ res['collection_name'] }}"),
-        {% end %} };
+        {% end %} 
+    };
 });
 

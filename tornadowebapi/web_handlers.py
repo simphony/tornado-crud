@@ -143,6 +143,32 @@ class BaseWebHandler(web.RequestHandler):
             else:
                 raise on_generic_raise
 
+    def parsed_query_arguments(self):
+        """Converts the query arguments to a dict. This works around
+        a limitation of tornado that does not provide a direct interface
+        to this service.
+        """
+        ret = {}
+        arguments = self.request.query_arguments
+
+        for key in arguments.keys():
+            value = self.get_query_arguments(key)
+            # They are all lists. If they have one element, extract it
+            # and put it as the value. If they are empty, remove the key
+            if len(value) == 0:
+                continue
+            elif len(value) == 1:
+                ret[key] = value[0]
+            else:
+                ret[key] = value
+
+            # We consider these specials (as they are passed to items())
+            # and convert them to integers
+            if key in ["limit", "offset"]:
+                ret[key] = int(ret[key])
+
+        return ret
+
 
 class CollectionWebHandler(BaseWebHandler):
     """Handler for URLs addressing a collection.
@@ -151,9 +177,10 @@ class CollectionWebHandler(BaseWebHandler):
     def get(self, collection_name):
         """Returns the collection of available items"""
         res_handler = self.get_resource_handler_or_404(collection_name)
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("get", collection_name):
-            items_response = yield res_handler.items()
+            items_response = yield res_handler.items(**args)
 
         # If it's a list, it's the full deal.
         # Convert it in a trivial ItemsResponse for ease of handling
@@ -203,6 +230,7 @@ class CollectionWebHandler(BaseWebHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
         payload = self.request.body
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("post", collection_name):
             representation = transport.parser.parse(payload)
@@ -234,7 +262,7 @@ class CollectionWebHandler(BaseWebHandler):
                 raise exceptions.BadRepresentation(
                     message="Missing mandatory elements: {}".format(absents))
 
-            resource_id = yield res_handler.create(resource)
+            resource_id = yield res_handler.create(resource, **args)
 
         self._check_none(resource_id,
                          "resource_id",
@@ -259,6 +287,7 @@ class ResourceWebHandler(BaseWebHandler):
         """Retrieves the resource representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("get",
                                      collection_name,
@@ -276,7 +305,7 @@ class ResourceWebHandler(BaseWebHandler):
                 res_handler.resource_class,
                 identifier,
                 None)
-            yield res_handler.retrieve(resource)
+            yield res_handler.retrieve(resource, **args)
 
             absents = resource_mod.mandatory_absents(resource)
             if len(absents) != 0:
@@ -305,6 +334,7 @@ class ResourceWebHandler(BaseWebHandler):
         presence of a resource at the given URL"""
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("post",
                                      collection_name,
@@ -320,7 +350,7 @@ class ResourceWebHandler(BaseWebHandler):
                 res_handler.resource_class,
                 identifier,
                 None)
-            exists = yield res_handler.exists(resource)
+            exists = yield res_handler.exists(resource, **args)
 
         if exists:
             raise web.HTTPError(httpstatus.CONFLICT)
@@ -332,6 +362,7 @@ class ResourceWebHandler(BaseWebHandler):
         """Replaces the resource with a new representation."""
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("put",
                                      collection_name,
@@ -367,7 +398,7 @@ class ResourceWebHandler(BaseWebHandler):
                 raise exceptions.BadRepresentation(
                     message="Missing mandatory elements: {}".format(absents))
 
-            yield res_handler.update(resource)
+            yield res_handler.update(resource, **args)
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
@@ -377,6 +408,7 @@ class ResourceWebHandler(BaseWebHandler):
         """Deletes the resource."""
         res_handler = self.get_resource_handler_or_404(collection_name)
         transport = self._registry.transport
+        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http("delete",
                                      collection_name,
@@ -394,7 +426,7 @@ class ResourceWebHandler(BaseWebHandler):
                 res_handler.resource_class,
                 identifier,
                 None)
-            yield res_handler.delete(resource)
+            yield res_handler.delete(resource, **args)
 
         self.clear_header('Content-Type')
         self.set_status(httpstatus.NO_CONTENT)
