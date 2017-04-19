@@ -42,12 +42,13 @@ class TestTraitlets(unittest.TestCase):
     def test_unicode_strip_and_empty(self):
         self.probe.us = "  hello "
         self.assertEqual(self.probe.us, "hello")
+        with self.assertRaises(TraitError):
+            self.probe.us = 4
 
         with self.assertRaises(TraitError):
             self.probe.ue = ""
 
         self.probe.ue = " "
         self.assertEqual(self.probe.ue, " ")
-
         with self.assertRaises(TraitError):
             self.probe.use = "   "
