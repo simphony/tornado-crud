@@ -15,6 +15,31 @@ class Resource(BaseResource):
         when creating.
         If False, the information must be present, or an error
         BadRepresentation will be raised.
+    - scope
+        string, default "both"
+        Expresses the scope of the trait information. It accepts
+        three values
+
+            - "input": the trait is only relevant for the input representation
+              and will be parsed, according to the other metadata, only during
+              input operations. During output, the trait will not be present
+              in the resulting representation, if specified.
+            - "output": the trait is only relevant for the output
+              representation. If specified during an input operation, it will
+              be ignored.
+            - "both": the default. The trait is relevant both in input and
+              output, and will be parsed and checked both at input and output.
+
+        Typical uses of scopes are:
+
+            - you want to specify "readonly" information in your resource
+              that you are not able to modify, but the server can return
+              anyway. Example: the state of an operation. In that case, use
+              "output"
+
+            - you want to specify information that the client can specify,
+              but the server does not want to (or cannot) return anymore.
+
 
     The resource is always identified via its collection name, and
     its identifier. Both will end up in the URL, like so
