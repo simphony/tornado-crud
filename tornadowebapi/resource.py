@@ -1,7 +1,8 @@
-from tornadowebapi.traitlets import HasTraits, Absent
+from tornadowebapi.base_resource import BaseResource
+from tornadowebapi.traitlets import Absent, OneOf
 
 
-class Resource(HasTraits):
+class Resource(BaseResource):
     """A model representing a resource in our system.
     Must be reimplemented for the specific resource in our domain,
     as well as specifying its properties with traitlets.
@@ -60,6 +61,10 @@ def mandatory_absents(resource):
         if (getattr(resource, trait_name) == Absent and not
                 trait_class.metadata.get("optional", False)):
             res.add(trait_name)
+        elif isinstance(trait_class, OneOf):
+            res.update([
+                ".".join([trait_name, x]) for x in mandatory_absents(
+                    getattr(resource, trait_name))])
 
     return res
 
