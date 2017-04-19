@@ -11,6 +11,7 @@ are only enforced when creating new resources or setting from scratch."""
 import traitlets as _traitlets
 
 HasTraits = _traitlets.HasTraits
+TraitError = _traitlets.TraitError
 Absent = _traitlets.Sentinel("Absent", "tornadowebapi.traitlets")
 
 
@@ -28,10 +29,34 @@ class Int(_traitlets.Int):
 class Unicode(_traitlets.Unicode):
     default_value = Absent
 
+    def info(self):
+        qualifiers = []
+        if self.get_metadata("strip", False):
+            qualifiers.append("strip")
+
+        if not self.get_metadata("allow_empty", True):
+            qualifiers.append("not empty")
+
+        text = ", ".join(qualifiers)
+
+        if len(text):
+            return self.info_text + "("+text+")"
+        else:
+            return self.info_text
+
     def validate(self, obj, value):
         if value == Absent:
             return value
-        return super().validate(obj, value)
+
+        value = super().validate(obj, value)
+
+        if self.get_metadata("strip", False):
+            value = value.strip()
+
+        if not self.get_metadata("allow_empty", True) and len(value) == 0:
+            self.error(obj, value)
+
+        return value
 
 
 class Bool(_traitlets.Bool):
