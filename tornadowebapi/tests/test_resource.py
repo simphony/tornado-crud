@@ -2,7 +2,7 @@ import unittest
 
 from tornadowebapi.resource_fragment import ResourceFragment
 from tornadowebapi.resource import Resource, mandatory_absents, is_valid
-from tornadowebapi.traitlets import Int, Unicode, OneOf
+from tornadowebapi.traitlets import Int, Unicode, OneOf, Absent
 
 
 class Student(Resource):
@@ -94,3 +94,16 @@ class TestResource(unittest.TestCase):
         self.assertIsInstance(t2.classroom, Classroom)
         self.assertEqual(t2.classroom.floor, 3)
         self.assertEqual(t2.classroom.name, "Chemistry lab")
+
+    def test_absent(self):
+        t = Teacher("1")
+        t.fill({
+            "classroom": {
+                "floor": 3,
+            }
+        })
+
+        self.assertEqual(t.name, Absent)
+        self.assertIsInstance(t.classroom, Classroom)
+        self.assertEqual(t.classroom.floor, 3)
+        self.assertEqual(t.classroom.name, Absent)
