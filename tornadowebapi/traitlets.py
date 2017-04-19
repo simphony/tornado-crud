@@ -31,10 +31,10 @@ class Unicode(_traitlets.Unicode):
 
     def info(self):
         qualifiers = []
-        if self.get_metadata("strip", False):
+        if self.metadata.get("strip", False):
             qualifiers.append("strip")
 
-        if not self.get_metadata("allow_empty", True):
+        if not self.metadata.get("allow_empty", True):
             qualifiers.append("not empty")
 
         text = ", ".join(qualifiers)
@@ -50,10 +50,10 @@ class Unicode(_traitlets.Unicode):
 
         value = super().validate(obj, value)
 
-        if self.get_metadata("strip", False):
+        if self.metadata.get("strip", False):
             value = value.strip()
 
-        if not self.get_metadata("allow_empty", True) and len(value) == 0:
+        if not self.metadata.get("allow_empty", True) and len(value) == 0:
             self.error(obj, value)
 
         return value
