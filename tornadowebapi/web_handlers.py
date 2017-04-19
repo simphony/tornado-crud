@@ -2,6 +2,7 @@ import contextlib
 
 from tornado import gen, web, template
 from tornado.log import app_log
+from tornadowebapi.traitlets import TraitError
 
 from . import resource as resource_mod
 from . import exceptions
@@ -223,11 +224,14 @@ class CollectionWebHandler(BaseWebHandler):
                              collection_name))
 
         with self.exceptions_to_http("post", collection_name):
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                None,
-                representation,
-            )
+            try:
+                resource = transport.deserializer.deserialize_resource(
+                    res_handler.resource_class,
+                    None,
+                    representation,
+                )
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=e.message)
 
             absents = resource_mod.mandatory_absents(resource)
             if len(absents) != 0:
@@ -273,10 +277,14 @@ class ResourceWebHandler(BaseWebHandler):
         with self.exceptions_to_http("get",
                                      collection_name,
                                      identifier):
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                identifier,
-                None)
+            try:
+                resource = transport.deserializer.deserialize_resource(
+                    res_handler.resource_class,
+                    identifier,
+                    None)
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=e.message)
+
             yield res_handler.retrieve(resource, **args)
 
             absents = resource_mod.mandatory_absents(resource)
@@ -318,10 +326,14 @@ class ResourceWebHandler(BaseWebHandler):
         self._check_none(identifier, "identifier", "preprocess_identifier")
 
         with self.exceptions_to_http("post", collection_name, identifier):
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                identifier,
-                None)
+            try:
+                resource = transport.deserializer.deserialize_resource(
+                    res_handler.resource_class,
+                    identifier,
+                    None)
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=e.message)
+
             exists = yield res_handler.exists(resource, **args)
 
         if exists:
@@ -353,10 +365,13 @@ class ResourceWebHandler(BaseWebHandler):
                                      collection_name,
                                      identifier,
                                      on_generic_raise=on_generic_raise):
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                identifier,
-                transport.parser.parse(self.request.body))
+            try:
+                resource = transport.deserializer.deserialize_resource(
+                    res_handler.resource_class,
+                    identifier,
+                    transport.parser.parse(self.request.body))
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=e.message)
 
         self._check_none(resource,
                          "representation",
@@ -394,10 +409,13 @@ class ResourceWebHandler(BaseWebHandler):
         with self.exceptions_to_http("delete",
                                      collection_name,
                                      identifier):
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                identifier,
-                None)
+            try:
+                resource = transport.deserializer.deserialize_resource(
+                    res_handler.resource_class,
+                    identifier,
+                    None)
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=e.message)
             yield res_handler.delete(resource, **args)
 
         self.clear_header('Content-Type')
