@@ -65,13 +65,17 @@ class Registry:
         TypeError:
             if typ is not a subclass of Resource
         """
-        if not issubclass(handler, ResourceHandler):
+        if handler is None or not issubclass(handler, ResourceHandler):
             raise TypeError("handler must be a subclass of ResourceHandler")
 
         resource_class = handler.resource_class
 
-        if not issubclass(resource_class, Resource):
-            raise TypeError("resource_class must be a subtype of Resource")
+        if resource_class is None or not issubclass(resource_class, Resource):
+            raise TypeError(
+                "resource_class for handler {} must be a "
+                "subtype of Resource. Found {}".format(
+                    handler,
+                    resource_class))
 
         collection_name = resource_class.collection_name()
         if collection_name in self._registered_handlers:
