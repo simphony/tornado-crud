@@ -128,6 +128,16 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"items": ['0', '1']})
 
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "name": "john wick",
+                "age": "hello",
+            })
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
     def test_retrieve(self):
         res = self.fetch(
             "/api/v1/students/",
@@ -201,6 +211,16 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "name": "john wick",
                              "age": 19,
                          })
+
+        res = self.fetch(
+            location,
+            method="PUT",
+            body=escape.json_encode({
+                "name": "john wick",
+                "age": "hello",
+            })
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
         res = self.fetch(
             "/api/v1/students/1/",
