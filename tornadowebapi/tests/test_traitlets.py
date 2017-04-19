@@ -1,7 +1,7 @@
 import unittest
 
 from tornadowebapi.traitlets import (
-    HasTraits, Int, Absent, Unicode, Dict, List, Float, Bool)
+    HasTraits, Int, Absent, Unicode, Dict, List, Float, Bool, TraitError)
 
 
 class ProbingTable(HasTraits):
@@ -11,6 +11,9 @@ class ProbingTable(HasTraits):
     d = Dict()
     b = Bool()
     u = Unicode()
+    us = Unicode(strip=True)
+    use = Unicode(strip=True, allow_empty=False)
+    ue = Unicode(allow_empty=False)
 
 
 class TestTraitlets(unittest.TestCase):
@@ -35,3 +38,16 @@ class TestTraitlets(unittest.TestCase):
             self.assertEqual(getattr(self.probe, trait_name), value)
             setattr(self.probe, trait_name, Absent)
             self.assertEqual(getattr(self.probe, trait_name), Absent)
+
+    def test_unicode_strip_and_empty(self):
+        self.probe.us = "  hello "
+        self.assertEqual(self.probe.us, "hello")
+
+        with self.assertRaises(TraitError):
+            self.probe.ue = ""
+
+        self.probe.ue = " "
+        self.assertEqual(self.probe.ue, " ")
+
+        with self.assertRaises(TraitError):
+            self.probe.use = "   "
