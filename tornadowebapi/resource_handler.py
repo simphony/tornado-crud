@@ -171,24 +171,28 @@ class ResourceHandler:
         return True
 
     @gen.coroutine
-    def items(self, offset=None, limit=None, **kwargs):
+    def items(self, items_response, offset=None, limit=None, **kwargs):
         """Invoked when a request is performed to the collection
-        URL. Returns a list of items, or a subset of the available
-        items as a ItemsResponse instance.
+        URL. Passes an empty items_response object that must be filled
+        with the relevant information.
         Corresponds to a GET operation on the collection URL.
 
-        Returns
-        -------
-        list or ItemsResponse
-            The list of available items, or an ItemsResponse instance
-            with the details of the sublist of presented items.
+        Parameters
+        ----------
+        items_response: ItemsResponse
+            An ItemsResponse instance with the details of the sublist
+            of presented items.
+        offset: int or None
+            The offset requested in as a query argument.
+        limit: int or None
+            The maximum amount of elements to return.
 
         Raises
         ------
         NotImplementedError:
             If the resource collection does not support the method.
         """
-        return []
+        raise NotImplementedError()
 
     def preprocess_representation(self, representation):
         """Hook that inserts after the parsing and before the deserializer.

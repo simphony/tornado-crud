@@ -46,22 +46,22 @@ class WorkingResourceHandler(ResourceHandler):
         del self.collection[instance.identifier]
 
     @gen.coroutine
-    def items(self, offset=None, limit=None, **kwargs):
+    def items(self, items_response, offset=None, limit=None, **kwargs):
         if offset is None:
             offset = 0
 
-        start = int(offset)
+        start = offset
 
         if limit is None:
             end = None
         else:
-            end = start + int(limit)
+            end = start + limit
 
         interval = slice(start, end)
         values = list(self.collection.values())
-        print(interval)
-        print(len(values))
-        return values[interval]
+        items_response.set(values[interval],
+                           offset=start,
+                           total=len(values))
 
 
 class Student(Resource):
@@ -111,7 +111,7 @@ class UnprocessableHandler(ResourceHandler):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def items(self, offset=None, limit=None, **kwargs):
+    def items(self, items_response, offset=None, limit=None, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
 
@@ -123,7 +123,7 @@ class UnsupportsCollectionHandler(ResourceHandler):
     resource_class = UnsupportsCollection
 
     @gen.coroutine
-    def items(self, offset=None, limit=None, **kwargs):
+    def items(self, items_response, offset=None, limit=None, **kwargs):
         raise NotImplementedError()
 
 
@@ -257,27 +257,3 @@ class FrobnicatorHandler(ResourceHandler):
 
 class WrongClassHandler(ResourceHandler):
     resource_class = str
-
-
-class ItemsReturnsString(Resource):
-    pass
-
-
-class ItemsReturnsStringHandler(ResourceHandler):
-    resource_class = ItemsReturnsString
-
-    @gen.coroutine
-    def items(self, **kwargs):
-        return "hello"
-
-
-class ReturnsIncorrectType(Resource):
-    pass
-
-
-class ReturnsIncorrectTypeHandler(ResourceHandler):
-    resource_class = ReturnsIncorrectType
-
-    @gen.coroutine
-    def items(self, **kwargs):
-        return ["hello"]

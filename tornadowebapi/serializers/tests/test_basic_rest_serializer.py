@@ -8,6 +8,7 @@ from tornadowebapi.tests.resource_handlers import Student, Teacher
 class TestBasicRESTSerializer(unittest.TestCase):
     def test_serialize_items_response(self):
         students = ItemsResponse(
+            type=Student,
             items=[
                 Student(identifier="1"),
                 Student(identifier="2"),
