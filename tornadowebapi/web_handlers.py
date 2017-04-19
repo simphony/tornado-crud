@@ -234,14 +234,14 @@ class CollectionWebHandler(BaseWebHandler):
                 raise exceptions.BadRepresentation(
                     message="Missing mandatory elements: {}".format(absents))
 
-            resource_id = yield res_handler.create(resource, **args)
+            yield res_handler.create(resource, **args)
 
-        self._check_none(resource_id,
+        self._check_none(resource.identifier,
                          "resource_id",
                          "{}.create()".format(collection_name))
 
         location = with_end_slash(
-            url_path_join(self.request.full_url(), str(resource_id)))
+            url_path_join(self.request.full_url(), str(resource.identifier)))
 
         self.set_status(httpstatus.CREATED)
         self.set_header("Location", location)

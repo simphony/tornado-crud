@@ -37,8 +37,7 @@ class ResourceHandler:
         The member is passed with an instance of Resource, pre-filled
         with the data from the passed (and decoded) payload.
         This member should be responsible for storing or acting on the
-        request and returning an identifier for persistence of the
-        resource.
+        request, and finally setting the resource.identifier value.
 
         Correspond to a POST operation on the resource collection.
 
@@ -47,13 +46,12 @@ class ResourceHandler:
         instance: Resource
             An instance of the associated resource_class, pre-filled
             with the data from the payload of the HTTP request.
-            The identifier of this resource will be None.
+            The identifier of this resource will be None, and it must be
+            filled by the routine with a str value.
 
         Returns
         -------
-        identifier: str
-            An identifier identifying the newly created resource.
-            It must be unique within the collection.
+        None
 
         Raises
         ------
