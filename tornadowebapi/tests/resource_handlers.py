@@ -59,10 +59,9 @@ class WorkingResourceHandler(ResourceHandler):
 
         interval = slice(start, end)
         values = list(self.collection.values())
-        items_response.items = values[interval]
-        items_response.offset = start
-        items_response.limit = len(items_response.items)
-        items_response.total = len(values)
+        items_response.set(values[interval],
+                           offset=start,
+                           total=len(values))
 
 
 class Student(Resource):

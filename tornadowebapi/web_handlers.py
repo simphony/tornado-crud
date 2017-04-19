@@ -179,21 +179,10 @@ class CollectionWebHandler(BaseWebHandler):
         res_handler = self.get_resource_handler_or_404(collection_name)
         args = self.parsed_query_arguments()
 
-        items_response = ItemsResponse()
+        items_response = ItemsResponse(res_handler.resource_class)
+
         with self.exceptions_to_http("get", collection_name):
             yield res_handler.items(items_response, **args)
-
-        for entry in items_response.items:
-            if not isinstance(entry, res_handler.resource_class):
-                self.log.error(
-                    "Internal error during get operation on {}. "
-                    "items() returned a list with objects different from "
-                    "the declared type. Got {} instead of {}".format(
-                        collection_name,
-                        entry.__class__,
-                        res_handler.resource_class
-                    ))
-                raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
 
         self.set_status(httpstatus.OK)
         # Need to convert into a dict for security issue tornado/1009
