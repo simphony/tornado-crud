@@ -182,6 +182,10 @@ class ResourceHandler:
         items_response: ItemsResponse
             An ItemsResponse instance with the details of the sublist
             of presented items.
+        offset: int or None
+            The offset requested in as a query argument.
+        limit: int or None
+            The maximum amount of elements to return.
 
         Raises
         ------
