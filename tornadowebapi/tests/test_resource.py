@@ -76,3 +76,21 @@ class TestResource(unittest.TestCase):
         self.assertIsInstance(t.classroom, Classroom)
         self.assertEqual(t.classroom.floor, 3)
         self.assertEqual(t.classroom.name, "Chemistry lab")
+
+    def test_fill_with_object(self):
+        t1 = Teacher("1")
+        t1.fill({
+            "name": "Mr. Stevens",
+            "classroom": {
+                "floor": 3,
+                "name": "Chemistry lab"
+            }
+        })
+
+        t2 = Teacher("2")
+        t2.fill(t1)
+
+        self.assertEqual(t2.name, "Mr. Stevens")
+        self.assertIsInstance(t2.classroom, Classroom)
+        self.assertEqual(t2.classroom.floor, 3)
+        self.assertEqual(t2.classroom.name, "Chemistry lab")
