@@ -70,3 +70,15 @@ class Dict(_traitlets.Dict):
         if value == Absent:
             return value
         return super().validate(obj, value)
+
+
+class OneOf(_traitlets.Instance):
+    """Marks a one to one relationship with a resource or resourcefragment."""
+    def make_dynamic_default(self):
+        return Absent
+
+    def validate(self, obj, value):
+        if value == Absent:
+            return value
+
+        return super().validate(obj, value)
