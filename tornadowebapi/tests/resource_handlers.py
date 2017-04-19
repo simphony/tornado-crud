@@ -20,7 +20,6 @@ class WorkingResourceHandler(ResourceHandler):
         self.collection[str(id)] = instance
         instance.identifier = str(id)
         type(self).id += 1
-        return id
 
     @gen.coroutine
     def retrieve(self, instance, **kwargs):
