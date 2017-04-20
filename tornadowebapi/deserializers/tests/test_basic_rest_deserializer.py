@@ -1,7 +1,8 @@
 import unittest
 
 from tornadowebapi.deserializers import BasicRESTDeserializer
-from tornadowebapi.tests.resource_handlers import Student, Teacher
+from tornadowebapi.tests.resource_handlers import Student, Teacher, Person, \
+    City
 from tornadowebapi.traitlets import Absent
 
 
@@ -48,3 +49,22 @@ class TestBasicRESTDeserializer(unittest.TestCase):
         self.assertEqual(res.identifier, "1")
         self.assertEqual(res.name, "john wick")
         self.assertEqual(res.discipline, ["chem", "phys"])
+
+    def test_deserialize_with_fragment(self):
+        data = {
+            "name": "Cambridge",
+            "mayor": {
+                "name": "Jeremy Benstead",
+                "age": 50
+            }
+        }
+
+        deserializer = BasicRESTDeserializer()
+        result = deserializer.deserialize_resource(City, "1", data)
+
+        self.assertIsInstance(result, City)
+        self.assertEqual(result.identifier, "1")
+        self.assertEqual(result.name, "Cambridge")
+        self.assertIsInstance(result.mayor, Person)
+        self.assertEqual(result.mayor.name, "Jeremy Benstead")
+        self.assertEqual(result.mayor.age, 50)

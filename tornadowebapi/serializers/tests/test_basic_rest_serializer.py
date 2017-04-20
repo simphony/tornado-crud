@@ -2,7 +2,8 @@ import unittest
 
 from tornadowebapi.items_response import ItemsResponse
 from tornadowebapi.serializers import BasicRESTSerializer
-from tornadowebapi.tests.resource_handlers import Student, Teacher
+from tornadowebapi.tests.resource_handlers import Student, Teacher, City, \
+    Person
 
 
 class TestBasicRESTSerializer(unittest.TestCase):
@@ -47,6 +48,27 @@ class TestBasicRESTSerializer(unittest.TestCase):
             serializer.serialize_resource(teacher),
             {"name": "john wick",
              "age": 39})
+
+    def test_serialize_with_fragment(self):
+        resource = City(
+            identifier="1",
+            name="Cambridge",
+            mayor=Person(
+                name="Jeremy Benstead",
+                age=50,
+            )
+        )
+
+        serializer = BasicRESTSerializer()
+        result = serializer.serialize_resource(resource)
+        self.assertEqual(result,
+                         {
+                             "name": "Cambridge",
+                             "mayor": {
+                                 "name": "Jeremy Benstead",
+                                 "age": 50
+                             }
+                         })
 
     def test_serialize_non_webapi_exception(self):
         serializer = BasicRESTSerializer()
