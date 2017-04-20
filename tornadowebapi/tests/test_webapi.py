@@ -128,12 +128,23 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"items": ['0', '1']})
 
+        # incorrect value for age
         res = self.fetch(
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
                 "name": "john wick",
                 "age": "hello",
+            })
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        # Missing mandatory entry
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "name": "john wick",
             })
         )
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)

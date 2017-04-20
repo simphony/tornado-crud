@@ -125,3 +125,6 @@ class TestResource(unittest.TestCase):
 
         self.assertEqual(mandatory_absents(j, "output"),
                          {"command", "status"})
+
+        with self.assertRaises(ValueError):
+            mandatory_absents(j, "whatever")
