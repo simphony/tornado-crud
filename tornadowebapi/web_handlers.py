@@ -129,7 +129,8 @@ class BaseWebHandler(web.RequestHandler):
                 raise exceptions.Unable()
             else:
                 # Should never get here, because mandatory_absents does it too.
-                raise ValueError("scope must be either input or output")
+                raise ValueError(
+                    "scope must be either input or output")  # pragma: no cover
 
     @contextlib.contextmanager
     def exceptions_to_http(self,
