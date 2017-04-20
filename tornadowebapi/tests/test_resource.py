@@ -21,6 +21,14 @@ class Teacher(Resource):
     classroom = OneOf(Classroom)
 
 
+class Job(Resource):
+    command = Unicode()
+    params = Unicode(scope="input")
+    max_secs = Int(scope="input", optional=True)
+    status = Unicode(scope="output")
+    elapsed_secs = Int(scope="output", optional=True)
+
+
 class TestResource(unittest.TestCase):
     def test_instantiation(self):
         s = Student("1")
@@ -29,38 +37,39 @@ class TestResource(unittest.TestCase):
     def test_mandatory_absents(self):
         s = Student("1")
         self.assertEqual(
-            mandatory_absents(s),
+            mandatory_absents(s, "input"),
             {"name", "age"})
-        self.assertFalse(is_valid(s))
+        self.assertFalse(is_valid(s, "input"))
 
         s.age = 15
 
         self.assertEqual(
-            mandatory_absents(s),
+            mandatory_absents(s, "input"),
             {"name"})
-        self.assertFalse(is_valid(s))
+        self.assertFalse(is_valid(s, "input"))
 
         s.name = "hello"
 
         self.assertEqual(
-            mandatory_absents(s),
+            mandatory_absents(s, "input"),
             set())
-        self.assertTrue(is_valid(s))
+        self.assertTrue(is_valid(s, "input"))
 
         s.identifier = None
-        self.assertFalse(is_valid(s))
+        self.assertFalse(is_valid(s, "input"))
 
     def test_mandatory_absents_with_fragments(self):
         t = Teacher("1")
-        self.assertEqual(mandatory_absents(t), {"name", "classroom"})
+        self.assertEqual(mandatory_absents(t, "input"), {"name", "classroom"})
 
         t.classroom = Classroom()
-        self.assertEqual(mandatory_absents(t), {"name", "classroom.floor"})
+        self.assertEqual(mandatory_absents(t, "input"),
+                         {"name", "classroom.floor"})
 
         t.name = "Mr. Stevens"
         t.classroom.floor = 3
 
-        self.assertEqual(mandatory_absents(t), set())
+        self.assertEqual(mandatory_absents(t, "input"), set())
 
     def test_fill(self):
         t = Teacher("1")
@@ -107,3 +116,12 @@ class TestResource(unittest.TestCase):
         self.assertIsInstance(t.classroom, Classroom)
         self.assertEqual(t.classroom.floor, 3)
         self.assertEqual(t.classroom.name, Absent)
+
+    def test_scopes(self):
+        j = Job("1")
+
+        self.assertEqual(mandatory_absents(j, "input"),
+                         {"command", "params"})
+
+        self.assertEqual(mandatory_absents(j, "output"),
+                         {"command", "status"})

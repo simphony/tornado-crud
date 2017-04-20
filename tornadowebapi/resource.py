@@ -78,27 +78,33 @@ class Resource(BaseResource):
 
 # Not as members because we want to prevent collisions with actual
 # resource subclass traits.
-def mandatory_absents(resource):
+def mandatory_absents(resource, scope):
     """Returns a set of the trait names that are mandatory, but do not
     have a specified value (i.e. they are Absent)."""
+    if scope not in ["input", "output"]:
+        raise ValueError("Scope must be either input or output")
+
     res = set()
-    for trait_name, trait_class in resource.traits().items():
-        if (getattr(resource, trait_name) == Absent and not
-                trait_class.metadata.get("optional", False)):
+    for trait_name, trait in resource.traits().items():
+        if trait.metadata.get("scope", scope) != scope:
+            continue
+
+        trait_optional = trait.metadata.get("optional", False)
+        if getattr(resource, trait_name) == Absent and not trait_optional:
             res.add(trait_name)
-        elif isinstance(trait_class, OneOf):
+        elif isinstance(trait, OneOf):
             res.update([
                 ".".join([trait_name, x]) for x in mandatory_absents(
-                    getattr(resource, trait_name))])
+                    getattr(resource, trait_name), scope)])
 
     return res
 
 
-def is_valid(resource):
+def is_valid(resource, scope):
     """Returns True if the resource is valid, False otherwise.
     Validity is defined as follows:
         - identifier is not None
         - mandatory_absents is empty
     """
     return (resource.identifier is not None and
-            len(mandatory_absents(resource)) == 0)
+            len(mandatory_absents(resource, scope)) == 0)

@@ -107,7 +107,22 @@ class BaseWebHandler(web.RequestHandler):
                     entity_name=entity_name,
                     culprit_routine=culprit_routine
                 ))
-            raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            raise exceptions.Unable()
+
+    def _check_resource_sanity(self, resource, scope):
+        absents = resource_mod.mandatory_absents(resource, scope)
+        if len(absents) != 0:
+            if scope == "input":
+                raise exceptions.BadRepresentation(
+                    message="Missing mandatory elements: {}".format(absents))
+            elif scope == "output":
+                self.log.error(
+                    "Returned resource {} had missing mandatory elements "
+                    "in get: {}".format(resource, absents)
+                    )
+                raise exceptions.Unable()
+            else:
+                raise ValueError("scope must be either input or output")
 
     @contextlib.contextmanager
     def exceptions_to_http(self,
@@ -218,10 +233,10 @@ class CollectionWebHandler(BaseWebHandler):
             representation = res_handler.preprocess_representation(
                 representation)
 
-        self._check_none(representation,
-                         "representation",
-                         "{}.preprocess_representation".format(
-                             collection_name))
+            self._check_none(representation,
+                             "representation",
+                             "{}.preprocess_representation".format(
+                                 collection_name))
 
         with self.exceptions_to_http("post", collection_name):
             try:
@@ -233,16 +248,13 @@ class CollectionWebHandler(BaseWebHandler):
             except TraitError as e:
                 raise exceptions.BadRepresentation(message=str(e))
 
-            absents = resource_mod.mandatory_absents(resource)
-            if len(absents) != 0:
-                raise exceptions.BadRepresentation(
-                    message="Missing mandatory elements: {}".format(absents))
+            self._check_resource_sanity(resource, "input")
 
             yield res_handler.create(resource, **args)
 
-        self._check_none(resource.identifier,
-                         "resource_id",
-                         "{}.create()".format(collection_name))
+            self._check_none(resource.identifier,
+                             "resource_id",
+                             "{}.create()".format(collection_name))
 
         location = with_end_slash(
             url_path_join(self.request.full_url(), str(resource.identifier)))
@@ -272,28 +284,17 @@ class ResourceWebHandler(BaseWebHandler):
                                          httpstatus.NOT_FOUND)):
             identifier = res_handler.preprocess_identifier(identifier)
 
-        self._check_none(identifier, "identifier", "preprocess_identifier")
-
-        with self.exceptions_to_http("get",
-                                     collection_name,
-                                     identifier):
+        with self.exceptions_to_http("get", collection_name, identifier):
             resource = transport.deserializer.deserialize_resource(
                 res_handler.resource_class,
                 identifier,
                 None)
 
+            self._check_none(identifier, "identifier", "preprocess_identifier")
+
             yield res_handler.retrieve(resource, **args)
 
-            absents = resource_mod.mandatory_absents(resource)
-            if len(absents) != 0:
-                self.log.error(
-                    "Returned resource {} {} had missing mandatory elements "
-                    "in get: {}".format(
-                        collection_name,
-                        identifier,
-                        absents
-                    ))
-                raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
+            self._check_resource_sanity(resource, "output")
 
         self.set_status(httpstatus.OK)
         transport = self._registry.transport
@@ -320,9 +321,9 @@ class ResourceWebHandler(BaseWebHandler):
                                          httpstatus.NOT_FOUND)):
             identifier = res_handler.preprocess_identifier(identifier)
 
-        self._check_none(identifier, "identifier", "preprocess_identifier")
-
         with self.exceptions_to_http("post", collection_name, identifier):
+            self._check_none(identifier, "identifier", "preprocess_identifier")
+
             resource = transport.deserializer.deserialize_resource(
                 res_handler.resource_class,
                 identifier,
@@ -349,8 +350,6 @@ class ResourceWebHandler(BaseWebHandler):
                                          httpstatus.NOT_FOUND)):
             identifier = res_handler.preprocess_identifier(identifier)
 
-        self._check_none(identifier, "identifier", "preprocess_identifier")
-
         on_generic_raise = self.to_http_exception(
             exceptions.BadRepresentation(
                 "Generic exception during preprocessing of {}".format(
@@ -359,6 +358,8 @@ class ResourceWebHandler(BaseWebHandler):
                                      collection_name,
                                      identifier,
                                      on_generic_raise=on_generic_raise):
+            self._check_none(identifier, "identifier", "preprocess_identifier")
+
             try:
                 resource = transport.deserializer.deserialize_resource(
                     res_handler.resource_class,
@@ -367,17 +368,14 @@ class ResourceWebHandler(BaseWebHandler):
             except TraitError as e:
                 raise exceptions.BadRepresentation(message=str(e))
 
-        self._check_none(resource,
-                         "representation",
-                         "preprocess_representation")
+            self._check_none(resource,
+                             "representation",
+                             "preprocess_representation")
 
         with self.exceptions_to_http("put",
                                      collection_name,
                                      identifier):
-            absents = resource_mod.mandatory_absents(resource)
-            if len(absents) != 0:
-                raise exceptions.BadRepresentation(
-                    message="Missing mandatory elements: {}".format(absents))
+            self._check_resource_sanity(resource, "input")
 
             yield res_handler.update(resource, **args)
 
