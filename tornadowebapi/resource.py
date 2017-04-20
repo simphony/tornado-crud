@@ -80,7 +80,17 @@ class Resource(BaseResource):
 # resource subclass traits.
 def mandatory_absents(resource, scope):
     """Returns a set of the trait names that are mandatory, but do not
-    have a specified value (i.e. they are Absent)."""
+    have a specified value (i.e. they are Absent).
+
+    Parameters
+    ----------
+    resource: Resource or ResourceFragment
+        The resource to check
+    scope: str
+        Valid values are "input" and "output". Perform the check as if the
+        resource is primed for an input operation (e.g. coming in as a POST or
+        PUT) or for an output one (e.g. a GET)
+    """
     if scope not in ["input", "output"]:
         raise ValueError("Scope must be either input or output")
 
