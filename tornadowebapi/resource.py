@@ -16,9 +16,9 @@ class Resource(BaseResource):
         If False, the information must be present, or an error
         BadRepresentation will be raised.
     - scope
-        string, default "both"
-        Expresses the scope of the trait information. It accepts
-        three values
+        string
+        Expresses the scope of the trait information. If specified, it accepts
+        either of the two values:
 
             - "input": the trait is only relevant for the input representation
               and will be parsed, according to the other metadata, only during
@@ -27,8 +27,8 @@ class Resource(BaseResource):
             - "output": the trait is only relevant for the output
               representation. If specified during an input operation, it will
               be ignored.
-            - "both": the default. The trait is relevant both in input and
-              output, and will be parsed and checked both at input and output.
+            - If unspecified, the trait will be validated and accepted in both
+              directions.
 
         Typical uses of scopes are:
 
