@@ -1,4 +1,5 @@
 from tornadowebapi.resource import Resource
+from tornadowebapi.resource_fragment import ResourceFragment
 from tornadowebapi.traitlets import OneOf
 from .base_deserializer import BaseDeserializer
 
@@ -9,15 +10,17 @@ class BasicRESTDeserializer(BaseDeserializer):
     so we have to rely on what is passed"""
     def deserialize_resource(self,
                              resource_class,
-                             identifier=None,
+                             identifier,
                              data=None):
-        if identifier is None:
-            if issubclass(resource_class, Resource):
-                raise ValueError("Identifier must not be none for a "
-                                 "Resource class")
+
+        if issubclass(resource_class, Resource):
+            resource = resource_class(identifier=identifier)
+        elif issubclass(resource_class, ResourceFragment):
             resource = resource_class()
         else:
-            resource = resource_class(identifier=identifier)
+            raise TypeError(
+                "Resource class is not a Resource or ResourceFragment"
+            )
 
         if data is None:
             return resource
