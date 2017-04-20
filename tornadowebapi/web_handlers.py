@@ -110,6 +110,12 @@ class BaseWebHandler(web.RequestHandler):
             raise exceptions.Unable()
 
     def _check_resource_sanity(self, resource, scope):
+        """Checks if a resource contains all the mandatory
+        data. The response is different depending if the scope
+        is input or output. In the first case, it's the client's fault (bad
+        representation). In the second, it's the server's fault (internal
+        error)
+        """
         absents = resource_mod.mandatory_absents(resource, scope)
         if len(absents) != 0:
             if scope == "input":
@@ -122,6 +128,7 @@ class BaseWebHandler(web.RequestHandler):
                     )
                 raise exceptions.Unable()
             else:
+                # Should never get here, because mandatory_absents does it too.
                 raise ValueError("scope must be either input or output")
 
     @contextlib.contextmanager
