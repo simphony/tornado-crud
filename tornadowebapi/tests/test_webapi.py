@@ -6,6 +6,7 @@ from unittest import mock
 from tornado.testing import LogTrapTestCase
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
+from tornadowebapi.traitlets import Absent
 from tornadowebapi.web_handlers import ResourceWebHandler, CollectionWebHandler
 from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
@@ -128,12 +129,23 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"items": ['0', '1']})
 
+        # incorrect value for age
         res = self.fetch(
             "/api/v1/students/",
             method="POST",
             body=escape.json_encode({
                 "name": "john wick",
                 "age": "hello",
+            })
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        # Missing mandatory entry
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "name": "john wick",
             })
         )
         self.assertEqual(res.code, httpstatus.BAD_REQUEST)
@@ -161,6 +173,13 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         res = self.fetch("/api/v1/students/1/")
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
         self.assertNotIn("Content-Type", res.headers)
+
+        handler = resource_handlers.StudentHandler
+        handler.collection["0"].age = Absent
+
+        # Verify output checks
+        res = self.fetch(location)
+        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
 
     def test_post_on_resource(self):
         res = self.fetch(
@@ -212,6 +231,7 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "age": 19,
                          })
 
+        # Incorrect type
         res = self.fetch(
             location,
             method="PUT",
@@ -231,6 +251,16 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
             })
         )
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        # Missing mandatory entry
+        res = self.fetch(
+            location,
+            method="PUT",
+            body=escape.json_encode({
+                "name": "john wick",
+            })
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_delete(self):
         res = self.fetch(

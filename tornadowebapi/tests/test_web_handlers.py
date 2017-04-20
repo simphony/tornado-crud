@@ -25,3 +25,12 @@ class TestWebHandlers(unittest.TestCase):
              "items": ["1", "2"]
              }
         )
+
+    def test_check_resource_sanity(self):
+        handler = CollectionWebHandler(MagicMock(), MagicMock(),
+                                       registry=MagicMock(),
+                                       base_urlpath="/",
+                                       api_version="1")
+
+        with self.assertRaises(ValueError):
+            handler._check_resource_sanity(Mock(), "whatever")
