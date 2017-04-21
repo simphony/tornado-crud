@@ -13,8 +13,8 @@ define([
 
     QUnit.test("interface", function (assert) {
         var done = assert.async();
-        resources.Student.items().done(function(item_ids) {
-            assert.equal(item_ids.length, 0, "no items in the server");
+        resources.Student.items().done(function(items, offset, total) {
+            assert.equal(Object.keys(items).length, 0, "no items in the server");
             done();
         });
     });
@@ -31,9 +31,9 @@ define([
 
     QUnit.test("check length", function (assert) {
         var done = assert.async();
-        resources.Student.items().done(function(item_ids) {
-            assert.equal(item_ids.length, 1, "item length == 1");
-            assert.equal(item_ids[0], "0", "one item present");
+        resources.Student.items().done(function(items, offset, total) {
+            assert.equal(Object.keys(items).length, 1, "item length == 1");
+            assert.notEqual(items["0"], undefined);
             done();
         });
     });
@@ -52,24 +52,24 @@ define([
 
     QUnit.test("checking multiple content", function (assert) {
         var done = assert.async();
-        resources.Student.items().done(function(item_ids) {
-            assert.equal(item_ids.length, 6, "six elements now present");
+        resources.Student.items().done(function(items, offset, total) {
+            assert.equal(Object.keys(items).length, 6, "six elements now present");
             done();
         });
     });
 
     QUnit.test("items with limit", function (assert) {
         var done = assert.async();
-        resources.Student.items({limit: 3}).done(function(item_ids) {
-            assert.equal(item_ids.length, 3);
+        resources.Student.items({limit: 3}).done(function(items, offset, total) {
+            assert.equal(Object.keys(items).length, 3);
             done();
         });
     });
     
     QUnit.test("items with offset", function (assert) {
         var done = assert.async();
-        resources.Student.items({offset: 4, limit: 4}).done(function(item_ids) {
-            assert.equal(item_ids.length, 2);
+        resources.Student.items({offset: 4, limit: 4}).done(function(items, offset, total) {
+            assert.equal(Object.keys(items).length, 2);
             done();
         });
     });

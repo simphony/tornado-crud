@@ -10,9 +10,14 @@ class BasicRESTSerializer(BaseSerializer):
         # this list will not be rendered as a list in a json representation.
         # Instead, a dictionary with the key "items" and value as this list
         # will be returned.
-        return {"items": [
-            str(item.identifier) for item in items_response.items
-            ]}
+        return {
+            "offset": items_response.offset,
+            "total": items_response.total,
+            "items": {
+                str(item.identifier): self.serialize_resource(item)
+                for item in items_response.items
+            }
+        }
 
     def serialize_exception(self, exception):
         if not isinstance(exception, WebAPIException):
