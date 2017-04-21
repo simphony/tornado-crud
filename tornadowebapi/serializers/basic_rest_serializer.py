@@ -1,5 +1,5 @@
 from tornadowebapi.exceptions import WebAPIException
-from tornadowebapi.traitlets import Absent
+from tornadowebapi.traitlets import Absent, OneOf
 from .base_serializer import BaseSerializer
 
 
@@ -40,10 +40,14 @@ class BasicRESTSerializer(BaseSerializer):
     def serialize_resource(self, resource):
         d = {}
 
-        for trait_name, trait_class in resource.traits().items():
+        for trait_name, trait in resource.traits().items():
             if getattr(resource, trait_name) is Absent:
                 continue
 
-            d[trait_name] = getattr(resource, trait_name)
+            if isinstance(trait, OneOf):
+                fragment = getattr(resource, trait_name)
+                d[trait_name] = self.serialize_resource(fragment)
+            else:
+                d[trait_name] = getattr(resource, trait_name)
 
         return d

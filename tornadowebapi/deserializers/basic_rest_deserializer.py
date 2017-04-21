@@ -1,3 +1,6 @@
+from tornadowebapi.resource import Resource
+from tornadowebapi.resource_fragment import ResourceFragment
+from tornadowebapi.traitlets import OneOf
 from .base_deserializer import BaseDeserializer
 
 
@@ -9,12 +12,32 @@ class BasicRESTDeserializer(BaseDeserializer):
                              resource_class,
                              identifier,
                              data=None):
-        instance = resource_class(identifier=identifier)
+
+        if issubclass(resource_class, Resource):
+            resource = resource_class(identifier=identifier)
+        elif issubclass(resource_class, ResourceFragment):
+            resource = resource_class()
+        else:
+            raise TypeError(
+                "Resource class is not a Resource or ResourceFragment"
+            )
 
         if data is None:
-            return instance
+            return resource
 
-        for key, value in data.items():
-            setattr(instance, key, value)
+        for trait_name, trait in resource.traits().items():
+            if trait_name not in data:
+                continue
 
-        return instance
+            if isinstance(trait, OneOf):
+                fragment_class = trait.klass
+                setattr(resource,
+                        trait_name,
+                        self.deserialize_resource(
+                            fragment_class,
+                            None,
+                            data[trait_name]))
+            else:
+                setattr(resource, trait_name, data[trait_name])
+
+        return resource

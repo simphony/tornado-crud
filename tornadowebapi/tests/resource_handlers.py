@@ -2,9 +2,10 @@ from collections import OrderedDict
 
 from tornado import gen
 from tornadowebapi import exceptions
+from tornadowebapi.resource_fragment import ResourceFragment
 from tornadowebapi.resource_handler import ResourceHandler
 from tornadowebapi.resource import Resource
-from tornadowebapi.traitlets import Unicode, Int, List
+from tornadowebapi.traitlets import Unicode, Int, List, OneOf
 
 
 class WorkingResourceHandler(ResourceHandler):
@@ -80,6 +81,20 @@ class Teacher(Resource):
 
 class TeacherHandler(ResourceHandler):
     resource_class = Teacher
+
+
+class Person(ResourceFragment):
+    name = Unicode()
+    age = Int()
+
+
+class City(Resource):
+    name = Unicode()
+    mayor = OneOf(Person)
+
+
+class CityHandler(WorkingResourceHandler):
+    resource_class = City
 
 
 class UnsupportAll(Resource):
