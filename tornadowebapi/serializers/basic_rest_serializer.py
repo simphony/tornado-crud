@@ -16,7 +16,8 @@ class BasicRESTSerializer(BaseSerializer):
             "items": {
                 str(item.identifier): self.serialize_resource(item)
                 for item in items_response.items
-            }
+            },
+            "identifiers": [item.identifier for item in items_response.items]
         }
 
     def serialize_exception(self, exception):

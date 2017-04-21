@@ -52,7 +52,9 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                          {
                              "total": 0,
                              "offset": 0,
-                             "items": {}})
+                             "items": {},
+                             "identifiers": []
+                         })
 
         handler = resource_handlers.StudentHandler
         handler.collection[1] = handler.resource_class(
@@ -87,7 +89,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                                      "name": "john wick 3",
                                      "age": 39,
                                  }
-                             }
+                             },
+                             "identifiers": ["1", "2", "3"]
                          })
 
     def test_items_with_query_params(self):
@@ -97,7 +100,9 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"total": 0,
                           "offset": 0,
-                          "items": {}})
+                          "items": {},
+                          "identifiers": []
+                          })
 
         res = self.fetch("/api/v1/students/?offset=1")
 
@@ -106,7 +111,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                          {
                              "total": 0,
                              "offset": 1,
-                             "items": {}
+                             "items": {},
+                             "identifiers": []
                          })
 
         res = self.fetch("/api/v1/students/?offset=1&limit=1")
@@ -116,7 +122,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                          {
                              "total": 0,
                              "offset": 1,
-                             "items": {}
+                             "items": {},
+                             "identifiers": []
                          })
 
         handler = resource_handlers.StudentHandler
@@ -148,7 +155,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                                      "name": "john wick 2",
                                      "age": 39,
                                  }
-                             }
+                             },
+                             "identifiers": ["1", "2"],
                          })
 
         res = self.fetch("/api/v1/students/?offset=1")
@@ -166,7 +174,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                                      "name": "john wick 3",
                                      "age": 39,
                                  }
-                             }
+                             },
+                             "identifiers": ["2", "3"],
                          })
 
         res = self.fetch("/api/v1/students/?offset=1&limit=1")
@@ -180,7 +189,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                                      "name": "john wick 2",
                                      "age": 39,
                                  }
-                             }
+                             },
+                             "identifiers": ["2"],
                          })
 
     def test_create(self):
@@ -219,7 +229,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                               "1": {"age": 19,
                                     "name": "john wick 2"
                                     },
-                          }
+                          },
+                          "identifiers": ["0", "1"],
                           })
 
         # incorrect value for age
