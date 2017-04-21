@@ -297,8 +297,9 @@ define(['jquery'], function ($) {
             API.request("GET", type, null, query_args)
                 .done(function(data, textStatus, jqXHR) {
                     var status = jqXHR.status;
-
+                    
                     var payload = null;
+                    console.log(jqXHR.responseText);
                     try {
                         payload = JSON.parse(jqXHR.responseText);
                     } catch (e) {
@@ -322,7 +323,8 @@ define(['jquery'], function ($) {
                         promise.reject(status, payload);
                         return;
                     }
-                    promise.resolve(payload.items);
+
+                    promise.resolve(payload.items, payload.offset, payload.total);
                     
                 })
                 .fail(function(jqXHR, textStatus, error) {

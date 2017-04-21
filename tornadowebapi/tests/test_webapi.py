@@ -49,7 +49,10 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": []})
+                         {
+                             "total": 0,
+                             "offset": 0,
+                             "items": {}})
 
         handler = resource_handlers.StudentHandler
         handler.collection[1] = handler.resource_class(identifier="1")
@@ -59,26 +62,43 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": ["1", "2", "3"]})
+                         {
+                             "total": 3,
+                             "offset": 0,
+                             "items": {
+                                 "1": {},
+                                 "2": {},
+                                 "3": {}}
+                         })
 
     def test_items_with_query_params(self):
         res = self.fetch("/api/v1/students/?limit=1")
 
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": []})
+                         {"total": 0,
+                          "offset": 0,
+                          "items": {}})
 
         res = self.fetch("/api/v1/students/?offset=1")
 
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": []})
+                         {
+                             "total": 0,
+                             "offset": 1,
+                             "items": {}
+                         })
 
         res = self.fetch("/api/v1/students/?offset=1&limit=1")
 
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": []})
+                         {
+                             "total": 0,
+                             "offset": 1,
+                             "items": {}
+                         })
 
         handler = resource_handlers.StudentHandler
         handler.collection[1] = handler.resource_class(identifier="1")
@@ -88,17 +108,34 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         res = self.fetch("/api/v1/students/?limit=2")
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": ["1", "2"]})
+                         {
+                             "total": 3,
+                             "offset": 0,
+                             "items": {"1": {},
+                                       "2": {}}})
 
         res = self.fetch("/api/v1/students/?offset=1")
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": ["2", "3"]})
+                         {
+                             "total": 3,
+                             "offset": 1,
+                             "items": {
+                                 "2": {},
+                                 "3": {}
+                             }
+                         })
 
         res = self.fetch("/api/v1/students/?offset=1&limit=1")
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": ["2"]})
+                         {
+                             "total": 3,
+                             "offset": 1,
+                             "items": {
+                                 "2": {}
+                             }
+                         })
 
     def test_create(self):
         res = self.fetch(
@@ -127,7 +164,17 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
         self.assertEqual(escape.json_decode(res.body),
-                         {"items": ['0', '1']})
+                         {"offset": 0,
+                          "total": 2,
+                          "items": {
+                              "0": {"age": 19,
+                                    "name": "john wick"
+                                    },
+                              "1": {"age": 19,
+                                    "name": "john wick 2"
+                                    },
+                          }
+                          })
 
         # incorrect value for age
         res = self.fetch(

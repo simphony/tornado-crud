@@ -15,15 +15,22 @@ class TestBasicRESTSerializer(unittest.TestCase):
                 Student(identifier="2"),
                 Student(identifier="3")
             ],
-            index_first=0,
-            num_items=3,
-            total_items=30
+            offset=0,
+            total=30
         )
 
         serializer = BasicRESTSerializer()
         self.assertEqual(
             serializer.serialize_items_response(students),
-            {"items": ["1", "2", "3"]})
+            {
+                "total": 30,
+                "offset": 0,
+                "items": {
+                    "1": {},
+                    "2": {},
+                    "3": {}
+                }
+            })
 
     def test_serialize_resource(self):
         student = Student(identifier="1", name="john wick", age=39)
