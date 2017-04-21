@@ -72,4 +72,4 @@ class TestBasicRESTDeserializer(unittest.TestCase):
     def test_invalid_resource(self):
         deserializer = BasicRESTDeserializer()
         with self.assertRaises(TypeError):
-            deserializer.deserialize_resource("hello", None, None)
+            deserializer.deserialize_resource(str, None, None)
