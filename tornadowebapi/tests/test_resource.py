@@ -59,6 +59,9 @@ class TestResource(unittest.TestCase):
         s.identifier = None
         self.assertFalse(is_valid(s, "input"))
 
+        with self.assertRaises(TypeError):
+            mandatory_absents("foo", "input")
+
     def test_mandatory_absents_with_fragments(self):
         t = Teacher("1")
         self.assertEqual(mandatory_absents(t, "input"), {"name", "classroom"})
