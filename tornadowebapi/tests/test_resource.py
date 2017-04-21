@@ -19,6 +19,7 @@ class Classroom(ResourceFragment):
 class Teacher(Resource):
     name = Unicode()
     classroom = OneOf(Classroom)
+    alternative_classroom = OneOf(Classroom, optional=True)
 
 
 class Job(Resource):
@@ -69,6 +70,18 @@ class TestResource(unittest.TestCase):
         t.name = "Mr. Stevens"
         t.classroom.floor = 3
 
+        self.assertEqual(mandatory_absents(t, "input"), set())
+
+    def test_mandatory_absents_optional_one_of(self):
+        t = Teacher("1")
+        t.fill({
+            "name": "Mr. Stevens",
+            "classroom": {
+                "floor": 3,
+            }
+        })
+
+        self.assertEqual(t.alternative_classroom, Absent)
         self.assertEqual(mandatory_absents(t, "input"), set())
 
     def test_fill(self):
