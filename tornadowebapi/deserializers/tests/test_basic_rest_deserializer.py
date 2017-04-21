@@ -68,3 +68,8 @@ class TestBasicRESTDeserializer(unittest.TestCase):
         self.assertIsInstance(result.mayor, Person)
         self.assertEqual(result.mayor.name, "Jeremy Benstead")
         self.assertEqual(result.mayor.age, 50)
+
+    def test_invalid_resource(self):
+        deserializer = BasicRESTDeserializer()
+        with self.assertRaises(TypeError):
+            deserializer.deserialize_resource("hello", None, None)
