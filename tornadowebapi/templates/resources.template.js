@@ -305,7 +305,6 @@ define(['jquery'], function ($) {
                     } catch (e) {
                         // Suppress any syntax error and discard the payload
                     }
-                    console.log(payload);
 
                     if (status !== 200) {
                         console.log(
@@ -325,8 +324,6 @@ define(['jquery'], function ($) {
                         return;
                     }
 
-                    console.log("resolving");
-                    console.log(payload.items);
                     promise.resolve(payload.items, payload.offset, payload.total);
                     
                 })
