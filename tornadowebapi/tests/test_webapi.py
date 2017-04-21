@@ -55,9 +55,18 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "items": {}})
 
         handler = resource_handlers.StudentHandler
-        handler.collection[1] = handler.resource_class(identifier="1")
-        handler.collection[2] = handler.resource_class(identifier="2")
-        handler.collection[3] = handler.resource_class(identifier="3")
+        handler.collection[1] = handler.resource_class(
+            identifier="1",
+            name="john wick",
+            age=39)
+        handler.collection[2] = handler.resource_class(
+            identifier="2",
+            name="john wick 2",
+            age=39)
+        handler.collection[3] = handler.resource_class(
+            identifier="3",
+            name="john wick 3",
+            age=39)
 
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, httpstatus.OK)
@@ -66,9 +75,19 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "total": 3,
                              "offset": 0,
                              "items": {
-                                 "1": {},
-                                 "2": {},
-                                 "3": {}}
+                                 "1": {
+                                     "name": "john wick",
+                                     "age": 39,
+                                 },
+                                 "2": {
+                                     "name": "john wick 2",
+                                     "age": 39,
+                                 },
+                                 "3": {
+                                     "name": "john wick 3",
+                                     "age": 39,
+                                 }
+                             }
                          })
 
     def test_items_with_query_params(self):
@@ -101,9 +120,18 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                          })
 
         handler = resource_handlers.StudentHandler
-        handler.collection[1] = handler.resource_class(identifier="1")
-        handler.collection[2] = handler.resource_class(identifier="2")
-        handler.collection[3] = handler.resource_class(identifier="3")
+        handler.collection[1] = handler.resource_class(
+            identifier="1",
+            name="john wick",
+            age=39)
+        handler.collection[2] = handler.resource_class(
+            identifier="2",
+            name="john wick 2",
+            age=39)
+        handler.collection[3] = handler.resource_class(
+            identifier="3",
+            name="john wick 3",
+            age=39)
 
         res = self.fetch("/api/v1/students/?limit=2")
         self.assertEqual(res.code, httpstatus.OK)
@@ -111,8 +139,17 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                          {
                              "total": 3,
                              "offset": 0,
-                             "items": {"1": {},
-                                       "2": {}}})
+                             "items": {
+                                 "1": {
+                                     "name": "john wick",
+                                     "age": 39,
+                                 },
+                                 "2": {
+                                     "name": "john wick 2",
+                                     "age": 39,
+                                 }
+                             }
+                         })
 
         res = self.fetch("/api/v1/students/?offset=1")
         self.assertEqual(res.code, httpstatus.OK)
@@ -121,8 +158,14 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "total": 3,
                              "offset": 1,
                              "items": {
-                                 "2": {},
-                                 "3": {}
+                                 "2": {
+                                     "name": "john wick 2",
+                                     "age": 39,
+                                 },
+                                 "3": {
+                                     "name": "john wick 3",
+                                     "age": 39,
+                                 }
                              }
                          })
 
@@ -133,7 +176,10 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "total": 3,
                              "offset": 1,
                              "items": {
-                                 "2": {}
+                                 "2": {
+                                     "name": "john wick 2",
+                                     "age": 39,
+                                 }
                              }
                          })
 

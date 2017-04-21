@@ -208,6 +208,12 @@ class CollectionWebHandler(BaseWebHandler):
         with self.exceptions_to_http("get", collection_name):
             yield res_handler.items(items_response, **args)
 
+        for resource in items_response.items:
+            self._check_none(resource.identifier,
+                             "identifier",
+                             "items")
+            self._check_resource_sanity(resource, "output")
+
         self.set_status(httpstatus.OK)
         # Need to convert into a dict for security issue tornado/1009
         transport = self._registry.transport
