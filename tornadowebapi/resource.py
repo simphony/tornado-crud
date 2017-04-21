@@ -1,4 +1,5 @@
 from tornadowebapi.base_resource import BaseResource
+from tornadowebapi.resource_fragment import ResourceFragment
 from tornadowebapi.traitlets import Absent, OneOf
 
 
@@ -94,14 +95,19 @@ def mandatory_absents(resource, scope):
     if scope not in ["input", "output"]:
         raise ValueError("Scope must be either input or output")
 
+    if not isinstance(resource, (Resource, ResourceFragment)):
+        raise TypeError("Resource must be a Resource or ResourceFragment, "
+                        "got {} {} instead".format(resource, type(resource)))
+
     res = set()
     for trait_name, trait in resource.traits().items():
         if trait.metadata.get("scope", scope) != scope:
             continue
 
         trait_optional = trait.metadata.get("optional", False)
-        if getattr(resource, trait_name) == Absent and not trait_optional:
-            res.add(trait_name)
+        if getattr(resource, trait_name) == Absent:
+            if not trait_optional:
+                res.add(trait_name)
         elif isinstance(trait, OneOf):
             res.update([
                 ".".join([trait_name, x]) for x in mandatory_absents(
