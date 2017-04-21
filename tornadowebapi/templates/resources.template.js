@@ -324,7 +324,11 @@ define(['jquery'], function ($) {
                         return;
                     }
 
-                    promise.resolve(payload.items, payload.offset, payload.total);
+                    promise.resolve(
+                        payload.identifiers, 
+                        payload.items, 
+                        payload.offset, 
+                        payload.total);
                     
                 })
                 .fail(function(jqXHR, textStatus, error) {
