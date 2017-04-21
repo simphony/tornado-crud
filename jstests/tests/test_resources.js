@@ -31,12 +31,15 @@ define([
 
     QUnit.test("check length", function (assert) {
         var done = assert.async();
-        resources.Student.items().done(function(items, offset, total) {
-            assert.equal(Object.keys(items).length, 1, "item length == 1");
-            assert.notEqual(items["0"], undefined);
-            done();
+        resources.Student.items().done(
+            function(identifiers, items, offset, total) {
+                assert.equal(Object.keys(items).length, 1, "item length == 1");
+                assert.equal(identifiers.length, 1);
+                assert.equal(identifiers[0], "0");
+                assert.notEqual(items["0"], undefined);
+                done();
+            });
         });
-    });
     
     QUnit.test("multiple create", function (assert) {
         var done = assert.async(5);
@@ -52,27 +55,33 @@ define([
 
     QUnit.test("checking multiple content", function (assert) {
         var done = assert.async();
-        resources.Student.items().done(function(items, offset, total) {
-            assert.equal(Object.keys(items).length, 6, "six elements now present");
-            done();
+        resources.Student.items().done(
+            function(identifiers, items, offset, total) {
+                assert.equal(Object.keys(items).length, 6, "six elements now present");
+                assert.equal(identifiers.length, 6);
+                done();
+            });
         });
-    });
 
     QUnit.test("items with limit", function (assert) {
         var done = assert.async();
-        resources.Student.items({limit: 3}).done(function(items, offset, total) {
-            assert.equal(Object.keys(items).length, 3);
-            done();
+        resources.Student.items({limit: 3}).done(
+            function(identifiers, items, offset, total) {
+                assert.equal(Object.keys(items).length, 3);
+                assert.equal(identifiers.length, 3);
+                done();
+            });
         });
-    });
     
     QUnit.test("items with offset", function (assert) {
         var done = assert.async();
-        resources.Student.items({offset: 4, limit: 4}).done(function(items, offset, total) {
-            assert.equal(Object.keys(items).length, 2);
-            done();
+        resources.Student.items({offset: 4, limit: 4}).done(
+            function(identifiers, items, offset, total) {
+                assert.equal(Object.keys(items).length, 2);
+                assert.equal(identifiers.length, 2)
+                done();
+            });
         });
-    });
 
     QUnit.test("retrieve", function (assert) {
         var done = assert.async();

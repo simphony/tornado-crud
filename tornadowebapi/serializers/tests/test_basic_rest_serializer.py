@@ -29,7 +29,8 @@ class TestBasicRESTSerializer(unittest.TestCase):
                     "1": {},
                     "2": {},
                     "3": {}
-                }
+                },
+                "identifiers": ["1", "2", "3"]
             })
 
     def test_serialize_resource(self):
