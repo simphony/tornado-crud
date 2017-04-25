@@ -264,20 +264,20 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
     @gen.coroutine
     def post(self, name):
         res_handler = self.get_resource_handler_or_404(name)
+        args = self.parsed_query_arguments()
 
         if res_handler.handles_singleton():
             subcoro = self._post_singleton
         else:
             subcoro = self._post_collection
 
-        yield subcoro(res_handler)
+        yield subcoro(res_handler, args)
 
     @gen.coroutine
-    def _post_collection(self, res_handler):
+    def _post_collection(self, res_handler, args):
         """Creates a new resource in the collection."""
         transport = self._registry.transport
         payload = self.request.body
-        args = self.parsed_query_arguments()
 
         with self.exceptions_to_http(res_handler, "post"):
             representation = transport.parser.parse(payload)
@@ -322,24 +322,54 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
         self.flush()
 
     @gen.coroutine
-    def _post_singleton(self, res_handler):
+    def _post_singleton(self, res_handler, args):
         """This operation is not possible in REST, and results
         in either Conflict or NotFound, depending on the
         presence of a resource at the given URL"""
         transport = self._registry.transport
+        payload = self.request.body
 
         with self.exceptions_to_http(res_handler, "post"):
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                None,
-                None)
+            representation = transport.parser.parse(payload)
+
+        on_generic_raise = self.to_http_exception(
+            exceptions.BadRepresentation("Generic exception "
+                                         "during preprocessing"))
+
+        with self.exceptions_to_http(res_handler, "post",
+                                     on_generic_raise=on_generic_raise):
+            representation = res_handler.preprocess_representation(
+                representation)
+
+            self._check_none(representation,
+                             "representation",
+                             "preprocess_representation")
+
+        with self.exceptions_to_http(res_handler, "post"):
+            try:
+                resource = transport.deserializer.deserialize_resource(
+                    res_handler.resource_class,
+                    None,
+                    representation,
+                )
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=str(e))
+
+            self._check_resource_sanity(resource, "input")
 
             exists = yield res_handler.exists(resource)
 
-        if exists:
-            raise web.HTTPError(httpstatus.CONFLICT)
-        else:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
+            if exists:
+                raise exceptions.Exists()
+
+            yield res_handler.create(resource, **args)
+
+        location = with_end_slash(self.request.full_url())
+
+        self.set_status(httpstatus.CREATED)
+        self.set_header("Location", location)
+        self.clear_header('Content-Type')
+        self.flush()
 
     @gen.coroutine
     def put(self, name):
