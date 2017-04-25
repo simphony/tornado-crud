@@ -1,5 +1,9 @@
 import abc
 
+from tornadowebapi.base_resource import BaseResource
+from tornadowebapi.exceptions import WebAPIException
+from tornadowebapi.items_response import ItemsResponse
+
 
 class BaseSerializer(metaclass=abc.ABCMeta):
     """The serializer is in charge of converting the data
@@ -9,6 +13,17 @@ class BaseSerializer(metaclass=abc.ABCMeta):
     This dictionary will then be passed to the renderer to be
     converted into something that is shown on the web.
     """
+    def serialize(self, entity):
+        if isinstance(entity, BaseResource):
+            return self.serialize_resource(entity)
+        elif isinstance(entity, ItemsResponse):
+            return self.serialize_items_response(entity)
+        elif isinstance(entity, WebAPIException):
+            return self.serialize_exception(entity)
+        else:
+            raise TypeError("Unrecognized entity {} in "
+                            "BaseSerializer.serialize".format(entity))
+
     @abc.abstractmethod
     def serialize_items_response(self, items_response):
         """Serializes a collection of items.

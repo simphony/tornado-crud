@@ -194,12 +194,29 @@ class BaseWebHandler(web.RequestHandler):
 
         return ret
 
+    def send_to_client(self, entity):
+        if entity is None:
+            self.clear_header('Content-Type')
+            self.set_status(httpstatus.NO_CONTENT)
+            self.flush()
+            return
+
+        self.set_status(httpstatus.OK)
+        # Need to convert into a dict for security issue tornado/1009
+        transport = self._registry.transport
+        self.write(
+            transport.renderer.render(
+                transport.serializer.serialize(
+                    entity)
+            )
+        )
+        self.set_header("Content-Type", transport.content_type)
+        self.flush()
+
 
 class WithoutIdentifierWebHandler(BaseWebHandler):
     """Handler for URLs without an identifier.
     """
-    SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
-
     @gen.coroutine
     def get(self, name):
         res_handler = self.get_resource_handler_or_404(name)
@@ -226,21 +243,11 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
                              "items")
             self._check_resource_sanity(resource, "output")
 
-        self.set_status(httpstatus.OK)
-        # Need to convert into a dict for security issue tornado/1009
-        transport = self._registry.transport
-        self.write(
-            transport.renderer.render(
-                transport.serializer.serialize_items_response(
-                    items_response)
-            )
-        )
-        self.set_header("Content-Type", transport.content_type)
-        self.flush()
+        self.send_to_client(items_response)
 
     @gen.coroutine
     def _get_singleton(self, name):
-        raise HTTPError(405)
+        raise HTTPError(httpstatus.METHOD_NOT_ALLOWED)
 
     @gen.coroutine
     def post(self, name):
@@ -373,14 +380,7 @@ class WithIdentifierWebHandler(BaseWebHandler):
 
             self._check_resource_sanity(resource, "output")
 
-        self.set_status(httpstatus.OK)
-        transport = self._registry.transport
-        self.write(
-            transport.renderer.render(
-                transport.serializer.serialize_resource(resource)
-            ))
-        self.set_header("Content-Type", transport.content_type)
-        self.flush()
+        self.send_to_client(resource)
 
     @gen.coroutine
     def post(self, collection_name, identifier):
@@ -456,8 +456,7 @@ class WithIdentifierWebHandler(BaseWebHandler):
 
             yield res_handler.update(resource, **args)
 
-        self.clear_header('Content-Type')
-        self.set_status(httpstatus.NO_CONTENT)
+        self.send_to_client(None)
 
     @gen.coroutine
     def delete(self, collection_name, identifier):
@@ -486,8 +485,7 @@ class WithIdentifierWebHandler(BaseWebHandler):
 
             yield res_handler.delete(resource, **args)
 
-        self.clear_header('Content-Type')
-        self.set_status(httpstatus.NO_CONTENT)
+        self.send_to_client(None)
 
 
 class JSAPIWebHandler(BaseWebHandler):

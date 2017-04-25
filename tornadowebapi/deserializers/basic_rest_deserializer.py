@@ -1,5 +1,6 @@
 from tornadowebapi.resource import Resource
 from tornadowebapi.resource_fragment import ResourceFragment
+from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import OneOf
 from .base_deserializer import BaseDeserializer
 
@@ -15,7 +16,7 @@ class BasicRESTDeserializer(BaseDeserializer):
 
         if issubclass(resource_class, Resource):
             resource = resource_class(identifier=identifier)
-        elif issubclass(resource_class, ResourceFragment):
+        elif issubclass(resource_class, (ResourceFragment, SingletonResource)):
             resource = resource_class()
         else:
             raise TypeError(
