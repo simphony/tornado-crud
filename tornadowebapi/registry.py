@@ -7,6 +7,7 @@ from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
 from .resource_handler import ResourceHandler
 from .resource import Resource
+from .singleton_resource import SingletonResource
 from .authenticator import NullAuthenticator
 
 
@@ -70,24 +71,33 @@ class Registry:
 
         resource_class = handler.resource_class
 
-        if resource_class is None or not issubclass(resource_class, Resource):
+        if resource_class is None:
+            raise TypeError(
+                "resource_class for handler {} must not be None".format(
+                    handler
+                ))
+
+        if issubclass(resource_class, Resource):
+            name = resource_class.collection_name()
+        elif issubclass(resource_class, SingletonResource):
+            name = resource_class.name()
+        else:
             raise TypeError(
                 "resource_class for handler {} must be a "
-                "subtype of Resource. Found {}".format(
+                "subtype of BaseResource. Found {}".format(
                     handler,
                     resource_class))
 
-        collection_name = resource_class.collection_name()
-        if collection_name in self._registered_handlers:
+        if name in self._registered_handlers:
             raise ValueError(
-                "Collection name {} is already in use by "
+                "Name {} is already in use by "
                 "class {}, so it cannot be used by class {}".format(
-                    collection_name,
-                    self._registered_handlers[collection_name].__name__,
+                    name,
+                    self._registered_handlers[name].__name__,
                     resource_class.__name__
                 ))
 
-        self._registered_handlers[collection_name] = handler
+        self._registered_handlers[name] = handler
 
     def __getitem__(self, collection_name):
         """Returns the class from the collection name with the
