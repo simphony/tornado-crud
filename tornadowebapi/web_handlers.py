@@ -423,8 +423,6 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 class WithIdentifierWebHandler(BaseWebHandler):
     """Handler for URLs addressing a resource.
     """
-    SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
-
     @gen.coroutine
     def get(self, collection_name, identifier):
         """Retrieves the resource representation."""
