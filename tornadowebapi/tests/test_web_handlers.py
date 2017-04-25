@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, MagicMock
 
-from tornadowebapi.web_handlers import CollectionWebHandler
+from tornadowebapi.web_handlers import WithoutIdentifierWebHandler
 
 
 class TestWebHandlers(unittest.TestCase):
@@ -14,10 +14,10 @@ class TestWebHandlers(unittest.TestCase):
             "items": ["1", "2"]
 
         }
-        handler = CollectionWebHandler(MagicMock(), request,
-                                       registry=MagicMock(),
-                                       base_urlpath="/",
-                                       api_version="1")
+        handler = WithoutIdentifierWebHandler(MagicMock(), request,
+                                              registry=MagicMock(),
+                                              base_urlpath="/",
+                                              api_version="1")
         self.assertEqual(
             handler.parsed_query_arguments(),
             {"limit": 5,
@@ -27,10 +27,10 @@ class TestWebHandlers(unittest.TestCase):
         )
 
     def test_check_resource_sanity(self):
-        handler = CollectionWebHandler(MagicMock(), MagicMock(),
-                                       registry=MagicMock(),
-                                       base_urlpath="/",
-                                       api_version="1")
+        handler = WithoutIdentifierWebHandler(MagicMock(), MagicMock(),
+                                              registry=MagicMock(),
+                                              base_urlpath="/",
+                                              api_version="1")
 
         with self.assertRaises(ValueError):
             handler._check_resource_sanity(Mock(), "whatever")

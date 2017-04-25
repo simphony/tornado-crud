@@ -7,7 +7,8 @@ from tornado.testing import LogTrapTestCase
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.traitlets import Absent
-from tornadowebapi.web_handlers import ResourceWebHandler, CollectionWebHandler
+from tornadowebapi.web_handlers import (
+    WithIdentifierWebHandler, WithoutIdentifierWebHandler)
 from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
@@ -595,6 +596,6 @@ class TestRESTFunctions(unittest.TestCase):
         reg = Registry()
         handlers = reg.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/(.*)/(.*)/")
-        self.assertEqual(handlers[0][1], ResourceWebHandler)
+        self.assertEqual(handlers[0][1], WithIdentifierWebHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
-        self.assertEqual(handlers[1][1], CollectionWebHandler)
+        self.assertEqual(handlers[1][1], WithoutIdentifierWebHandler)

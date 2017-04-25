@@ -2,6 +2,7 @@ import contextlib
 
 from tornado import gen, web, template
 from tornado.log import app_log
+from tornado.web import HTTPError
 from tornadowebapi.traitlets import TraitError
 
 from . import resource as resource_mod
@@ -194,18 +195,29 @@ class BaseWebHandler(web.RequestHandler):
         return ret
 
 
-class CollectionWebHandler(BaseWebHandler):
-    """Handler for URLs addressing a collection.
+class WithoutIdentifierWebHandler(BaseWebHandler):
+    """Handler for URLs without an identifier.
     """
+    SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
+
     @gen.coroutine
-    def get(self, collection_name):
+    def get(self, name):
+        res_handler = self.get_resource_handler_or_404(name)
+
+        if res_handler.handles_singleton():
+            yield self._get_singleton(name)
+        else:
+            yield self._get_collection(name)
+
+    @gen.coroutine
+    def _get_collection(self, name):
         """Returns the collection of available items"""
-        res_handler = self.get_resource_handler_or_404(collection_name)
+        res_handler = self.get_resource_handler_or_404(name)
         args = self.parsed_query_arguments()
 
         items_response = ItemsResponse(res_handler.resource_class)
 
-        with self.exceptions_to_http("get", collection_name):
+        with self.exceptions_to_http("get", name):
             yield res_handler.items(items_response, **args)
 
         for resource in items_response.items:
@@ -227,22 +239,35 @@ class CollectionWebHandler(BaseWebHandler):
         self.flush()
 
     @gen.coroutine
-    def post(self, collection_name):
+    def _get_singleton(self, name):
+        raise HTTPError(405)
+
+    @gen.coroutine
+    def post(self, name):
+        res_handler = self.get_resource_handler_or_404(name)
+
+        if res_handler.handles_singleton():
+            yield self._post_singleton(name)
+        else:
+            yield self._post_collection(name)
+
+    @gen.coroutine
+    def _post_collection(self, name):
         """Creates a new resource in the collection."""
-        res_handler = self.get_resource_handler_or_404(collection_name)
+        res_handler = self.get_resource_handler_or_404(name)
         transport = self._registry.transport
         payload = self.request.body
         args = self.parsed_query_arguments()
 
-        with self.exceptions_to_http("post", collection_name):
+        with self.exceptions_to_http("post", name):
             representation = transport.parser.parse(payload)
 
         on_generic_raise = self.to_http_exception(
             exceptions.BadRepresentation(
                 "Generic exception during preprocessing of {}".format(
-                    collection_name)))
+                    name)))
 
-        with self.exceptions_to_http("post", collection_name,
+        with self.exceptions_to_http("post", name,
                                      on_generic_raise=on_generic_raise):
             representation = res_handler.preprocess_representation(
                 representation)
@@ -250,9 +275,9 @@ class CollectionWebHandler(BaseWebHandler):
             self._check_none(representation,
                              "representation",
                              "{}.preprocess_representation".format(
-                                 collection_name))
+                                 name))
 
-        with self.exceptions_to_http("post", collection_name):
+        with self.exceptions_to_http("post", name):
             try:
                 resource = transport.deserializer.deserialize_resource(
                     res_handler.resource_class,
@@ -268,7 +293,7 @@ class CollectionWebHandler(BaseWebHandler):
 
             self._check_none(resource.identifier,
                              "resource_id",
-                             "{}.create()".format(collection_name))
+                             "{}.create()".format(name))
 
         location = with_end_slash(
             url_path_join(self.request.full_url(), str(resource.identifier)))
@@ -278,8 +303,46 @@ class CollectionWebHandler(BaseWebHandler):
         self.clear_header('Content-Type')
         self.flush()
 
+    @gen.coroutine
+    def _post_singleton(self, name):
+        raise HTTPError(405)
 
-class ResourceWebHandler(BaseWebHandler):
+    @gen.coroutine
+    def put(self, name):
+        res_handler = self.get_resource_handler_or_404(name)
+
+        if res_handler.handles_singleton():
+            yield self._put_singleton(name)
+        else:
+            yield self._put_collection(name)
+
+    @gen.coroutine
+    def _put_collection(self, name):
+        raise HTTPError(405)
+
+    @gen.coroutine
+    def _put_singleton(self, name):
+        raise HTTPError(405)
+
+    @gen.coroutine
+    def delete(self, name):
+        res_handler = self.get_resource_handler_or_404(name)
+
+        if res_handler.handles_singleton():
+            yield self._delete_singleton(name)
+        else:
+            yield self._delete_collection(name)
+
+    @gen.coroutine
+    def _delete_collection(self, name):
+        raise HTTPError(405)
+
+    @gen.coroutine
+    def _delete_singleton(self, name):
+        raise HTTPError(405)
+
+
+class WithIdentifierWebHandler(BaseWebHandler):
     """Handler for URLs addressing a resource.
     """
     SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
