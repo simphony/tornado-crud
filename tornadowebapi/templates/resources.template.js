@@ -299,7 +299,6 @@ define(['jquery'], function ($) {
                     var status = jqXHR.status;
                     
                     var payload = null;
-                    console.log(jqXHR.responseText);
                     try {
                         payload = JSON.parse(jqXHR.responseText);
                     } catch (e) {
