@@ -135,8 +135,8 @@ class BaseWebHandler(web.RequestHandler):
 
     @contextlib.contextmanager
     def exceptions_to_http(self,
+                           res_handler,
                            handler_method,
-                           collection_name,
                            identifier=None,
                            on_generic_raise=None):
         """Convenience method to reduce clutter due to exception handling.
@@ -151,17 +151,16 @@ class BaseWebHandler(web.RequestHandler):
             raise
         except exceptions.WebAPIException as e:
             self.log.error("Web API exception on {} {} {}: {} {}".format(
-                collection_name, identifier, handler_method, type(e), str(e)
+                res_handler, identifier, handler_method,
+                type(e), str(e)
             ))
             raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
         except Exception:
             self.log.exception(
-                "Internal error during {} on {} {}".format(
-                    handler_method,
-                    collection_name,
-                    identifier
+                "Internal error on {} {} {}".format(
+                    res_handler, identifier, handler_method
                 ))
             if on_generic_raise is None:
                 raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
