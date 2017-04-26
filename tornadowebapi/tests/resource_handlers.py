@@ -66,33 +66,38 @@ class WorkingResourceHandler(ResourceHandler):
 
 
 class SingletonResourceHandler(ResourceHandler):
-    instance = None
+    instance = {}
 
     @gen.coroutine
     def create(self, instance, **kwargs):
-        self.instance = instance
+        if "instance" in self.instance:
+            raise exceptions.Exists()
+
+        self.instance['instance'] = instance
 
     @gen.coroutine
     def retrieve(self, instance, **kwargs):
-        if self.instance is None:
+        if "instance" not in self.instance:
             raise exceptions.NotFound()
 
         for trait_name, trait_class in instance.traits().items():
-            setattr(instance, trait_name, getattr(self.instance, trait_name))
+            setattr(instance, trait_name,
+                    getattr(self.instance["instance"],
+                            trait_name))
 
     @gen.coroutine
     def update(self, instance, **kwargs):
-        if self.instance is None:
+        if "instance" not in self.instance:
             raise exceptions.NotFound()
 
-        self.instance = instance
+        self.instance["instance"] = instance
 
     @gen.coroutine
     def delete(self, instance, **kwargs):
-        if self.instance is None:
+        if "instance" not in self.instance:
             raise exceptions.NotFound()
 
-        self.instance = None
+        del self.instance["instance"]
 
 
 class Student(Resource):
@@ -133,7 +138,7 @@ class ServerInfo(SingletonResource):
     status = Unicode()
 
 
-class ServerInfoHandler(WorkingResourceHandler):
+class ServerInfoHandler(SingletonResourceHandler):
     resource_class = ServerInfo
 
 

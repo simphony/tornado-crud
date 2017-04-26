@@ -1,5 +1,4 @@
 from tornadowebapi.base_resource import BaseResource
-from tornadowebapi.resource_fragment import ResourceFragment
 from tornadowebapi.traitlets import Absent, OneOf
 
 
@@ -95,8 +94,8 @@ def mandatory_absents(resource, scope):
     if scope not in ["input", "output"]:
         raise ValueError("Scope must be either input or output")
 
-    if not isinstance(resource, (Resource, ResourceFragment)):
-        raise TypeError("Resource must be a Resource or ResourceFragment, "
+    if not isinstance(resource, (BaseResource)):
+        raise TypeError("Resource must be a BaseResource, "
                         "got {} {} instead".format(resource, type(resource)))
 
     res = set()

@@ -27,6 +27,7 @@ ALL_RESOURCES = (
     resource_handlers.TeacherHandler,
     resource_handlers.InvalidIdentifierHandler,
     resource_handlers.OurExceptionInvalidIdentifierHandler,
+    resource_handlers.ServerInfoHandler,
 )
 
 
@@ -34,6 +35,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
         resource_handlers.StudentHandler.collection = OrderedDict()
+        resource_handlers.StudentHandler.id = 0
+        resource_handlers.ServerInfoHandler.instance = {}
         resource_handlers.StudentHandler.id = 0
 
     def get_app(self):
@@ -589,6 +592,91 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
         res = self.fetch(collection_url, method="GET")
         self.assertEqual(res.code, httpstatus.OK)
+
+    def test_singleton_create(self):
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            })
+        )
+
+        self.assertEqual(res.code, httpstatus.CREATED)
+        self.assertIn("api/v1/serverinfo/", res.headers["Location"])
+
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.OK)
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            })
+        )
+        self.assertEqual(res.code, httpstatus.CONFLICT)
+
+    def test_singleton_delete(self):
+        res = self.fetch("/api/v1/serverinfo/", method="DELETE")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            })
+        )
+        self.assertEqual(res.code, httpstatus.CREATED)
+
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.OK)
+
+        res = self.fetch("/api/v1/serverinfo/", method="DELETE")
+        self.assertEqual(res.code, httpstatus.NO_CONTENT)
+
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+    def test_singleton_put(self):
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="PUT",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            }))
+
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            }))
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="PUT",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 2000,
+            }))
+
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"status": "ok",
+                          "uptime": 2000})
 
 
 class TestRESTFunctions(unittest.TestCase):

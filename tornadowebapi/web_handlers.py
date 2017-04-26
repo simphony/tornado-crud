@@ -218,6 +218,7 @@ class BaseWebHandler(web.RequestHandler):
         self.flush()
 
     def _send_created_to_client(self, resource):
+        """Sends a created message to the client for a given resource"""
         if isinstance(resource, Resource):
             location = with_end_slash(
                 url_path_join(self.request.full_url(),
@@ -377,7 +378,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
             yield res_handler.create(resource, **args)
 
-        self.send_created_to_client(resource)
+        self._send_created_to_client(resource)
 
     @gen.coroutine
     def put(self, name):
