@@ -202,7 +202,6 @@ class BaseWebHandler(web.RequestHandler):
         if entity is None:
             self.clear_header('Content-Type')
             self.set_status(httpstatus.NO_CONTENT)
-            self.flush()
             return
 
         self.set_status(httpstatus.OK)
