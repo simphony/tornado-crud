@@ -271,10 +271,8 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
         transport = self._registry.transport
 
         with self.exceptions_to_http(res_handler, "get"):
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                None,
-                None)
+            resource = transport.deserializer.deserialize(
+                res_handler.resource_class)
 
             yield res_handler.retrieve(resource, **args)
 
@@ -318,7 +316,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
         with self.exceptions_to_http(res_handler, "post"):
             try:
-                resource = transport.deserializer.deserialize_resource(
+                resource = transport.deserializer.deserialize(
                     res_handler.resource_class,
                     None,
                     representation,
@@ -361,7 +359,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
         with self.exceptions_to_http(res_handler, "post"):
             try:
-                resource = transport.deserializer.deserialize_resource(
+                resource = transport.deserializer.deserialize(
                     res_handler.resource_class,
                     None,
                     representation,
@@ -409,7 +407,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
                                      "put",
                                      on_generic_raise=on_generic_raise):
             try:
-                resource = transport.deserializer.deserialize_resource(
+                resource = transport.deserializer.deserialize(
                     res_handler.resource_class,
                     None,
                     transport.parser.parse(self.request.body))
@@ -418,7 +416,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
             self._check_none(resource,
                              "representation",
-                             "deserialize_resource")
+                             "deserialize")
 
         with self.exceptions_to_http(res_handler, "put"):
             self._check_resource_sanity(resource, "input")
@@ -449,10 +447,8 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
         transport = self._registry.transport
 
         with self.exceptions_to_http(res_handler, "delete"):
-            resource = transport.deserializer.deserialize_resource(
-                res_handler.resource_class,
-                None,
-                None)
+            resource = transport.deserializer.deserialize(
+                res_handler.resource_class)
 
             yield res_handler.delete(resource, **args)
 
@@ -477,10 +473,9 @@ class WithIdentifierWebHandler(BaseWebHandler):
             identifier = res_handler.preprocess_identifier(identifier)
 
         with self.exceptions_to_http("get", collection_name, identifier):
-            resource = transport.deserializer.deserialize_resource(
+            resource = transport.deserializer.deserialize(
                 res_handler.resource_class,
-                identifier,
-                None)
+                identifier)
 
             self._check_none(identifier, "identifier", "preprocess_identifier")
 
@@ -509,10 +504,9 @@ class WithIdentifierWebHandler(BaseWebHandler):
         with self.exceptions_to_http("post", collection_name, identifier):
             self._check_none(identifier, "identifier", "preprocess_identifier")
 
-            resource = transport.deserializer.deserialize_resource(
+            resource = transport.deserializer.deserialize(
                 res_handler.resource_class,
-                identifier,
-                None)
+                identifier)
 
             exists = yield res_handler.exists(resource, **args)
 
@@ -546,7 +540,7 @@ class WithIdentifierWebHandler(BaseWebHandler):
             self._check_none(identifier, "identifier", "preprocess_identifier")
 
             try:
-                resource = transport.deserializer.deserialize_resource(
+                resource = transport.deserializer.deserialize(
                     res_handler.resource_class,
                     identifier,
                     transport.parser.parse(self.request.body))
@@ -586,10 +580,9 @@ class WithIdentifierWebHandler(BaseWebHandler):
                                      collection_name,
                                      identifier):
 
-            resource = transport.deserializer.deserialize_resource(
+            resource = transport.deserializer.deserialize(
                 res_handler.resource_class,
-                identifier,
-                None)
+                identifier)
 
             yield res_handler.delete(resource, **args)
 

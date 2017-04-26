@@ -255,6 +255,8 @@ class ResourceHandler:
 
     @classmethod
     def handles_singleton(cls):
+        """Returns true if the handler resource_class is a singleton class.
+        Returns false otherwise."""
         resource_class = cls.resource_class
 
         if resource_class is None:
@@ -276,6 +278,11 @@ class ResourceHandler:
 
     @classmethod
     def bound_name(cls):
+        """Returns the name under which the resource will be presented as
+        a URL /name/.
+        This passes through the call to its name if singleton,
+        or to the collection name if not.
+        """
         resource_class = cls.resource_class
         if cls.handles_singleton():
             return resource_class.name()

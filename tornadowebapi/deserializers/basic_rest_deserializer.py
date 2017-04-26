@@ -9,10 +9,10 @@ class BasicRESTDeserializer(BaseDeserializer):
     """Deserializes data from our own flavor of REST data.
     Our flavor does not contain the identifier in the payload,
     so we have to rely on what is passed"""
-    def deserialize_resource(self,
-                             resource_class,
-                             identifier,
-                             data=None):
+    def deserialize(self,
+                    resource_class,
+                    identifier=None,
+                    data=None):
 
         if issubclass(resource_class, Resource):
             resource = resource_class(identifier=identifier)
@@ -34,7 +34,7 @@ class BasicRESTDeserializer(BaseDeserializer):
                 fragment_class = trait.klass
                 setattr(resource,
                         trait_name,
-                        self.deserialize_resource(
+                        self.deserialize(
                             fragment_class,
                             None,
                             data[trait_name]))
