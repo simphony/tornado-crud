@@ -152,4 +152,51 @@ define([
                 done();
             });
     });
+  
+    QUnit.test("create singleton", function (assert) {
+      var done = assert.async();
+      resources.ServerInfo.create(
+        {uptime: 10, status: "ok"}
+      ).done(function(location) {
+        assert.equal(location, 
+          "http://127.0.0.1:12345/api/v1/serverinfo/", 
+          "Create successful");
+        done();
+      });
+    });
+  
+    QUnit.test("retrieve singleton", function (assert) {
+      var done = assert.async();
+      resources.ServerInfo.retrieve().done(function(info) {
+        assert.equal(info.uptime, 10);
+        assert.equal(info.status, "ok");
+        done();
+      });
+    });
+
+    QUnit.test("update", function (assert) {
+      var done = assert.async();
+      resources.ServerInfo.update({status: "busy", uptime: 20})
+        .done(function() {
+          resources.ServerInfo.retrieve().done(
+            function(info) {
+              assert.equal(info.status, "busy");
+              assert.equal(info.uptime, 20);
+              done();
+            }
+          );
+        });
+    });
+
+    QUnit.test("delete", function (assert) {
+      var done = assert.async();
+      resources.ServerInfo.delete()
+        .done(function() {
+          resources.ServerInfo.retrieve()
+            .fail(function (error) {
+              assert.equal(error.code, 404);
+              done();
+            });
+        });
+    });
 });

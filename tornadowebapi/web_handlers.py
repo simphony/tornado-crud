@@ -602,12 +602,14 @@ class JSAPIWebHandler(BaseWebHandler):
     def get(self):
         resources = []
         reg = self.registry
-        for coll_name, resource_handler in reg.registered_handlers.items():
+        for resource_handler in reg.registered_handlers.values():
             class_name = resource_handler.resource_class.__name__
+            bound_name = resource_handler.bound_name()
 
             resources.append({
                 "class_name": class_name,
-                "collection_name": coll_name,
+                "bound_name": bound_name,
+                "singleton": resource_handler.handles_singleton()
             })
         self.set_header("Content-Type", "application/javascript")
         self.render("templates/resources.template.js",
