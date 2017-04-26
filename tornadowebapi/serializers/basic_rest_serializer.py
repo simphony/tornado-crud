@@ -1,4 +1,3 @@
-from tornadowebapi.exceptions import WebAPIException
 from tornadowebapi.traitlets import Absent, OneOf
 from .base_serializer import BaseSerializer
 
@@ -21,10 +20,6 @@ class BasicRESTSerializer(BaseSerializer):
         }
 
     def serialize_exception(self, exception):
-        if not isinstance(exception, WebAPIException):
-            raise TypeError("exception must be a "
-                            "WebAPIException. Got {}".format(type(exception)))
-
         if exception.message is None and exception.info is None:
             return None
 

@@ -1,4 +1,6 @@
 from tornado import gen, log
+from tornadowebapi.resource import Resource
+from tornadowebapi.singleton_resource import SingletonResource
 
 from . import exceptions
 
@@ -7,7 +9,7 @@ class ResourceHandler:
     """Base class for resource handlers.
     To implement a new ResourceHandler class, inherit from this subclass
     and reimplement the CRUD class methods with the appropriate
-    logic. Additionaly, specify a resource_class of type Resource.
+    logic. Additionally, specify a resource_class of type Resource.
 
     The ResourceHandler exports two member vars: application and current_user.
     They are equivalent to the members in the tornado web handler.
@@ -250,3 +252,39 @@ class ResourceHandler:
         The identifier that will be used.
         """
         return identifier
+
+    @classmethod
+    def handles_singleton(cls):
+        """Returns true if the handler resource_class is a singleton class.
+        Returns false otherwise."""
+        resource_class = cls.resource_class
+
+        if resource_class is None:
+            raise TypeError(
+                "resource_class for handler {} must not be None".format(
+                    cls
+                ))
+
+        if issubclass(resource_class, Resource):
+            return False
+        elif issubclass(resource_class, SingletonResource):
+            return True
+
+        raise TypeError(
+            "resource_class for handler {} must be a "
+            "subtype of BaseResource. Found {}".format(
+                cls,
+                resource_class))
+
+    @classmethod
+    def bound_name(cls):
+        """Returns the name under which the resource will be presented as
+        a URL /name/.
+        This passes through the call to its name if singleton,
+        or to the collection name if not.
+        """
+        resource_class = cls.resource_class
+        if cls.handles_singleton():
+            return resource_class.name()
+        else:
+            return resource_class.collection_name()

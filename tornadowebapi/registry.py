@@ -1,12 +1,11 @@
 from .web_handlers import (
-    ResourceWebHandler,
-    CollectionWebHandler,
+    WithIdentifierWebHandler,
+    WithoutIdentifierWebHandler,
     JSAPIWebHandler)
 
 from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
 from .resource_handler import ResourceHandler
-from .resource import Resource
 from .authenticator import NullAuthenticator
 
 
@@ -68,26 +67,18 @@ class Registry:
         if handler is None or not issubclass(handler, ResourceHandler):
             raise TypeError("handler must be a subclass of ResourceHandler")
 
-        resource_class = handler.resource_class
+        name = handler.bound_name()
 
-        if resource_class is None or not issubclass(resource_class, Resource):
-            raise TypeError(
-                "resource_class for handler {} must be a "
-                "subtype of Resource. Found {}".format(
-                    handler,
-                    resource_class))
-
-        collection_name = resource_class.collection_name()
-        if collection_name in self._registered_handlers:
+        if name in self._registered_handlers:
             raise ValueError(
-                "Collection name {} is already in use by "
+                "Name {} is already in use by "
                 "class {}, so it cannot be used by class {}".format(
-                    collection_name,
-                    self._registered_handlers[collection_name].__name__,
-                    resource_class.__name__
+                    name,
+                    self._registered_handlers[name].__name__,
+                    handler.__name__
                 ))
 
-        self._registered_handlers[collection_name] = handler
+        self._registered_handlers[name] = handler
 
     def __getitem__(self, collection_name):
         """Returns the class from the collection name with the
@@ -125,12 +116,12 @@ class Registry:
         return [
             (with_end_slash(
                 url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
-             ResourceWebHandler,
+             WithIdentifierWebHandler,
              init_args
              ),
             (with_end_slash(
                 url_path_join(base_urlpath, "api", version, "(.*)")),
-             CollectionWebHandler,
+             WithoutIdentifierWebHandler,
              init_args
              ),
             (url_path_join(base_urlpath, "jsapi", version, "resources.js"),

@@ -5,6 +5,7 @@ from tornadowebapi import exceptions
 from tornadowebapi.resource_fragment import ResourceFragment
 from tornadowebapi.resource_handler import ResourceHandler
 from tornadowebapi.resource import Resource
+from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import Unicode, Int, List, OneOf
 
 
@@ -64,6 +65,38 @@ class WorkingResourceHandler(ResourceHandler):
                            total=len(values))
 
 
+class SingletonResourceHandler(ResourceHandler):
+    instance = {}
+
+    @gen.coroutine
+    def create(self, instance, **kwargs):
+        self.instance['instance'] = instance
+
+    @gen.coroutine
+    def retrieve(self, instance, **kwargs):
+        if "instance" not in self.instance:
+            raise exceptions.NotFound()
+
+        for trait_name, trait_class in instance.traits().items():
+            setattr(instance, trait_name,
+                    getattr(self.instance["instance"],
+                            trait_name))
+
+    @gen.coroutine
+    def update(self, instance, **kwargs):
+        if "instance" not in self.instance:
+            raise exceptions.NotFound()
+
+        self.instance["instance"] = instance
+
+    @gen.coroutine
+    def delete(self, instance, **kwargs):
+        if "instance" not in self.instance:
+            raise exceptions.NotFound()
+
+        del self.instance["instance"]
+
+
 class Student(Resource):
     name = Unicode()
     age = Int()
@@ -95,6 +128,15 @@ class City(Resource):
 
 class CityHandler(WorkingResourceHandler):
     resource_class = City
+
+
+class ServerInfo(SingletonResource):
+    uptime = Int()
+    status = Unicode()
+
+
+class ServerInfoHandler(SingletonResourceHandler):
+    resource_class = ServerInfo
 
 
 class UnsupportAll(Resource):

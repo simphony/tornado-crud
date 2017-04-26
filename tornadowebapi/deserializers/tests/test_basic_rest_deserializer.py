@@ -9,7 +9,7 @@ from tornadowebapi.traitlets import Absent
 class TestBasicRESTDeserializer(unittest.TestCase):
     def test_basic_functionality(self):
         deserializer = BasicRESTDeserializer()
-        res = deserializer.deserialize_resource(
+        res = deserializer.deserialize(
             Student,
             "1",
             {"age": 39,
@@ -23,7 +23,7 @@ class TestBasicRESTDeserializer(unittest.TestCase):
 
     def test_optional_entries(self):
         deserializer = BasicRESTDeserializer()
-        res = deserializer.deserialize_resource(
+        res = deserializer.deserialize(
             Teacher,
             "1",
             {"age": 39,
@@ -37,7 +37,7 @@ class TestBasicRESTDeserializer(unittest.TestCase):
         self.assertEqual(res.name, "john wick")
         self.assertEqual(res.discipline, ["chem", "phys"])
 
-        res = deserializer.deserialize_resource(
+        res = deserializer.deserialize(
             Teacher,
             "1",
             {"name": "john wick",
@@ -60,7 +60,7 @@ class TestBasicRESTDeserializer(unittest.TestCase):
         }
 
         deserializer = BasicRESTDeserializer()
-        result = deserializer.deserialize_resource(City, "1", data)
+        result = deserializer.deserialize(City, "1", data)
 
         self.assertIsInstance(result, City)
         self.assertEqual(result.identifier, "1")
@@ -72,4 +72,4 @@ class TestBasicRESTDeserializer(unittest.TestCase):
     def test_invalid_resource(self):
         deserializer = BasicRESTDeserializer()
         with self.assertRaises(TypeError):
-            deserializer.deserialize_resource(str, None, None)
+            deserializer.deserialize(str, None, None)

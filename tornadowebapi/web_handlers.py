@@ -2,6 +2,9 @@ import contextlib
 
 from tornado import gen, web, template
 from tornado.log import app_log
+from tornado.web import HTTPError
+from tornadowebapi.resource import Resource
+from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import TraitError
 
 from . import resource as resource_mod
@@ -84,7 +87,7 @@ class BaseWebHandler(web.RequestHandler):
 
         transport = self._registry.transport
         payload = transport.renderer.render(
-            transport.serializer.serialize_exception(exc))
+            transport.serializer.serialize(exc))
 
         if payload is not None:
             return PayloadedHTTPError(
@@ -134,8 +137,8 @@ class BaseWebHandler(web.RequestHandler):
 
     @contextlib.contextmanager
     def exceptions_to_http(self,
+                           res_handler,
                            handler_method,
-                           collection_name,
                            identifier=None,
                            on_generic_raise=None):
         """Convenience method to reduce clutter due to exception handling.
@@ -150,17 +153,16 @@ class BaseWebHandler(web.RequestHandler):
             raise
         except exceptions.WebAPIException as e:
             self.log.error("Web API exception on {} {} {}: {} {}".format(
-                collection_name, identifier, handler_method, type(e), str(e)
+                res_handler, identifier, handler_method,
+                type(e), str(e)
             ))
             raise self.to_http_exception(e)
         except NotImplementedError:
             raise web.HTTPError(httpstatus.METHOD_NOT_ALLOWED)
         except Exception:
             self.log.exception(
-                "Internal error during {} on {} {}".format(
-                    handler_method,
-                    collection_name,
-                    identifier
+                "Internal error on {} {} {}".format(
+                    res_handler, identifier, handler_method
                 ))
             if on_generic_raise is None:
                 raise web.HTTPError(httpstatus.INTERNAL_SERVER_ERROR)
@@ -193,19 +195,67 @@ class BaseWebHandler(web.RequestHandler):
 
         return ret
 
+    def _send_to_client(self, entity):
+        """Convenience method to send a given entity to a client.
+        Serializes it and puts the right headers.
+        If entity is None, sets no content http response."""
+        if entity is None:
+            self.clear_header('Content-Type')
+            self.set_status(httpstatus.NO_CONTENT)
+            self.flush()
+            return
 
-class CollectionWebHandler(BaseWebHandler):
-    """Handler for URLs addressing a collection.
+        self.set_status(httpstatus.OK)
+        # Need to convert into a dict for security issue tornado/1009
+        transport = self._registry.transport
+        self.write(
+            transport.renderer.render(
+                transport.serializer.serialize(
+                    entity)
+            )
+        )
+        self.set_header("Content-Type", transport.content_type)
+        self.flush()
+
+    def _send_created_to_client(self, resource):
+        """Sends a created message to the client for a given resource"""
+        if isinstance(resource, Resource):
+            location = with_end_slash(
+                url_path_join(self.request.full_url(),
+                              str(resource.identifier)))
+        elif isinstance(resource, SingletonResource):
+            location = with_end_slash(self.request.full_url())
+        else:
+            raise TypeError("Invalid resource type {}".format(resource))
+
+        self.set_status(httpstatus.CREATED)
+        self.set_header("Location", location)
+        self.clear_header('Content-Type')
+        self.flush()
+
+
+class WithoutIdentifierWebHandler(BaseWebHandler):
+    """Handler for URLs without an identifier.
     """
     @gen.coroutine
-    def get(self, collection_name):
-        """Returns the collection of available items"""
-        res_handler = self.get_resource_handler_or_404(collection_name)
+    def get(self, name):
+        res_handler = self.get_resource_handler_or_404(name)
         args = self.parsed_query_arguments()
+
+        if res_handler.handles_singleton():
+            subcoro = self._get_singleton
+        else:
+            subcoro = self._get_collection
+
+        yield subcoro(res_handler, args)
+
+    @gen.coroutine
+    def _get_collection(self, res_handler, args):
+        """Returns the collection of available items"""
 
         items_response = ItemsResponse(res_handler.resource_class)
 
-        with self.exceptions_to_http("get", collection_name):
+        with self.exceptions_to_http(res_handler, "get"):
             yield res_handler.items(items_response, **args)
 
         for resource in items_response.items:
@@ -214,47 +264,59 @@ class CollectionWebHandler(BaseWebHandler):
                              "items")
             self._check_resource_sanity(resource, "output")
 
-        self.set_status(httpstatus.OK)
-        # Need to convert into a dict for security issue tornado/1009
-        transport = self._registry.transport
-        self.write(
-            transport.renderer.render(
-                transport.serializer.serialize_items_response(
-                    items_response)
-            )
-        )
-        self.set_header("Content-Type", transport.content_type)
-        self.flush()
+        self._send_to_client(items_response)
 
     @gen.coroutine
-    def post(self, collection_name):
-        """Creates a new resource in the collection."""
-        res_handler = self.get_resource_handler_or_404(collection_name)
+    def _get_singleton(self, res_handler, args):
         transport = self._registry.transport
-        payload = self.request.body
+
+        with self.exceptions_to_http(res_handler, "get"):
+            resource = transport.deserializer.deserialize(
+                res_handler.resource_class)
+
+            yield res_handler.retrieve(resource, **args)
+
+            self._check_resource_sanity(resource, "output")
+
+        self._send_to_client(resource)
+
+    @gen.coroutine
+    def post(self, name):
+        res_handler = self.get_resource_handler_or_404(name)
         args = self.parsed_query_arguments()
 
-        with self.exceptions_to_http("post", collection_name):
+        if res_handler.handles_singleton():
+            subcoro = self._post_singleton
+        else:
+            subcoro = self._post_collection
+
+        yield subcoro(res_handler, args)
+
+    @gen.coroutine
+    def _post_collection(self, res_handler, args):
+        """Creates a new resource in the collection."""
+        transport = self._registry.transport
+        payload = self.request.body
+
+        with self.exceptions_to_http(res_handler, "post"):
             representation = transport.parser.parse(payload)
 
         on_generic_raise = self.to_http_exception(
-            exceptions.BadRepresentation(
-                "Generic exception during preprocessing of {}".format(
-                    collection_name)))
+            exceptions.BadRepresentation("Generic exception "
+                                         "during preprocessing"))
 
-        with self.exceptions_to_http("post", collection_name,
+        with self.exceptions_to_http(res_handler, "post",
                                      on_generic_raise=on_generic_raise):
             representation = res_handler.preprocess_representation(
                 representation)
 
             self._check_none(representation,
                              "representation",
-                             "{}.preprocess_representation".format(
-                                 collection_name))
+                             "preprocess_representation")
 
-        with self.exceptions_to_http("post", collection_name):
+        with self.exceptions_to_http(res_handler, "post"):
             try:
-                resource = transport.deserializer.deserialize_resource(
+                resource = transport.deserializer.deserialize(
                     res_handler.resource_class,
                     None,
                     representation,
@@ -268,22 +330,134 @@ class CollectionWebHandler(BaseWebHandler):
 
             self._check_none(resource.identifier,
                              "resource_id",
-                             "{}.create()".format(collection_name))
+                             "create()")
 
-        location = with_end_slash(
-            url_path_join(self.request.full_url(), str(resource.identifier)))
+        self._send_created_to_client(resource)
 
-        self.set_status(httpstatus.CREATED)
-        self.set_header("Location", location)
-        self.clear_header('Content-Type')
-        self.flush()
+    @gen.coroutine
+    def _post_singleton(self, res_handler, args):
+        """POST on a singleton creates the resource and fills the information
+        if the resource is not there. If it's there, will return a conflict."""
+        transport = self._registry.transport
+        payload = self.request.body
+
+        with self.exceptions_to_http(res_handler, "post"):
+            representation = transport.parser.parse(payload)
+
+        on_generic_raise = self.to_http_exception(
+            exceptions.BadRepresentation("Generic exception "
+                                         "during preprocessing"))
+
+        with self.exceptions_to_http(res_handler, "post",
+                                     on_generic_raise=on_generic_raise):
+            representation = res_handler.preprocess_representation(
+                representation)
+
+            self._check_none(representation,
+                             "representation",
+                             "preprocess_representation")
+
+        with self.exceptions_to_http(res_handler, "post"):
+            try:
+                resource = transport.deserializer.deserialize(
+                    res_handler.resource_class,
+                    None,
+                    representation,
+                )
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=str(e))
+
+            self._check_resource_sanity(resource, "input")
+
+            exists = yield res_handler.exists(resource)
+
+            if exists:
+                raise exceptions.Exists()
+
+            yield res_handler.create(resource, **args)
+
+        self._send_created_to_client(resource)
+
+    @gen.coroutine
+    def put(self, name):
+        res_handler = self.get_resource_handler_or_404(name)
+        args = self.parsed_query_arguments()
+
+        if res_handler.handles_singleton():
+            coro = self._put_singleton
+        else:
+            coro = self._put_collection
+
+        yield coro(res_handler, args)
+
+    @gen.coroutine
+    def _put_collection(self, res_handler, args):
+        """You cannot PUT on a collection"""
+        raise HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+
+    @gen.coroutine
+    def _put_singleton(self, res_handler, args):
+        """Replaces the resource with a new representation."""
+        transport = self._registry.transport
+
+        on_generic_raise = self.to_http_exception(
+            exceptions.BadRepresentation("Generic exception during "
+                                         "deserialization"))
+        with self.exceptions_to_http(res_handler,
+                                     "put",
+                                     on_generic_raise=on_generic_raise):
+            try:
+                resource = transport.deserializer.deserialize(
+                    res_handler.resource_class,
+                    None,
+                    transport.parser.parse(self.request.body))
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=str(e))
+
+            self._check_none(resource,
+                             "representation",
+                             "deserialize")
+
+        with self.exceptions_to_http(res_handler, "put"):
+            self._check_resource_sanity(resource, "input")
+
+            yield res_handler.update(resource, **args)
+
+        self._send_to_client(None)
+
+    @gen.coroutine
+    def delete(self, name):
+        res_handler = self.get_resource_handler_or_404(name)
+        args = self.parsed_query_arguments()
+
+        if res_handler.handles_singleton():
+            coro = self._delete_singleton
+        else:
+            coro = self._delete_collection
+
+        yield coro(res_handler, args)
+
+    @gen.coroutine
+    def _delete_collection(self, res_handler, args):
+        raise HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+
+    @gen.coroutine
+    def _delete_singleton(self, res_handler, args):
+        """Deletes the singleton resource."""
+        transport = self._registry.transport
+
+        with self.exceptions_to_http(res_handler, "delete"):
+            resource = transport.deserializer.deserialize(
+                res_handler.resource_class)
+
+            yield res_handler.delete(resource, **args)
+
+        self._send_to_client(None)
 
 
-class ResourceWebHandler(BaseWebHandler):
+class WithIdentifierWebHandler(BaseWebHandler):
     """Handler for URLs addressing a resource.
     """
-    SUPPORTED_METHODS = ("GET", "POST", "PUT", "DELETE")
-
     @gen.coroutine
     def get(self, collection_name, identifier):
         """Retrieves the resource representation."""
@@ -299,10 +473,9 @@ class ResourceWebHandler(BaseWebHandler):
             identifier = res_handler.preprocess_identifier(identifier)
 
         with self.exceptions_to_http("get", collection_name, identifier):
-            resource = transport.deserializer.deserialize_resource(
+            resource = transport.deserializer.deserialize(
                 res_handler.resource_class,
-                identifier,
-                None)
+                identifier)
 
             self._check_none(identifier, "identifier", "preprocess_identifier")
 
@@ -310,14 +483,7 @@ class ResourceWebHandler(BaseWebHandler):
 
             self._check_resource_sanity(resource, "output")
 
-        self.set_status(httpstatus.OK)
-        transport = self._registry.transport
-        self.write(
-            transport.renderer.render(
-                transport.serializer.serialize_resource(resource)
-            ))
-        self.set_header("Content-Type", transport.content_type)
-        self.flush()
+        self._send_to_client(resource)
 
     @gen.coroutine
     def post(self, collection_name, identifier):
@@ -338,10 +504,9 @@ class ResourceWebHandler(BaseWebHandler):
         with self.exceptions_to_http("post", collection_name, identifier):
             self._check_none(identifier, "identifier", "preprocess_identifier")
 
-            resource = transport.deserializer.deserialize_resource(
+            resource = transport.deserializer.deserialize(
                 res_handler.resource_class,
-                identifier,
-                None)
+                identifier)
 
             exists = yield res_handler.exists(resource, **args)
 
@@ -375,7 +540,7 @@ class ResourceWebHandler(BaseWebHandler):
             self._check_none(identifier, "identifier", "preprocess_identifier")
 
             try:
-                resource = transport.deserializer.deserialize_resource(
+                resource = transport.deserializer.deserialize(
                     res_handler.resource_class,
                     identifier,
                     transport.parser.parse(self.request.body))
@@ -393,8 +558,7 @@ class ResourceWebHandler(BaseWebHandler):
 
             yield res_handler.update(resource, **args)
 
-        self.clear_header('Content-Type')
-        self.set_status(httpstatus.NO_CONTENT)
+        self._send_to_client(None)
 
     @gen.coroutine
     def delete(self, collection_name, identifier):
@@ -416,15 +580,13 @@ class ResourceWebHandler(BaseWebHandler):
                                      collection_name,
                                      identifier):
 
-            resource = transport.deserializer.deserialize_resource(
+            resource = transport.deserializer.deserialize(
                 res_handler.resource_class,
-                identifier,
-                None)
+                identifier)
 
             yield res_handler.delete(resource, **args)
 
-        self.clear_header('Content-Type')
-        self.set_status(httpstatus.NO_CONTENT)
+        self._send_to_client(None)
 
 
 class JSAPIWebHandler(BaseWebHandler):
@@ -433,12 +595,14 @@ class JSAPIWebHandler(BaseWebHandler):
     def get(self):
         resources = []
         reg = self.registry
-        for coll_name, resource_handler in reg.registered_handlers.items():
+        for resource_handler in reg.registered_handlers.values():
             class_name = resource_handler.resource_class.__name__
+            bound_name = resource_handler.bound_name()
 
             resources.append({
                 "class_name": class_name,
-                "collection_name": coll_name,
+                "bound_name": bound_name,
+                "singleton": resource_handler.handles_singleton()
             })
         self.set_header("Content-Type", "application/javascript")
         self.render("templates/resources.template.js",

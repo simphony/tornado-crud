@@ -7,7 +7,8 @@ from tornado.testing import LogTrapTestCase
 from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.traitlets import Absent
-from tornadowebapi.web_handlers import ResourceWebHandler, CollectionWebHandler
+from tornadowebapi.web_handlers import (
+    WithIdentifierWebHandler, WithoutIdentifierWebHandler)
 from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
@@ -26,6 +27,7 @@ ALL_RESOURCES = (
     resource_handlers.TeacherHandler,
     resource_handlers.InvalidIdentifierHandler,
     resource_handlers.OurExceptionInvalidIdentifierHandler,
+    resource_handlers.ServerInfoHandler,
 )
 
 
@@ -33,6 +35,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
         resource_handlers.StudentHandler.collection = OrderedDict()
+        resource_handlers.StudentHandler.id = 0
+        resource_handlers.ServerInfoHandler.instance = {}
         resource_handlers.StudentHandler.id = 0
 
     def get_app(self):
@@ -390,6 +394,19 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         res = self.fetch("/api/v1/students/1/", method="DELETE")
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
+    def test_delete_collection(self):
+        res = self.fetch("/api/v1/students/", method="DELETE")
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+
+    def test_put_collection(self):
+        res = self.fetch("/api/v1/students/",
+                         method="PUT",
+                         body=escape.json_encode({
+                             "name": "john wick",
+                             "age": 19,
+                         }))
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+
     def test_unexistent_resource_type(self):
         res = self.fetch(
             "/api/v1/notpresent/",
@@ -589,12 +606,127 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         res = self.fetch(collection_url, method="GET")
         self.assertEqual(res.code, httpstatus.OK)
 
+    def test_singleton_create(self):
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            })
+        )
+
+        self.assertEqual(res.code, httpstatus.CREATED)
+        self.assertIn("api/v1/serverinfo/", res.headers["Location"])
+
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.OK)
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            })
+        )
+        self.assertEqual(res.code, httpstatus.CONFLICT)
+
+    def test_singleton_create_with_invalid_type(self):
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": "hello",
+            })
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+    def test_singleton_delete(self):
+        res = self.fetch("/api/v1/serverinfo/", method="DELETE")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            })
+        )
+        self.assertEqual(res.code, httpstatus.CREATED)
+
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.OK)
+
+        res = self.fetch("/api/v1/serverinfo/", method="DELETE")
+        self.assertEqual(res.code, httpstatus.NO_CONTENT)
+
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+    def test_singleton_put(self):
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="PUT",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            }))
+
+        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            }))
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="PUT",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 2000,
+            }))
+
+        res = self.fetch("/api/v1/serverinfo/", method="GET")
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"status": "ok",
+                          "uptime": 2000})
+
+    def test_put_invalid_type(self):
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            }))
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="PUT",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": "hello",
+            }))
+
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
 
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
         reg = Registry()
         handlers = reg.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/(.*)/(.*)/")
-        self.assertEqual(handlers[0][1], ResourceWebHandler)
+        self.assertEqual(handlers[0][1], WithIdentifierWebHandler)
         self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
-        self.assertEqual(handlers[1][1], CollectionWebHandler)
+        self.assertEqual(handlers[1][1], WithoutIdentifierWebHandler)

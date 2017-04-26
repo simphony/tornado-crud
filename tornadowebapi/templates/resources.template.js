@@ -129,6 +129,152 @@ define(['jquery'], function ($) {
         }
         promise.reject(err);
     };
+
+    var create_handler = function(promise, data, textStatus, jqXHR) {
+        var status = jqXHR.status;
+
+        var payload = null;
+        try {
+            payload = JSON.parse(data);
+        } catch (e) {
+            // Suppress any syntax error and discard the payload
+        }
+
+        if (status !== 201) {
+            // Strange situation in which the call succeeded, but
+            // not with a 201. Just do our best.
+            console.log(
+              "Create succeded but response with status " +
+              status +
+              " instead of 201."
+            );
+            promise.reject(status, payload);
+            return;
+        }
+
+        var id, location;
+        try {
+            location = jqXHR.getResponseHeader('Location');
+            var url = parse_url(location);
+            var arr = url.pathname.replace(/\/$/, "").split('/');
+            id = arr[arr.length - 1];
+        } catch (e) {
+            console.log("Response had invalid or absent Location header");
+            promise.reject(status, payload);
+            return;
+        }
+        promise.resolve(id, location);
+    };
+
+    var create_singleton_handler = function(promise, data, textStatus, jqXHR) {
+        var status = jqXHR.status;
+
+        var payload = null;
+        try {
+            payload = JSON.parse(data);
+        } catch (e) {
+            // Suppress any syntax error and discard the payload
+        }
+
+        if (status !== 201) {
+            // Strange situation in which the call succeeded, but
+            // not with a 201. Just do our best.
+            console.log(
+              "Create succeded but response with status " +
+              status +
+              " instead of 201."
+            );
+            promise.reject(status, payload);
+            return;
+        }
+
+        var location;
+        try {
+            location = jqXHR.getResponseHeader('Location');
+        } catch (e) {
+            console.log("Response had invalid or absent Location header");
+            promise.reject(status, payload);
+            return;
+        }
+        promise.resolve(location);
+    };
+    
+    var update_handler = function(promise, data, textStatus, jqXHR) {
+        var status = jqXHR.status;
+
+        var payload = null;
+        try {
+            payload = JSON.parse(data);
+        } catch (e) {
+            // Suppress any syntax error and discard the payload
+        }
+
+        if (status !== 204) {
+            // Strange situation in which the call succeeded, but
+            // not with a 201. Just do our best.
+            console.log(
+              "Update succeded but response with status " +
+              status +
+              " instead of 204."
+            );
+            promise.reject(status, payload);
+            return;
+        }
+
+        promise.resolve();
+    };
+    
+    var delete_handler = function(promise, data, textStatus, jqXHR) {
+        var status = jqXHR.status;
+        var payload = null;
+        try {
+            payload = JSON.parse(data);
+        } catch (e) {
+            // Suppress any syntax error and discard the payload
+        }
+
+        if (status !== 204) {
+            console.log(
+              "Delete succeded but response with status " +
+              status +
+              " instead of 204."
+            );
+            promise.reject(status, payload);
+            return;
+        }
+        promise.resolve();
+    };
+    
+    var retrieve_handler = function(promise, data, textStatus, jqXHR) {
+        var status = jqXHR.status;
+
+        var payload = null;
+        try {
+            payload = JSON.parse(jqXHR.responseText);
+        } catch (e) {
+            // Suppress any syntax error and discard the payload
+        }
+
+        if (status !== 200) {
+            console.log(
+              "Retrieve succeded but response with status " +
+              status +
+              " instead of 200."
+            );
+            promise.reject(status, payload);
+            return;
+        }
+
+        if (payload === null) {
+            console.log(
+              "Retrieve succeded but empty or invalid payload"
+            );
+            promise.reject(status, payload);
+            return;
+        }
+
+        promise.resolve(payload);
+    };
     
     var Resource = function(type) {
         this.type = type;
@@ -139,46 +285,13 @@ define(['jquery'], function ($) {
 
             API.request("POST", type, body, query_args)
                 .done(function(data, textStatus, jqXHR) {
-                    var status = jqXHR.status;
-                    
-                    var payload = null;
-                    try {
-                        payload = JSON.parse(data);
-                    } catch (e) {
-                        // Suppress any syntax error and discard the payload
-                    }
-
-                    if (status !== 201) {
-                        // Strange situation in which the call succeeded, but
-                        // not with a 201. Just do our best.
-                        console.log(
-                            "Create succeded but response with status " +
-                            status + 
-                            " instead of 201."
-                        );
-                        promise.reject(status, payload);
-                        return;
-                    }
-                    
-                    var id, location;
-                    try {
-                        location = jqXHR.getResponseHeader('Location');
-                        var url = parse_url(location);
-                        var arr = url.pathname.replace(/\/$/, "").split('/');
-                        id = arr[arr.length - 1];
-                    } catch (e) {
-                        console.log("Response had invalid or absent Location header");
-                        promise.reject(status, payload);
-                        return;
-                    }
-                    promise.resolve(id, location);
+                    create_handler(promise, data, textStatus, jqXHR);
                 })
                 .fail(function(jqXHR, textStatus, error) {
                     fail_handler(promise, jqXHR, textStatus, error);
                 });
             
             return promise;
-            
         };
         
         this.update = function(id, representation, query_args) {
@@ -187,36 +300,14 @@ define(['jquery'], function ($) {
 
             API.request("PUT", url_path_join(type, id), body, query_args)
                 .done(function(data, textStatus, jqXHR) {
-                    var status = jqXHR.status;
-
-                    var payload = null;
-                    try {
-                        payload = JSON.parse(data);
-                    } catch (e) {
-                        // Suppress any syntax error and discard the payload
-                    }
-
-                    if (status !== 204) {
-                        // Strange situation in which the call succeeded, but
-                        // not with a 201. Just do our best.
-                        console.log(
-                            "Update succeded but response with status " +
-                            status +
-                            " instead of 204."
-                        );
-                        promise.reject(status, payload);
-                        return;
-                    }
-
-                    promise.resolve();
-                })
+                    update_handler(promise, data, textStatus, jqXHR)
+                  }
+                )
                 .fail(function(jqXHR, textStatus, error) {
                     fail_handler(promise, jqXHR, textStatus, error);
                 });
 
             return promise;
-
-
         };
         
         this.delete = function(id, query_args) {
@@ -224,25 +315,9 @@ define(['jquery'], function ($) {
             
             API.request("DELETE", url_path_join(type, id), null, query_args)
                 .done(function(data, textStatus, jqXHR) {
-                    var status = jqXHR.status;
-                    var payload = null;
-                    try {
-                        payload = JSON.parse(data);
-                    } catch (e) {
-                        // Suppress any syntax error and discard the payload
-                    }
-                    
-                    if (status !== 204) {
-                        console.log(
-                            "Delete succeded but response with status " +
-                            status +
-                            " instead of 204."
-                        );
-                        promise.reject(status, payload);
-                        return; 
-                    }
-                    promise.resolve();
-                })
+                    delete_handler(promise, data, textStatus, jqXHR);
+                }
+                )
                 .fail(function(jqXHR, textStatus, error) {
                     fail_handler(promise, jqXHR, textStatus, error);
                 });
@@ -255,35 +330,9 @@ define(['jquery'], function ($) {
             
             API.request("GET", url_path_join(type, id), null, query_args)
                 .done(function(data, textStatus, jqXHR) {
-                    var status = jqXHR.status;
-                    
-                    var payload = null;
-                    try {
-                        payload = JSON.parse(jqXHR.responseText);
-                    } catch (e) {
-                        // Suppress any syntax error and discard the payload
-                    }
-
-                    if (status !== 200) {
-                        console.log(
-                            "Retrieve succeded but response with status " +
-                            status +
-                            " instead of 200."
-                        );
-                        promise.reject(status, payload);
-                        return;
-                    }
-                        
-                    if (payload === null) {
-                        console.log(
-                            "Retrieve succeded but empty or invalid payload"
-                        );
-                        promise.reject(status, payload);
-                        return;
-                    }
-                        
-                    promise.resolve(payload);
-                })
+                    retrieve_handler(promise, data, textStatus, jqXHR);
+                }
+                )
                 .fail(function(jqXHR, textStatus, error) {
                     fail_handler(promise, jqXHR, textStatus, error);
                 });
@@ -328,7 +377,6 @@ define(['jquery'], function ($) {
                         payload.items, 
                         payload.offset, 
                         payload.total);
-                    
                 })
                 .fail(function(jqXHR, textStatus, error) {
                     fail_handler(promise, jqXHR, textStatus, error);
@@ -338,9 +386,74 @@ define(['jquery'], function ($) {
         };
     };
 
+    var SingletonResource = function(type) {
+        this.type = type;
+        this.create = function(representation, query_args) {
+            var body = JSON.stringify(representation);
+            var promise = $.Deferred();
+
+            API.request("POST", type, body, query_args)
+              .done(function(data, textStatus, jqXHR) {
+                  create_singleton_handler(promise, data, textStatus, jqXHR);
+              })
+              .fail(function(jqXHR, textStatus, error) {
+                  fail_handler(promise, jqXHR, textStatus, error);
+              });
+
+            return promise;
+        };
+        this.update = function(representation, query_args) {
+            var body = JSON.stringify(representation);
+            var promise = $.Deferred();
+
+            API.request("PUT", type, body, query_args)
+              .done(function(data, textStatus, jqXHR) {
+                    update_handler(promise, data, textStatus, jqXHR)
+                }
+              )
+              .fail(function(jqXHR, textStatus, error) {
+                  fail_handler(promise, jqXHR, textStatus, error);
+              });
+
+            return promise;
+
+
+        };
+
+        this.delete = function(query_args) {
+            var promise = $.Deferred();
+
+            API.request("DELETE", type, null, query_args)
+              .done(function(data, textStatus, jqXHR) {
+                    delete_handler(promise, data, textStatus, jqXHR);
+                }
+              )
+              .fail(function(jqXHR, textStatus, error) {
+                  fail_handler(promise, jqXHR, textStatus, error);
+              });
+
+            return promise;
+        };
+
+        this.retrieve = function(query_args) {
+            var promise = $.Deferred();
+
+            API.request("GET", type, null, query_args)
+              .done(function(data, textStatus, jqXHR) {
+                    retrieve_handler(promise, data, textStatus, jqXHR);
+                }
+              )
+              .fail(function(jqXHR, textStatus, error) {
+                  fail_handler(promise, jqXHR, textStatus, error);
+              });
+
+            return promise;
+        };
+    };
+    
     return {
-        {% for res in resources %}"{{ res['class_name'] }}" : new Resource("{{ res['collection_name'] }}"),
-        {% end %} 
+        {% for res in resources %}"{{ res['class_name'] }}" : new {% if res["singleton"] %}SingletonResource{% else %}Resource{% end %}("{{ res['bound_name'] }}"),
+        {% end %}
     };
 });
 
