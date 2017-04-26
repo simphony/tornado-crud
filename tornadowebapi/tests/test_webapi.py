@@ -635,6 +635,17 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         )
         self.assertEqual(res.code, httpstatus.CONFLICT)
 
+    def test_singleton_create_with_invalid_type(self):
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": "hello",
+            })
+        )
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
     def test_singleton_delete(self):
         res = self.fetch("/api/v1/serverinfo/", method="DELETE")
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
@@ -690,6 +701,25 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(escape.json_decode(res.body),
                          {"status": "ok",
                           "uptime": 2000})
+
+    def test_put_invalid_type(self):
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="POST",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": 1000,
+            }))
+
+        res = self.fetch(
+            "/api/v1/serverinfo/",
+            method="PUT",
+            body=escape.json_encode({
+                "status": "ok",
+                "uptime": "hello",
+            }))
+
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
 
 class TestRESTFunctions(unittest.TestCase):

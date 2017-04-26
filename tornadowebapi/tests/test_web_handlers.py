@@ -34,3 +34,12 @@ class TestWebHandlers(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             handler._check_resource_sanity(Mock(), "whatever")
+
+    def test_send_created_to_client(self):
+        handler = WithoutIdentifierWebHandler(MagicMock(), MagicMock(),
+                                              registry=MagicMock(),
+                                              base_urlpath="/",
+                                              api_version="1")
+
+        with self.assertRaises(TypeError):
+            handler._send_created_to_client("whatever")

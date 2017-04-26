@@ -14,6 +14,19 @@ class BaseSerializer(metaclass=abc.ABCMeta):
     converted into something that is shown on the web.
     """
     def serialize(self, entity):
+        """
+        Serializes the passed entity. Returns a dictionary with the
+        result of the serialization
+
+        Parameters
+        ----------
+        entity: BaseResource or ItemsResponse or WebAPIException
+
+        Returns
+        -------
+        dict
+            A dict representing the serialized entity
+        """
         if isinstance(entity, BaseResource):
             return self.serialize_resource(entity)
         elif isinstance(entity, ItemsResponse):

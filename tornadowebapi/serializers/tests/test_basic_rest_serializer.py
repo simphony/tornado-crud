@@ -21,7 +21,7 @@ class TestBasicRESTSerializer(unittest.TestCase):
 
         serializer = BasicRESTSerializer()
         self.assertEqual(
-            serializer.serialize_items_response(students),
+            serializer.serialize(students),
             {
                 "total": 30,
                 "offset": 0,
@@ -38,7 +38,7 @@ class TestBasicRESTSerializer(unittest.TestCase):
 
         serializer = BasicRESTSerializer()
         self.assertEqual(
-            serializer.serialize_resource(student),
+            serializer.serialize(student),
             {"age": 39,
              "name": "john wick"})
 
@@ -48,12 +48,12 @@ class TestBasicRESTSerializer(unittest.TestCase):
 
         serializer = BasicRESTSerializer()
         self.assertEqual(
-            serializer.serialize_resource(teacher),
+            serializer.serialize(teacher),
             {"name": "john wick"})
 
         teacher.age = 39
         self.assertEqual(
-            serializer.serialize_resource(teacher),
+            serializer.serialize(teacher),
             {"name": "john wick",
              "age": 39})
 
@@ -68,7 +68,7 @@ class TestBasicRESTSerializer(unittest.TestCase):
         )
 
         serializer = BasicRESTSerializer()
-        result = serializer.serialize_resource(resource)
+        result = serializer.serialize(resource)
         self.assertEqual(result,
                          {
                              "name": "Cambridge",
@@ -78,8 +78,7 @@ class TestBasicRESTSerializer(unittest.TestCase):
                              }
                          })
 
-    def test_serialize_non_webapi_exception(self):
+    def test_serialize_incorrect_type(self):
         serializer = BasicRESTSerializer()
-
         with self.assertRaises(TypeError):
-            serializer.serialize_exception(KeyError())
+            serializer.serialize("hello")
