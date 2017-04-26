@@ -3,6 +3,8 @@ import contextlib
 from tornado import gen, web, template
 from tornado.log import app_log
 from tornado.web import HTTPError
+from tornadowebapi.resource import Resource
+from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import TraitError
 
 from . import resource as resource_mod
@@ -193,7 +195,10 @@ class BaseWebHandler(web.RequestHandler):
 
         return ret
 
-    def send_to_client(self, entity):
+    def _send_to_client(self, entity):
+        """Convenience method to send a given entity to a client.
+        Serializes it and puts the right headers.
+        If entity is None, sets no content http response."""
         if entity is None:
             self.clear_header('Content-Type')
             self.set_status(httpstatus.NO_CONTENT)
@@ -210,6 +215,21 @@ class BaseWebHandler(web.RequestHandler):
             )
         )
         self.set_header("Content-Type", transport.content_type)
+        self.flush()
+
+    def _send_created_to_client(self, resource):
+        if isinstance(resource, Resource):
+            location = with_end_slash(
+                url_path_join(self.request.full_url(),
+                              str(resource.identifier)))
+        elif isinstance(resource, SingletonResource):
+            location = with_end_slash(self.request.full_url())
+        else:
+            raise TypeError("Invalid resource type {}".format(resource))
+
+        self.set_status(httpstatus.CREATED)
+        self.set_header("Location", location)
+        self.clear_header('Content-Type')
         self.flush()
 
 
@@ -243,7 +263,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
                              "items")
             self._check_resource_sanity(resource, "output")
 
-        self.send_to_client(items_response)
+        self._send_to_client(items_response)
 
     @gen.coroutine
     def _get_singleton(self, res_handler, args):
@@ -259,7 +279,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
             self._check_resource_sanity(resource, "output")
 
-        self.send_to_client(resource)
+        self._send_to_client(resource)
 
     @gen.coroutine
     def post(self, name):
@@ -313,19 +333,12 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
                              "resource_id",
                              "create()")
 
-        location = with_end_slash(
-            url_path_join(self.request.full_url(), str(resource.identifier)))
-
-        self.set_status(httpstatus.CREATED)
-        self.set_header("Location", location)
-        self.clear_header('Content-Type')
-        self.flush()
+        self._send_created_to_client(resource)
 
     @gen.coroutine
     def _post_singleton(self, res_handler, args):
-        """This operation is not possible in REST, and results
-        in either Conflict or NotFound, depending on the
-        presence of a resource at the given URL"""
+        """POST on a singleton creates the resource and fills the information
+        if the resource is not there. If it's there, will return a conflict."""
         transport = self._registry.transport
         payload = self.request.body
 
@@ -364,12 +377,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
             yield res_handler.create(resource, **args)
 
-        location = with_end_slash(self.request.full_url())
-
-        self.set_status(httpstatus.CREATED)
-        self.set_header("Location", location)
-        self.clear_header('Content-Type')
-        self.flush()
+        self.send_created_to_client(resource)
 
     @gen.coroutine
     def put(self, name):
@@ -385,6 +393,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
     @gen.coroutine
     def _put_collection(self, res_handler, args):
+        """You cannot PUT on a collection"""
         raise HTTPError(httpstatus.METHOD_NOT_ALLOWED)
 
     @gen.coroutine
@@ -415,7 +424,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
             yield res_handler.update(resource, **args)
 
-        self.send_to_client(None)
+        self._send_to_client(None)
 
     @gen.coroutine
     def delete(self, name):
@@ -446,7 +455,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
 
             yield res_handler.delete(resource, **args)
 
-        self.send_to_client(None)
+        self._send_to_client(None)
 
 
 class WithIdentifierWebHandler(BaseWebHandler):
@@ -478,7 +487,7 @@ class WithIdentifierWebHandler(BaseWebHandler):
 
             self._check_resource_sanity(resource, "output")
 
-        self.send_to_client(resource)
+        self._send_to_client(resource)
 
     @gen.coroutine
     def post(self, collection_name, identifier):
@@ -554,7 +563,7 @@ class WithIdentifierWebHandler(BaseWebHandler):
 
             yield res_handler.update(resource, **args)
 
-        self.send_to_client(None)
+        self._send_to_client(None)
 
     @gen.coroutine
     def delete(self, collection_name, identifier):
@@ -583,7 +592,7 @@ class WithIdentifierWebHandler(BaseWebHandler):
 
             yield res_handler.delete(resource, **args)
 
-        self.send_to_client(None)
+        self._send_to_client(None)
 
 
 class JSAPIWebHandler(BaseWebHandler):
