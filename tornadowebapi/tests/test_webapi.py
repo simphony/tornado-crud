@@ -394,6 +394,14 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         res = self.fetch("/api/v1/students/1/", method="DELETE")
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
 
+    def test_delete_collection(self):
+        res = self.fetch("/api/v1/students/", method="DELETE")
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+
+    def test_put_collection(self):
+        res = self.fetch("/api/v1/students/", method="PUT")
+        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+
     def test_unexistent_resource_type(self):
         res = self.fetch(
             "/api/v1/notpresent/",

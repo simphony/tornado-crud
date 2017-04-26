@@ -70,9 +70,6 @@ class SingletonResourceHandler(ResourceHandler):
 
     @gen.coroutine
     def create(self, instance, **kwargs):
-        if "instance" in self.instance:
-            raise exceptions.Exists()
-
         self.instance['instance'] = instance
 
     @gen.coroutine

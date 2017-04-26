@@ -87,7 +87,7 @@ class BaseWebHandler(web.RequestHandler):
 
         transport = self._registry.transport
         payload = transport.renderer.render(
-            transport.serializer.serialize_exception(exc))
+            transport.serializer.serialize(exc))
 
         if payload is not None:
             return PayloadedHTTPError(
