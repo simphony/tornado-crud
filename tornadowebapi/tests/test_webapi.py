@@ -399,7 +399,12 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
     def test_put_collection(self):
-        res = self.fetch("/api/v1/students/", method="PUT")
+        res = self.fetch("/api/v1/students/",
+                         method="PUT",
+                         body=escape.json_encode({
+                             "name": "john wick",
+                             "age": 19,
+                         }))
         self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
 
     def test_unexistent_resource_type(self):
