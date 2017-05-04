@@ -1,6 +1,6 @@
 import unittest
 
-from tornadowebapi.filtering import filter_spec_to_function, And, Eq
+from tornadowebapi.filtering import filter_spec_to_function, And, Eq, Nop
 from tornadowebapi.resource import Resource
 from tornadowebapi.traitlets import Int
 
@@ -42,3 +42,18 @@ class TestFilter(unittest.TestCase):
 
         b.bar = 3
         self.assertTrue(f(b))
+
+    def test_empty_filtering(self):
+        b = Bongo(identifier="1")
+
+        f = filter_spec_to_function(None)
+        self.assertIsInstance(f, Nop)
+        self.assertTrue(f(b))
+
+        f = filter_spec_to_function({})
+        self.assertIsInstance(f, And)
+        self.assertTrue(f(b))
+
+    def test_exception(self):
+        with self.assertRaises(ValueError):
+            filter_spec_to_function("")

@@ -197,6 +197,15 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "identifiers": ["2"],
                          })
 
+    def test_items_with_broken_limit_offset(self):
+        res = self.fetch("/api/v1/students/?limit=hello")
+
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        res = self.fetch("/api/v1/students/?offset=hello")
+
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
     def test_items_with_filter(self):
         res = self.fetch(
             '/api/v1/students/?filter={%22name%22:%22john%20wick%22}')
@@ -238,6 +247,11 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              },
                              "identifiers": ["1"],
                          })
+
+    def test_items_with_filter_broken_request(self):
+        res = self.fetch(
+            '/api/v1/students/?filter={%22name%22:%22john')
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_create(self):
         res = self.fetch(

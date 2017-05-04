@@ -196,12 +196,12 @@ class BaseWebHandler(web.RequestHandler):
                 try:
                     ret[key] = int(ret[key])
                 except Exception:
-                    del ret[key]
+                    raise web.HTTPError(httpstatus.BAD_REQUEST)
             elif key == "filter":
                 try:
                     filter_spec = escape.json_decode(ret["filter"])
                 except Exception:
-                    filter_spec = None
+                    raise web.HTTPError(httpstatus.BAD_REQUEST)
 
                 if isinstance(filter_spec, (list, dict)):
                     ret["filter_"] = filter_spec_to_function(filter_spec)
