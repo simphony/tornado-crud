@@ -51,7 +51,6 @@ define(['jquery'], function ($) {
             } else {
                 result.push(key_enc+"="+encodeURIComponent(value))
             }
-        console.log(result)
         }
 
         return result.join("&");
