@@ -1,8 +1,10 @@
 import contextlib
 
-from tornado import gen, web, template
+
+from tornado import gen, web, template, escape
 from tornado.log import app_log
 from tornado.web import HTTPError
+from tornadowebapi.filtering import filter_spec_to_function
 from tornadowebapi.resource import Resource
 from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import TraitError
@@ -191,7 +193,23 @@ class BaseWebHandler(web.RequestHandler):
             # We consider these specials (as they are passed to items())
             # and convert them to integers
             if key in ["limit", "offset"]:
-                ret[key] = int(ret[key])
+                try:
+                    ret[key] = int(ret[key])
+                except Exception:
+                    raise web.HTTPError(httpstatus.BAD_REQUEST)
+            elif key == "filter":
+                try:
+                    filter_spec = escape.json_decode(ret["filter"])
+                except Exception:
+                    raise web.HTTPError(httpstatus.BAD_REQUEST)
+
+                if isinstance(filter_spec, (list, dict)):
+                    ret["filter_"] = filter_spec_to_function(filter_spec)
+
+                # We remove the original filter option because filter
+                # is a python function and we want to reduce chances of
+                # collision.
+                del ret["filter"]
 
         return ret
 

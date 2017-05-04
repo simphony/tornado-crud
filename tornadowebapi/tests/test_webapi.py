@@ -97,7 +97,7 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "identifiers": ["1", "2", "3"]
                          })
 
-    def test_items_with_query_params(self):
+    def test_items_with_limit_params(self):
         res = self.fetch("/api/v1/students/?limit=1")
 
         self.assertEqual(res.code, httpstatus.OK)
@@ -196,6 +196,62 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              },
                              "identifiers": ["2"],
                          })
+
+    def test_items_with_broken_limit_offset(self):
+        res = self.fetch("/api/v1/students/?limit=hello")
+
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+        res = self.fetch("/api/v1/students/?offset=hello")
+
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+
+    def test_items_with_filter(self):
+        res = self.fetch(
+            '/api/v1/students/?filter={%22name%22:%22john%20wick%22}')
+
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {"total": 0,
+                          "offset": 0,
+                          "items": {},
+                          "identifiers": []
+                          })
+
+        handler = resource_handlers.StudentHandler
+        handler.collection[1] = handler.resource_class(
+            identifier="1",
+            name="john wick",
+            age=39)
+        handler.collection[2] = handler.resource_class(
+            identifier="2",
+            name="john wick 2",
+            age=39)
+        handler.collection[3] = handler.resource_class(
+            identifier="3",
+            name="john wick 3",
+            age=39)
+
+        res = self.fetch(
+            '/api/v1/students/?filter={%22name%22:%22john%20wick%22}')
+        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(escape.json_decode(res.body),
+                         {
+                             "total": 3,
+                             "offset": 0,
+                             "items": {
+                                 "1": {
+                                     "name": "john wick",
+                                     "age": 39,
+                                 },
+                             },
+                             "identifiers": ["1"],
+                         })
+
+    def test_items_with_filter_broken_request(self):
+        res = self.fetch(
+            '/api/v1/students/?filter={%22name%22:%22john')
+        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_create(self):
         res = self.fetch(

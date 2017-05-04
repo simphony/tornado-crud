@@ -47,7 +47,8 @@ class WorkingResourceHandler(ResourceHandler):
         del self.collection[instance.identifier]
 
     @gen.coroutine
-    def items(self, items_response, offset=None, limit=None, **kwargs):
+    def items(self, items_response,
+              offset=None, limit=None, filter_=None, **kwargs):
         if offset is None:
             offset = 0
 
@@ -59,10 +60,15 @@ class WorkingResourceHandler(ResourceHandler):
             end = start + limit
 
         interval = slice(start, end)
-        values = list(self.collection.values())
+
+        if filter_ is not None:
+            values = [x for x in self.collection.values() if filter_(x)]
+        else:
+            values = [x for x in self.collection.values()]
+
         items_response.set(values[interval],
                            offset=start,
-                           total=len(values))
+                           total=len(self.collection.values()))
 
 
 class SingletonResourceHandler(ResourceHandler):
