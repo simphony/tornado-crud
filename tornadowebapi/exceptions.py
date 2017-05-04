@@ -43,6 +43,13 @@ class BadRepresentation(WebAPIException):
     http_code = httpstatus.BAD_REQUEST
 
 
+class BadQueryArguments(WebAPIException):
+    """Exception raised when the query arguments do not conform to the
+    expected format.
+    """
+    http_code = httpstatus.BAD_REQUEST
+
+
 class BadRequest(WebAPIException):
     """Deprecated. Kept for compatibility. Use BadRepresentation."""
     http_code = httpstatus.BAD_REQUEST
