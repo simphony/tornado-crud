@@ -78,10 +78,21 @@ define([
         resources.Student.items({offset: 4, limit: 4}).done(
             function(identifiers, items, offset, total) {
                 assert.equal(Object.keys(items).length, 2);
-                assert.equal(identifiers.length, 2)
+                assert.equal(identifiers.length, 2);
                 done();
             });
         });
+  
+  QUnit.test("items with filter", function (assert) {
+    var done = assert.async();
+    resources.Student.items({filter: JSON.stringify({"name": "john wick"})}).done(
+      function(identifiers, items, offset, total) {
+        assert.equal(Object.keys(items).length, 1);
+        assert.equal(identifiers.length, 1);
+        assert.equal(items[identifiers[0]].name, "john wick");
+        done();
+      });
+  });
 
     QUnit.test("retrieve", function (assert) {
         var done = assert.async();
