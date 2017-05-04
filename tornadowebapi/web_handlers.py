@@ -1,6 +1,7 @@
 import contextlib
 
-from tornado import gen, web, template
+
+from tornado import gen, web, template, escape
 from tornado.log import app_log
 from tornado.web import HTTPError
 from tornadowebapi.resource import Resource
@@ -191,7 +192,20 @@ class BaseWebHandler(web.RequestHandler):
             # We consider these specials (as they are passed to items())
             # and convert them to integers
             if key in ["limit", "offset"]:
-                ret[key] = int(ret[key])
+                try:
+                    ret[key] = int(ret[key])
+                except Exception:
+                    del ret[key]
+            elif key == "filter":
+                try:
+                    filter_spec = escape.json_decode(ret["filter"])
+                except Exception as e:
+                    filter_spec = None
+
+                if not isinstance(filter_spec, (list, dict)):
+                    del ret["filter"]
+                else:
+                    ret["filter_spec"] = filter_spec
 
         return ret
 

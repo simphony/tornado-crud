@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 from tornado import gen
 from tornadowebapi import exceptions
+from tornadowebapi.filtering import filter_spec_to_function
 from tornadowebapi.resource_fragment import ResourceFragment
 from tornadowebapi.resource_handler import ResourceHandler
 from tornadowebapi.resource import Resource
@@ -47,7 +48,8 @@ class WorkingResourceHandler(ResourceHandler):
         del self.collection[instance.identifier]
 
     @gen.coroutine
-    def items(self, items_response, offset=None, limit=None, **kwargs):
+    def items(self, items_response,
+              offset=None, limit=None, filter_spec=None, **kwargs):
         if offset is None:
             offset = 0
 
@@ -59,10 +61,14 @@ class WorkingResourceHandler(ResourceHandler):
             end = start + limit
 
         interval = slice(start, end)
-        values = list(self.collection.values())
+
+        filter_func = filter_spec_to_function(filter_spec)
+        values = [x for x in self.collection.values()
+                  if filter_func(x)]
+
         items_response.set(values[interval],
                            offset=start,
-                           total=len(values))
+                           total=len(self.collection.values()))
 
 
 class SingletonResourceHandler(ResourceHandler):
