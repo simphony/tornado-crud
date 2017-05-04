@@ -26,6 +26,7 @@ class Nop:
 def filter_spec_to_function(filter_spec):
     """Converts a filter specification into a function object that can be
     used as a filter (True if satisfies, False if not)"""
+    print(filter_spec)
     if filter_spec is None:
         return Nop()
 

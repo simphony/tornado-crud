@@ -4,6 +4,7 @@ import contextlib
 from tornado import gen, web, template, escape
 from tornado.log import app_log
 from tornado.web import HTTPError
+from tornadowebapi.filtering import filter_spec_to_function
 from tornadowebapi.resource import Resource
 from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import TraitError
@@ -199,13 +200,16 @@ class BaseWebHandler(web.RequestHandler):
             elif key == "filter":
                 try:
                     filter_spec = escape.json_decode(ret["filter"])
-                except Exception as e:
+                except Exception:
                     filter_spec = None
 
-                if not isinstance(filter_spec, (list, dict)):
-                    del ret["filter"]
-                else:
-                    ret["filter_spec"] = filter_spec
+                if isinstance(filter_spec, (list, dict)):
+                    ret["filter_"] = filter_spec_to_function(filter_spec)
+
+                # We remove the original filter option because filter
+                # is a python function and we want to reduce chances of
+                # collision.
+                del ret["filter"]
 
         return ret
 
