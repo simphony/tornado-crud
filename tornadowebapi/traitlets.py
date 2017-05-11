@@ -59,6 +59,24 @@ class Unicode(_traitlets.Unicode):
         return value
 
 
+class Label(Unicode):
+    """A label is a string that is not none and is automatically
+    stripped"""
+
+    def __init__(self):
+        super().__init__(allow_empty=False, strip=True)
+
+
+class Enum(_traitlets.Enum):
+    default_value = Absent
+
+    def validate(self, obj, value):
+        if value == Absent:
+            return value
+
+        return super().validate(obj, value)
+
+
 class Bool(_traitlets.Bool):
     default_value = Absent
 
