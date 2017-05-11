@@ -1,7 +1,8 @@
 import unittest
 
 from tornadowebapi.traitlets import (
-    HasTraits, Int, Absent, Unicode, Dict, List, Float, Bool, TraitError)
+    HasTraits, Int, Absent, Unicode, Dict, List, Float, Bool, TraitError,
+    Label, Enum)
 
 
 class ProbingTable(HasTraits):
@@ -14,6 +15,8 @@ class ProbingTable(HasTraits):
     us = Unicode(strip=True)
     use = Unicode(strip=True, allow_empty=False)
     ue = Unicode(allow_empty=False)
+    label = Label()
+    enum = Enum(["foo", "bar", "baz"])
 
 
 class TestTraitlets(unittest.TestCase):
@@ -25,7 +28,10 @@ class TestTraitlets(unittest.TestCase):
             ("d", {}),
             ("b", True),
             ("l", []),
-            ("u", "foo")]
+            ("u", "foo"),
+            ("label", "xxx"),
+            ("enum", "foo"),
+        ]
 
     def test_absent(self):
         for trait_name, value in self.names_and_values:
@@ -52,3 +58,14 @@ class TestTraitlets(unittest.TestCase):
         self.assertEqual(self.probe.ue, " ")
         with self.assertRaises(TraitError):
             self.probe.use = "   "
+
+    def test_enum(self):
+        with self.assertRaises(TraitError):
+            self.probe.enum = "hello"
+
+    def test_label(self):
+        with self.assertRaises(TraitError):
+            self.probe.label = "   "
+
+        with self.assertRaises(TraitError):
+            self.probe.label = ""
