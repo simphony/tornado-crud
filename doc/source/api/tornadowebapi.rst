@@ -6,7 +6,12 @@ Subpackages
 
 .. toctree::
 
+    tornadowebapi.deserializers
     tornadowebapi.http
+    tornadowebapi.parsers
+    tornadowebapi.renderers
+    tornadowebapi.serializers
+    tornadowebapi.transports
 
 Submodules
 ----------
@@ -19,10 +24,42 @@ tornadowebapi.authenticator module
     :undoc-members:
     :show-inheritance:
 
+tornadowebapi.base_resource module
+----------------------------------
+
+.. automodule:: tornadowebapi.base_resource
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tornadowebapi.exceptions module
 -------------------------------
 
 .. automodule:: tornadowebapi.exceptions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tornadowebapi.filtering module
+------------------------------
+
+.. automodule:: tornadowebapi.filtering
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tornadowebapi.items_response module
+-----------------------------------
+
+.. automodule:: tornadowebapi.items_response
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tornadowebapi.model_connector module
+------------------------------------
+
+.. automodule:: tornadowebapi.model_connector
     :members:
     :undoc-members:
     :show-inheritance:
@@ -35,10 +72,34 @@ tornadowebapi.registry module
     :undoc-members:
     :show-inheritance:
 
-tornadowebapi.resource_handler module
--------------------------------------
+tornadowebapi.resource module
+-----------------------------
 
-.. automodule:: tornadowebapi.resource_handler
+.. automodule:: tornadowebapi.resource
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tornadowebapi.resource_fragment module
+--------------------------------------
+
+.. automodule:: tornadowebapi.resource_fragment
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tornadowebapi.singleton_resource module
+---------------------------------------
+
+.. automodule:: tornadowebapi.singleton_resource
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tornadowebapi.traitlets module
+------------------------------
+
+.. automodule:: tornadowebapi.traitlets
     :members:
     :undoc-members:
     :show-inheritance:
