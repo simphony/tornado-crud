@@ -3,13 +3,13 @@ from collections import OrderedDict
 from tornado import gen
 from tornadowebapi import exceptions
 from tornadowebapi.resource_fragment import ResourceFragment
-from tornadowebapi.resource_handler import ResourceHandler
+from tornadowebapi.model_connector import ModelConnector
 from tornadowebapi.resource import Resource
 from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import Unicode, Int, List, OneOf
 
 
-class WorkingResourceHandler(ResourceHandler):
+class WorkingModelConn(ModelConnector):
     """Base class for tests. Still missing the resource_class
     that must be set in the derived class."""
 
@@ -71,7 +71,7 @@ class WorkingResourceHandler(ResourceHandler):
                            total=len(self.collection.values()))
 
 
-class SingletonResourceHandler(ResourceHandler):
+class SingletonModelConn(ModelConnector):
     instance = {}
 
     @gen.coroutine
@@ -108,7 +108,7 @@ class Student(Resource):
     age = Int()
 
 
-class StudentHandler(WorkingResourceHandler):
+class StudentModelConn(WorkingModelConn):
     resource_class = Student
 
 
@@ -118,7 +118,7 @@ class Teacher(Resource):
     discipline = List()
 
 
-class TeacherHandler(ResourceHandler):
+class TeacherModelConn(ModelConnector):
     resource_class = Teacher
 
 
@@ -132,7 +132,7 @@ class City(Resource):
     mayor = OneOf(Person)
 
 
-class CityHandler(WorkingResourceHandler):
+class CityModelConn(WorkingModelConn):
     resource_class = City
 
 
@@ -141,7 +141,7 @@ class ServerInfo(SingletonResource):
     status = Unicode()
 
 
-class ServerInfoHandler(SingletonResourceHandler):
+class ServerInfoModelConn(SingletonModelConn):
     resource_class = ServerInfo
 
 
@@ -149,7 +149,7 @@ class UnsupportAll(Resource):
     pass
 
 
-class UnsupportAllHandler(ResourceHandler):
+class UnsupportAllModelConn(ModelConnector):
     resource_class = UnsupportAll
 
 
@@ -157,7 +157,7 @@ class Unprocessable(Resource):
     pass
 
 
-class UnprocessableHandler(ResourceHandler):
+class UnprocessableModelConn(ModelConnector):
     resource_class = Unprocessable
 
     @gen.coroutine
@@ -181,7 +181,7 @@ class UnsupportsCollection(Resource):
     pass
 
 
-class UnsupportsCollectionHandler(ResourceHandler):
+class UnsupportsCollectionModelConn(ModelConnector):
     resource_class = UnsupportsCollection
 
     @gen.coroutine
@@ -193,7 +193,7 @@ class Broken(Resource):
     pass
 
 
-class BrokenHandler(ResourceHandler):
+class BrokenModelConn(ModelConnector):
     resource_class = Broken
 
     @gen.coroutine
@@ -211,7 +211,7 @@ class ExceptionValidated(Resource):
     pass
 
 
-class ExceptionValidatedHandler(ResourceHandler):
+class ExceptionValidatedModelConn(ModelConnector):
     resource_class = ExceptionValidated
 
     def preprocess_representation(self, representation):
@@ -222,7 +222,7 @@ class OurExceptionValidated(Resource):
     pass
 
 
-class OurExceptionValidatedHandler(ResourceHandler):
+class OurExceptionValidatedModelConn(ModelConnector):
     resource_class = OurExceptionValidated
 
     def preprocess_representation(self, representation):
@@ -233,7 +233,7 @@ class NullReturningValidated(Resource):
     pass
 
 
-class NullReturningValidatedHandler(ResourceHandler):
+class NullReturningValidatedModelConn(ModelConnector):
     resource_class = NullReturningValidated
 
     def preprocess_representation(self, representation):
@@ -244,7 +244,7 @@ class CorrectValidated(Resource):
     pass
 
 
-class CorrectValidatedHandler(WorkingResourceHandler):
+class CorrectValidatedModelConn(WorkingModelConn):
     resource_class = CorrectValidated
 
     def preprocess_representation(self, representation):
@@ -256,7 +256,7 @@ class AlreadyPresent(Resource):
     pass
 
 
-class AlreadyPresentHandler(ResourceHandler):
+class AlreadyPresentModelConn(ModelConnector):
     resource_class = AlreadyPresent
 
     @gen.coroutine
@@ -268,7 +268,7 @@ class InvalidIdentifier(Resource):
     pass
 
 
-class InvalidIdentifierHandler(ResourceHandler):
+class InvalidIdentifierModelConn(ModelConnector):
     resource_class = InvalidIdentifier
 
     def preprocess_identifier(self, identifier):
@@ -279,7 +279,7 @@ class OurExceptionInvalidIdentifier(Resource):
     pass
 
 
-class OurExceptionInvalidIdentifierHandler(ResourceHandler):
+class OurExceptionInvalidIdentifierModelConn(ModelConnector):
     resource_class = OurExceptionInvalidIdentifier
 
     def preprocess_identifier(self, identifier):
@@ -292,7 +292,7 @@ class Sheep(Resource):
         return "sheep"
 
 
-class SheepHandler(ResourceHandler):
+class SheepModelConn(ModelConnector):
     """Sheep plural is the same as singular."""
     resource_class = Sheep
 
@@ -303,7 +303,7 @@ class Octopus(Resource):
         return "octopi"
 
 
-class OctopusHandler(ResourceHandler):
+class OctopusModelConn(ModelConnector):
     """Octopus plural is a matter of debate."""
     resource_class = Octopus
 
@@ -312,10 +312,10 @@ class Frobnicator(Resource):
     pass
 
 
-class FrobnicatorHandler(ResourceHandler):
+class FrobnicatorModelConn(ModelConnector):
     """A weird name to test if it's kept"""
     resource_class = Frobnicator
 
 
-class WrongClassHandler(ResourceHandler):
+class WrongClassModelConn(ModelConnector):
     resource_class = str

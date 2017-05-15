@@ -3,8 +3,8 @@ from unittest import mock
 
 from tornadowebapi.registry import Registry
 from tornadowebapi.tests.resource_handlers import (
-    StudentHandler, SheepHandler, OctopusHandler, FrobnicatorHandler,
-    WrongClassHandler)
+    StudentModelConn, SheepModelConn, OctopusModelConn, FrobnicatorModelConn,
+    WrongClassModelConn)
 from tornadowebapi.transports.base_transport import BaseTransport
 
 
@@ -13,28 +13,28 @@ class TestRegistry(unittest.TestCase):
         reg = Registry()
 
         # Register the classes.
-        reg.register(StudentHandler)
-        reg.register(SheepHandler)
-        reg.register(OctopusHandler)
-        reg.register(FrobnicatorHandler)
+        reg.register(StudentModelConn)
+        reg.register(SheepModelConn)
+        reg.register(OctopusModelConn)
+        reg.register(FrobnicatorModelConn)
 
         # Check if they are there with the appropriate form
         self.assertIn("students", reg)
         self.assertIn("sheep", reg)
         self.assertIn("octopi", reg)
-        self.assertEqual(reg["students"], StudentHandler)
-        self.assertEqual(reg["sheep"], SheepHandler)
-        self.assertEqual(reg["octopi"], OctopusHandler)
+        self.assertEqual(reg["students"], StudentModelConn)
+        self.assertEqual(reg["sheep"], SheepModelConn)
+        self.assertEqual(reg["octopi"], OctopusModelConn)
 
         self.assertIn("frobnicators", reg)
-        self.assertEqual(reg["frobnicators"], FrobnicatorHandler)
+        self.assertEqual(reg["frobnicators"], FrobnicatorModelConn)
 
     def test_double_registration(self):
         reg = Registry()
 
-        reg.register(StudentHandler)
+        reg.register(StudentModelConn)
         with self.assertRaises(ValueError):
-            reg.register(StudentHandler)
+            reg.register(StudentModelConn)
 
     def test_incorrect_class_registration(self):
         reg = Registry()
@@ -46,7 +46,7 @@ class TestRegistry(unittest.TestCase):
             reg.register(int)
 
         with self.assertRaises(TypeError):
-            reg.register(WrongClassHandler)
+            reg.register(WrongClassModelConn)
 
     def test_authenticator(self):
         reg = Registry()

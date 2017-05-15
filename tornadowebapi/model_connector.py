@@ -5,13 +5,13 @@ from tornadowebapi.singleton_resource import SingletonResource
 from . import exceptions
 
 
-class ResourceHandler:
-    """Base class for resource handlers.
-    To implement a new ResourceHandler class, inherit from this subclass
+class ModelConnector:
+    """Base class for data layers.
+    To implement a new DataLayer class, inherit from this subclass
     and reimplement the CRUD class methods with the appropriate
     logic. Additionally, specify a resource_class of type Resource.
 
-    The ResourceHandler exports two member vars: application and current_user.
+    The DataLayer exports two member vars: application and current_user.
     They are equivalent to the members in the tornado web handler.
     """
 
