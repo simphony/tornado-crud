@@ -24,10 +24,10 @@ tornadowebapi.authenticator module
     :undoc-members:
     :show-inheritance:
 
-tornadowebapi.base_resource module
-----------------------------------
+tornadowebapi.base_schema module
+--------------------------------
 
-.. automodule:: tornadowebapi.base_resource
+.. automodule:: tornadowebapi.base_schema
     :members:
     :undoc-members:
     :show-inheritance:
@@ -72,26 +72,26 @@ tornadowebapi.registry module
     :undoc-members:
     :show-inheritance:
 
-tornadowebapi.resource module
------------------------------
+tornadowebapi.schema module
+---------------------------
 
-.. automodule:: tornadowebapi.resource
+.. automodule:: tornadowebapi.schema
     :members:
     :undoc-members:
     :show-inheritance:
 
-tornadowebapi.resource_fragment module
---------------------------------------
+tornadowebapi.schema_fragment module
+------------------------------------
 
-.. automodule:: tornadowebapi.resource_fragment
+.. automodule:: tornadowebapi.schema_fragment
     :members:
     :undoc-members:
     :show-inheritance:
 
-tornadowebapi.singleton_resource module
----------------------------------------
+tornadowebapi.singleton_schema module
+-------------------------------------
 
-.. automodule:: tornadowebapi.singleton_resource
+.. automodule:: tornadowebapi.singleton_schema
     :members:
     :undoc-members:
     :show-inheritance:
