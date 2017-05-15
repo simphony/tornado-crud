@@ -14,30 +14,30 @@ from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
 ALL_RESOURCES = (
-    resource_handlers.AlreadyPresentHandler,
-    resource_handlers.ExceptionValidatedHandler,
-    resource_handlers.NullReturningValidatedHandler,
-    resource_handlers.CorrectValidatedHandler,
-    resource_handlers.OurExceptionValidatedHandler,
-    resource_handlers.BrokenHandler,
-    resource_handlers.UnsupportsCollectionHandler,
-    resource_handlers.UnprocessableHandler,
-    resource_handlers.UnsupportAllHandler,
-    resource_handlers.StudentHandler,
-    resource_handlers.TeacherHandler,
-    resource_handlers.InvalidIdentifierHandler,
-    resource_handlers.OurExceptionInvalidIdentifierHandler,
-    resource_handlers.ServerInfoHandler,
+    resource_handlers.AlreadyPresentModelConn,
+    resource_handlers.ExceptionValidatedModelConn,
+    resource_handlers.NullReturningValidatedModelConn,
+    resource_handlers.CorrectValidatedModelConn,
+    resource_handlers.OurExceptionValidatedModelConn,
+    resource_handlers.BrokenModelConn,
+    resource_handlers.UnsupportsCollectionModelConn,
+    resource_handlers.UnprocessableModelConn,
+    resource_handlers.UnsupportAllModelConn,
+    resource_handlers.StudentModelConn,
+    resource_handlers.TeacherModelConn,
+    resource_handlers.InvalidIdentifierModelConn,
+    resource_handlers.OurExceptionInvalidIdentifierModelConn,
+    resource_handlers.ServerInfoModelConn,
 )
 
 
 class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
-        resource_handlers.StudentHandler.collection = OrderedDict()
-        resource_handlers.StudentHandler.id = 0
-        resource_handlers.ServerInfoHandler.instance = {}
-        resource_handlers.StudentHandler.id = 0
+        resource_handlers.StudentModelConn.collection = OrderedDict()
+        resource_handlers.StudentModelConn.id = 0
+        resource_handlers.ServerInfoModelConn.instance = {}
+        resource_handlers.StudentModelConn.id = 0
 
     def get_app(self):
         registry = Registry()
@@ -60,7 +60,7 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "identifiers": []
                          })
 
-        handler = resource_handlers.StudentHandler
+        handler = resource_handlers.StudentModelConn
         handler.collection[1] = handler.resource_class(
             identifier="1",
             name="john wick",
@@ -130,7 +130,7 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "identifiers": []
                          })
 
-        handler = resource_handlers.StudentHandler
+        handler = resource_handlers.StudentModelConn
         handler.collection[1] = handler.resource_class(
             identifier="1",
             name="john wick",
@@ -218,7 +218,7 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                           "identifiers": []
                           })
 
-        handler = resource_handlers.StudentHandler
+        handler = resource_handlers.StudentModelConn
         handler.collection[1] = handler.resource_class(
             identifier="1",
             name="john wick",
@@ -338,7 +338,7 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(res.code, httpstatus.NOT_FOUND)
         self.assertNotIn("Content-Type", res.headers)
 
-        handler = resource_handlers.StudentHandler
+        handler = resource_handlers.StudentModelConn
         handler.collection["0"].age = Absent
 
         # Verify output checks

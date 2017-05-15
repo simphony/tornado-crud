@@ -5,7 +5,7 @@ from .web_handlers import (
 
 from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
-from .resource_handler import ResourceHandler
+from .model_connector import ModelConnector
 from .authenticator import NullAuthenticator
 
 
@@ -46,8 +46,8 @@ class Registry:
     def registered_handlers(self):
         return self._registered_handlers
 
-    def register(self, handler):
-        """Registers a ResourceHandler.
+    def register(self, model_connector):
+        """Registers a Model Connector.
         The associated resource will be used to determine the URL
         representing the resource collections. For example, a resource Image
         will have URLs of the type
@@ -56,18 +56,19 @@ class Registry:
 
         Parameters
         ----------
-        handler: ResourceHandler
-            A subclass of the ResourceHandler
+        model_connector: ModelConnector
+            A subclass of the ModelConnector
 
         Raises
         ------
         TypeError:
             if typ is not a subclass of Resource
         """
-        if handler is None or not issubclass(handler, ResourceHandler):
-            raise TypeError("handler must be a subclass of ResourceHandler")
+        if model_connector is None or not issubclass(model_connector,
+                                                     ModelConnector):
+            raise TypeError("handler must be a subclass of ModelConnector")
 
-        name = handler.bound_name()
+        name = model_connector.bound_name()
 
         if name in self._registered_handlers:
             raise ValueError(
@@ -75,10 +76,10 @@ class Registry:
                 "class {}, so it cannot be used by class {}".format(
                     name,
                     self._registered_handlers[name].__name__,
-                    handler.__name__
+                    model_connector.__name__
                 ))
 
-        self._registered_handlers[name] = handler
+        self._registered_handlers[name] = model_connector
 
     def __getitem__(self, collection_name):
         """Returns the class from the collection name with the

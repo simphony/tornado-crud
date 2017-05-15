@@ -116,10 +116,11 @@ def mandatory_absents(resource, scope):
 
 
 def is_valid(resource, scope):
-    """Returns True if the resource is valid, False otherwise.
+    """
+    Returns True if the resource is valid, False otherwise.
     Validity is defined as follows:
-        - identifier is not None
-        - mandatory_absents is empty
+    - identifier is not None
+    - mandatory_absents is empty
     """
     return (resource.identifier is not None and
             len(mandatory_absents(resource, scope)) == 0)

@@ -7,7 +7,7 @@ from tornadowebapi.items_response import ItemsResponse
 
 class BaseSerializer(metaclass=abc.ABCMeta):
     """The serializer is in charge of converting the data
-    from the ResourceHandler into a dictionary with appropriate
+    from the DataLayer into a dictionary with appropriate
     keys.
 
     This dictionary will then be passed to the renderer to be
