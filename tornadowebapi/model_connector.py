@@ -6,12 +6,12 @@ from . import exceptions
 
 
 class ModelConnector:
-    """Base class for data layers.
-    To implement a new DataLayer class, inherit from this subclass
+    """Base class for model connectors.
+    To implement a new ModelConnector class, inherit from this subclass
     and reimplement the CRUD class methods with the appropriate
     logic. Additionally, specify a resource_class of type Resource.
 
-    The DataLayer exports two member vars: application and current_user.
+    The ModelConnector exports two member vars: application and current_user.
     They are equivalent to the members in the tornado web handler.
     """
 

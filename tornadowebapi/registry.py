@@ -47,7 +47,7 @@ class Registry:
         return self._registered_handlers
 
     def register(self, model_connector):
-        """Registers a DataLayer.
+        """Registers a Model Connector.
         The associated resource will be used to determine the URL
         representing the resource collections. For example, a resource Image
         will have URLs of the type
