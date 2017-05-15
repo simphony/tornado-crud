@@ -2,9 +2,9 @@ from collections import OrderedDict
 
 from tornado import gen
 from tornadowebapi import exceptions
-from tornadowebapi.resource_fragment import ResourceFragment
+from tornadowebapi.schema_fragment import SchemaFragment
 from tornadowebapi.model_connector import ModelConnector
-from tornadowebapi.resource import Resource
+from tornadowebapi.schema import Schema
 from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import Unicode, Int, List, OneOf
 
@@ -103,7 +103,7 @@ class SingletonModelConn(ModelConnector):
         del self.instance["instance"]
 
 
-class Student(Resource):
+class Student(Schema):
     name = Unicode()
     age = Int()
 
@@ -112,7 +112,7 @@ class StudentModelConn(WorkingModelConn):
     resource_class = Student
 
 
-class Teacher(Resource):
+class Teacher(Schema):
     name = Unicode()
     age = Int(optional=True)
     discipline = List()
@@ -122,12 +122,12 @@ class TeacherModelConn(ModelConnector):
     resource_class = Teacher
 
 
-class Person(ResourceFragment):
+class Person(SchemaFragment):
     name = Unicode()
     age = Int()
 
 
-class City(Resource):
+class City(Schema):
     name = Unicode()
     mayor = OneOf(Person)
 
@@ -145,7 +145,7 @@ class ServerInfoModelConn(SingletonModelConn):
     resource_class = ServerInfo
 
 
-class UnsupportAll(Resource):
+class UnsupportAll(Schema):
     pass
 
 
@@ -153,7 +153,7 @@ class UnsupportAllModelConn(ModelConnector):
     resource_class = UnsupportAll
 
 
-class Unprocessable(Resource):
+class Unprocessable(Schema):
     pass
 
 
@@ -177,7 +177,7 @@ class UnprocessableModelConn(ModelConnector):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
 
-class UnsupportsCollection(Resource):
+class UnsupportsCollection(Schema):
     pass
 
 
@@ -189,7 +189,7 @@ class UnsupportsCollectionModelConn(ModelConnector):
         raise NotImplementedError()
 
 
-class Broken(Resource):
+class Broken(Schema):
     pass
 
 
@@ -207,7 +207,7 @@ class BrokenModelConn(ModelConnector):
     items = boom
 
 
-class ExceptionValidated(Resource):
+class ExceptionValidated(Schema):
     pass
 
 
@@ -218,7 +218,7 @@ class ExceptionValidatedModelConn(ModelConnector):
         raise Exception("woo!")
 
 
-class OurExceptionValidated(Resource):
+class OurExceptionValidated(Schema):
     pass
 
 
@@ -229,7 +229,7 @@ class OurExceptionValidatedModelConn(ModelConnector):
         raise exceptions.BadRepresentation("woo!")
 
 
-class NullReturningValidated(Resource):
+class NullReturningValidated(Schema):
     pass
 
 
@@ -240,7 +240,7 @@ class NullReturningValidatedModelConn(ModelConnector):
         pass
 
 
-class CorrectValidated(Resource):
+class CorrectValidated(Schema):
     pass
 
 
@@ -252,7 +252,7 @@ class CorrectValidatedModelConn(WorkingModelConn):
         return representation
 
 
-class AlreadyPresent(Resource):
+class AlreadyPresent(Schema):
     pass
 
 
@@ -264,7 +264,7 @@ class AlreadyPresentModelConn(ModelConnector):
         raise exceptions.Exists()
 
 
-class InvalidIdentifier(Resource):
+class InvalidIdentifier(Schema):
     pass
 
 
@@ -275,7 +275,7 @@ class InvalidIdentifierModelConn(ModelConnector):
         raise Exception("woo!")
 
 
-class OurExceptionInvalidIdentifier(Resource):
+class OurExceptionInvalidIdentifier(Schema):
     pass
 
 
@@ -286,7 +286,7 @@ class OurExceptionInvalidIdentifierModelConn(ModelConnector):
         raise exceptions.BadRepresentation("woo!")
 
 
-class Sheep(Resource):
+class Sheep(Schema):
     @classmethod
     def collection_name(cls):
         return "sheep"
@@ -297,7 +297,7 @@ class SheepModelConn(ModelConnector):
     resource_class = Sheep
 
 
-class Octopus(Resource):
+class Octopus(Schema):
     @classmethod
     def collection_name(cls):
         return "octopi"
@@ -308,7 +308,7 @@ class OctopusModelConn(ModelConnector):
     resource_class = Octopus
 
 
-class Frobnicator(Resource):
+class Frobnicator(Schema):
     pass
 
 

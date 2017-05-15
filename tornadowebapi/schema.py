@@ -1,8 +1,8 @@
-from tornadowebapi.base_resource import BaseResource
+from tornadowebapi.base_resource import BaseSchema
 from tornadowebapi.traitlets import Absent, OneOf
 
 
-class Resource(BaseResource):
+class Schema(BaseSchema):
     """A model representing a resource in our system.
     Must be reimplemented for the specific resource in our domain,
     as well as specifying its properties with traitlets.
@@ -50,7 +50,7 @@ class Resource(BaseResource):
     def __init__(self, identifier, *args, **kwargs):
         self.identifier = identifier
 
-        super(Resource, self).__init__(*args, **kwargs)
+        super(Schema, self).__init__(*args, **kwargs)
 
     @classmethod
     def collection_name(cls):
@@ -84,7 +84,7 @@ def mandatory_absents(resource, scope):
 
     Parameters
     ----------
-    resource: Resource or ResourceFragment
+    resource: Schema or ResourceFragment
         The resource to check
     scope: str
         Valid values are "input" and "output". Perform the check as if the
@@ -94,7 +94,7 @@ def mandatory_absents(resource, scope):
     if scope not in ["input", "output"]:
         raise ValueError("Scope must be either input or output")
 
-    if not isinstance(resource, (BaseResource)):
+    if not isinstance(resource, (BaseSchema)):
         raise TypeError("Resource must be a BaseResource, "
                         "got {} {} instead".format(resource, type(resource)))
 

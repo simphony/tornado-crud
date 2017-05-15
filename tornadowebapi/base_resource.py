@@ -2,7 +2,7 @@ from tornadowebapi.traitlets import OneOf
 from traitlets import HasTraits
 
 
-class BaseResource(HasTraits):
+class BaseSchema(HasTraits):
     def fill(self, entity):
         """Fills the traits with data taken from the given
         entity.
@@ -16,7 +16,7 @@ class BaseResource(HasTraits):
             use getattr.
         """
         # Prevent cyclic import
-        from tornadowebapi.resource_fragment import ResourceFragment
+        from tornadowebapi.schema_fragment import SchemaFragment
 
         if isinstance(entity, dict):
             def getter(x, y):
@@ -31,7 +31,7 @@ class BaseResource(HasTraits):
                 continue
 
             if (isinstance(trait, OneOf) and
-                    issubclass(trait.klass, ResourceFragment)):
+                    issubclass(trait.klass, SchemaFragment)):
 
                 value = trait.klass()
                 value.fill(getter(entity, trait_name))

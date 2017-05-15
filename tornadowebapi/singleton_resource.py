@@ -1,7 +1,7 @@
-from tornadowebapi.base_resource import BaseResource
+from tornadowebapi.base_resource import BaseSchema
 
 
-class SingletonResource(BaseResource):
+class SingletonResource(BaseSchema):
     """
     A model representing a singleton resource in our system, that is
     a resource that exists only as a single entity.

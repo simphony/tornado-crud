@@ -1,5 +1,5 @@
 from tornado import gen, log
-from tornadowebapi.resource import Resource
+from tornadowebapi.schema import Schema
 from tornadowebapi.singleton_resource import SingletonResource
 
 from . import exceptions
@@ -45,7 +45,7 @@ class ModelConnector:
 
         Parameters
         ----------
-        instance: Resource
+        instance: Schema
             An instance of the associated resource_class, pre-filled
             with the data from the payload of the HTTP request.
             The identifier of this resource will be None, and it must be
@@ -156,7 +156,7 @@ class ModelConnector:
 
         Parameters
         ----------
-        instance: Resource
+        instance: Schema
             A Resource instance. Only the identifier will be filled.
 
         Returns
@@ -265,7 +265,7 @@ class ModelConnector:
                     cls
                 ))
 
-        if issubclass(resource_class, Resource):
+        if issubclass(resource_class, Schema):
             return False
         elif issubclass(resource_class, SingletonResource):
             return True

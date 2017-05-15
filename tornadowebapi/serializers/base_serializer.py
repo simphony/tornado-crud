@@ -1,6 +1,6 @@
 import abc
 
-from tornadowebapi.base_resource import BaseResource
+from tornadowebapi.base_resource import BaseSchema
 from tornadowebapi.exceptions import WebAPIException
 from tornadowebapi.items_response import ItemsResponse
 
@@ -20,14 +20,14 @@ class BaseSerializer(metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        entity: BaseResource or ItemsResponse or WebAPIException
+        entity: BaseSchema or ItemsResponse or WebAPIException
 
         Returns
         -------
         dict
             A dict representing the serialized entity
         """
-        if isinstance(entity, BaseResource):
+        if isinstance(entity, BaseSchema):
             return self.serialize_resource(entity)
         elif isinstance(entity, ItemsResponse):
             return self.serialize_items_response(entity)

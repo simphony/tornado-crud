@@ -5,11 +5,11 @@ from tornado import gen, web, template, escape
 from tornado.log import app_log
 from tornado.web import HTTPError
 from tornadowebapi.filtering import filter_spec_to_function
-from tornadowebapi.resource import Resource
+from tornadowebapi.schema import Schema
 from tornadowebapi.singleton_resource import SingletonResource
 from tornadowebapi.traitlets import TraitError
 
-from . import resource as resource_mod
+from . import schema as resource_mod
 from . import exceptions
 from .items_response import ItemsResponse
 from .http import httpstatus
@@ -236,7 +236,7 @@ class BaseWebHandler(web.RequestHandler):
 
     def _send_created_to_client(self, resource):
         """Sends a created message to the client for a given resource"""
-        if isinstance(resource, Resource):
+        if isinstance(resource, Schema):
             location = with_end_slash(
                 url_path_join(self.request.full_url(),
                               str(resource.identifier)))

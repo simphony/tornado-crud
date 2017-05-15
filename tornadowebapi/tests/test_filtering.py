@@ -1,11 +1,11 @@
 import unittest
 
 from tornadowebapi.filtering import filter_spec_to_function, And, Eq, Nop
-from tornadowebapi.resource import Resource
+from tornadowebapi.schema import Schema
 from tornadowebapi.traitlets import Int
 
 
-class Bongo(Resource):
+class Bongo(Schema):
     foo = Int()
     bar = Int()
 
