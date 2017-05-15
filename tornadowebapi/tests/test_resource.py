@@ -1,28 +1,28 @@
 import unittest
 
-from tornadowebapi.resource_fragment import ResourceFragment
-from tornadowebapi.resource import Resource, mandatory_absents, is_valid
+from tornadowebapi.schema_fragment import SchemaFragment
+from tornadowebapi.schema import Schema, mandatory_absents, is_valid
 from tornadowebapi.traitlets import Int, Unicode, OneOf, Absent
 
 
-class Student(Resource):
+class Student(Schema):
     name = Unicode()
     age = Int()
     hair_color = Unicode(optional=True)
 
 
-class Classroom(ResourceFragment):
+class Classroom(SchemaFragment):
     floor = Int()
     name = Unicode(optional=True)
 
 
-class Teacher(Resource):
+class Teacher(Schema):
     name = Unicode()
     classroom = OneOf(Classroom)
     alternative_classroom = OneOf(Classroom, optional=True)
 
 
-class Job(Resource):
+class Job(Schema):
     command = Unicode()
     params = Unicode(scope="input")
     max_secs = Int(scope="input", optional=True)

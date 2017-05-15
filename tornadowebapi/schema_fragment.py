@@ -1,7 +1,7 @@
-from tornadowebapi.base_resource import BaseResource
+from tornadowebapi.base_schema import BaseSchema
 
 
-class ResourceFragment(BaseResource):
+class SchemaFragment(BaseSchema):
     """Represents a sub-resource that is not addressable with an identifier
     and is not part of a collection.
 

@@ -1,6 +1,6 @@
 import copy
 
-from tornadowebapi.resource import Resource
+from tornadowebapi.schema import Schema
 from traitlets import HasTraits, List, Int, Type
 
 
@@ -20,7 +20,7 @@ class ItemsResponse(HasTraits):
     total = Int(0, min=0)
 
     #: The type to check for the items. None means any type.
-    _type = Type(klass=Resource, allow_none=True)
+    _type = Type(klass=Schema, allow_none=True)
 
     def __init__(self, type, **kwargs):
         """Instantiates the ItemsResponse for a specific type
@@ -28,7 +28,7 @@ class ItemsResponse(HasTraits):
 
         Parameters
         ----------
-        type: Resource or None
+        type: Schema or None
             A Resource
         """
         self._type = type
