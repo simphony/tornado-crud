@@ -5,7 +5,7 @@ from tornadowebapi import exceptions
 from tornadowebapi.schema_fragment import SchemaFragment
 from tornadowebapi.model_connector import ModelConnector
 from tornadowebapi.schema import Schema
-from tornadowebapi.singleton_resource import SingletonResource
+from tornadowebapi.singleton_schema import SingletonSchema
 from tornadowebapi.traitlets import Unicode, Int, List, OneOf
 
 
@@ -136,7 +136,7 @@ class CityModelConn(WorkingModelConn):
     resource_class = City
 
 
-class ServerInfo(SingletonResource):
+class ServerInfo(SingletonSchema):
     uptime = Int()
     status = Unicode()
 

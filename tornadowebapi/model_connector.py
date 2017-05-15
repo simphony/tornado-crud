@@ -1,6 +1,6 @@
 from tornado import gen, log
 from tornadowebapi.schema import Schema
-from tornadowebapi.singleton_resource import SingletonResource
+from tornadowebapi.singleton_schema import SingletonSchema
 
 from . import exceptions
 
@@ -267,7 +267,7 @@ class ModelConnector:
 
         if issubclass(resource_class, Schema):
             return False
-        elif issubclass(resource_class, SingletonResource):
+        elif issubclass(resource_class, SingletonSchema):
             return True
 
         raise TypeError(

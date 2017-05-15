@@ -6,7 +6,7 @@ from tornado.log import app_log
 from tornado.web import HTTPError
 from tornadowebapi.filtering import filter_spec_to_function
 from tornadowebapi.schema import Schema
-from tornadowebapi.singleton_resource import SingletonResource
+from tornadowebapi.singleton_schema import SingletonSchema
 from tornadowebapi.traitlets import TraitError
 
 from . import schema as resource_mod
@@ -240,7 +240,7 @@ class BaseWebHandler(web.RequestHandler):
             location = with_end_slash(
                 url_path_join(self.request.full_url(),
                               str(resource.identifier)))
-        elif isinstance(resource, SingletonResource):
+        elif isinstance(resource, SingletonSchema):
             location = with_end_slash(self.request.full_url())
         else:
             raise TypeError("Invalid resource type {}".format(resource))

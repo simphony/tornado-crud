@@ -1,6 +1,6 @@
 import abc
 
-from tornadowebapi.base_resource import BaseSchema
+from tornadowebapi.base_schema import BaseSchema
 from tornadowebapi.exceptions import WebAPIException
 from tornadowebapi.items_response import ItemsResponse
 

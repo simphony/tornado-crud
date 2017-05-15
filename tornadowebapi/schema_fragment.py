@@ -1,4 +1,4 @@
-from tornadowebapi.base_resource import BaseSchema
+from tornadowebapi.base_schema import BaseSchema
 
 
 class SchemaFragment(BaseSchema):
