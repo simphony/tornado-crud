@@ -11,7 +11,9 @@ from tornadowebapi.singleton_schema import SingletonSchema
 from tornadowebapi.utils import with_end_slash, url_path_join
 
 
-class BaseWebHandler(web.RequestHandler):
+class Resource(web.RequestHandler):
+    model_connector = None
+
     def initialize(self, registry, base_urlpath, api_version):
         """Initialization method for when the class is instantiated."""
         self._registry = registry
@@ -44,18 +46,10 @@ class BaseWebHandler(web.RequestHandler):
     def log(self):
         return app_log
 
-    def get_resource_handler_or_404(self, collection_name):
-        """Given a collection name, inquires the registry
-        for its associated Resource class. If not found
-        raises HTTPError(NOT_FOUND)"""
-
-        try:
-            resource_class = self.registry[collection_name]
-            return resource_class(
-                application=self.application,
-                current_user=self.current_user)
-        except KeyError:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
+    def get_model_connector(self):
+        return self.model_connector(
+            application=self.application,
+            current_user=self.current_user)
 
     def write_error(self, status_code, **kwargs):
         """Provides appropriate payload to the response in case of error.

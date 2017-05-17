@@ -1,30 +1,19 @@
 from tornado import gen, web, template
 from tornado.web import HTTPError
-from tornadowebapi.base_web_handler import BaseWebHandler
+from tornadowebapi.resource import Resource
 from tornadowebapi.traitlets import TraitError
 from . import exceptions
 from .http import httpstatus
 from .items_response import ItemsResponse
 
 
-class WithoutIdentifierWebHandler(BaseWebHandler):
+class ResourceList(Resource):
     """Handler for URLs without an identifier.
     """
     @gen.coroutine
-    def get(self, name):
-        res_handler = self.get_resource_handler_or_404(name)
+    def get(self):
+        res_handler = self.get_model_connector()
         args = self.parsed_query_arguments()
-
-        if res_handler.handles_singleton():
-            subcoro = self._get_singleton
-        else:
-            subcoro = self._get_collection
-
-        yield subcoro(res_handler, args)
-
-    @gen.coroutine
-    def _get_collection(self, res_handler, args):
-        """Returns the collection of available items"""
 
         items_response = ItemsResponse(res_handler.resource_class)
 
@@ -40,34 +29,10 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
         self._send_to_client(items_response)
 
     @gen.coroutine
-    def _get_singleton(self, res_handler, args):
-        transport = self._registry.transport
-
-        with self.exceptions_to_http(res_handler, "get"):
-            resource = transport.deserializer.deserialize(
-                res_handler.resource_class)
-
-            yield res_handler.retrieve(resource, **args)
-
-            self._check_resource_sanity(resource, "output")
-
-        self._send_to_client(resource)
-
-    @gen.coroutine
-    def post(self, name):
-        res_handler = self.get_resource_handler_or_404(name)
+    def post(self):
+        res_handler = self.get_model_connector()
         args = self.parsed_query_arguments()
 
-        if res_handler.handles_singleton():
-            subcoro = self._post_singleton
-        else:
-            subcoro = self._post_collection
-
-        yield subcoro(res_handler, args)
-
-    @gen.coroutine
-    def _post_collection(self, res_handler, args):
-        """Creates a new resource in the collection."""
         transport = self._registry.transport
         payload = self.request.body
 
@@ -108,9 +73,172 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
         self._send_created_to_client(resource)
 
     @gen.coroutine
-    def _post_singleton(self, res_handler, args):
-        """POST on a singleton creates the resource and fills the information
-        if the resource is not there. If it's there, will return a conflict."""
+    def put(self):
+        """You cannot PUT on a collection"""
+        raise HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+
+    @gen.coroutine
+    def delete(self):
+        raise HTTPError(httpstatus.METHOD_NOT_ALLOWED)
+
+
+class ResourceDetails(Resource):
+    """Handler for URLs addressing a resource.
+    """
+    @gen.coroutine
+    def get(self, identifier):
+        """Retrieves the resource representation."""
+        res_handler = self.get_model_connector()
+        transport = self._registry.transport
+        args = self.parsed_query_arguments()
+
+        with self.exceptions_to_http("get",
+                                     str(res_handler),
+                                     identifier,
+                                     on_generic_raise=web.HTTPError(
+                                         httpstatus.NOT_FOUND)):
+            identifier = res_handler.preprocess_identifier(identifier)
+
+        with self.exceptions_to_http("get", str(res_handler), identifier):
+            resource = transport.deserializer.deserialize(
+                res_handler.resource_class,
+                identifier)
+
+            self._check_none(identifier, "identifier", "preprocess_identifier")
+
+            yield res_handler.retrieve(resource, **args)
+
+            self._check_resource_sanity(resource, "output")
+
+        self._send_to_client(resource)
+
+    @gen.coroutine
+    def post(self, identifier):
+        """This operation is not possible in REST, and results
+        in either Conflict or NotFound, depending on the
+        presence of a resource at the given URL"""
+        res_handler = self.get_model_connector()
+        transport = self._registry.transport
+        args = self.parsed_query_arguments()
+
+        with self.exceptions_to_http("post",
+                                     str(res_handler),
+                                     identifier,
+                                     on_generic_raise=web.HTTPError(
+                                         httpstatus.NOT_FOUND)):
+            identifier = res_handler.preprocess_identifier(identifier)
+
+        with self.exceptions_to_http("post", str(res_handler), identifier):
+            self._check_none(identifier, "identifier", "preprocess_identifier")
+
+            resource = transport.deserializer.deserialize(
+                res_handler.resource_class,
+                identifier)
+
+            exists = yield res_handler.exists(resource, **args)
+
+        if exists:
+            raise web.HTTPError(httpstatus.CONFLICT)
+        else:
+            raise web.HTTPError(httpstatus.NOT_FOUND)
+
+    @gen.coroutine
+    def put(self, identifier):
+        """Replaces the resource with a new representation."""
+        res_handler = self.get_model_connector()
+        transport = self._registry.transport
+        args = self.parsed_query_arguments()
+
+        with self.exceptions_to_http("put",
+                                     str(res_handler),
+                                     identifier,
+                                     on_generic_raise=web.HTTPError(
+                                         httpstatus.NOT_FOUND)):
+            identifier = res_handler.preprocess_identifier(identifier)
+
+        on_generic_raise = self.to_http_exception(
+            exceptions.BadRepresentation(
+                "Generic exception during preprocessing of {}".format(
+                    str(res_handler))))
+        with self.exceptions_to_http("put",
+                                     str(res_handler),
+                                     identifier,
+                                     on_generic_raise=on_generic_raise):
+            self._check_none(identifier, "identifier", "preprocess_identifier")
+
+            try:
+                resource = transport.deserializer.deserialize(
+                    res_handler.resource_class,
+                    identifier,
+                    transport.parser.parse(self.request.body))
+            except TraitError as e:
+                raise exceptions.BadRepresentation(message=str(e))
+
+            self._check_none(resource,
+                             "representation",
+                             "preprocess_representation")
+
+        with self.exceptions_to_http("put",
+                                     str(res_handler),
+                                     identifier):
+            self._check_resource_sanity(resource, "input")
+
+            yield res_handler.update(resource, **args)
+
+        self._send_to_client(None)
+
+    @gen.coroutine
+    def delete(self, identifier):
+        """Deletes the resource."""
+        res_handler = self.get_model_connector()
+        transport = self._registry.transport
+        args = self.parsed_query_arguments()
+
+        with self.exceptions_to_http("delete",
+                                     str(res_handler),
+                                     identifier,
+                                     on_generic_raise=web.HTTPError(
+                                         httpstatus.NOT_FOUND)):
+            identifier = res_handler.preprocess_identifier(identifier)
+
+        self._check_none(identifier, "identifier", "preprocess_identifier")
+
+        with self.exceptions_to_http("delete",
+                                     str(res_handler),
+                                     identifier):
+
+            resource = transport.deserializer.deserialize(
+                res_handler.resource_class,
+                identifier)
+
+            yield res_handler.delete(resource, **args)
+
+        self._send_to_client(None)
+
+
+class ResourceSingletonDetails(Resource):
+    @gen.coroutine
+    def get(self):
+        res_handler = self.get_model_connector()
+        args = self.parsed_query_arguments()
+
+        transport = self._registry.transport
+
+        with self.exceptions_to_http(res_handler, "get"):
+            resource = transport.deserializer.deserialize(
+                res_handler.resource_class)
+
+            yield res_handler.retrieve(resource, **args)
+
+            self._check_resource_sanity(resource, "output")
+
+        self._send_to_client(resource)
+
+    @gen.coroutine
+    def post(self):
+        res_handler = self.get_model_connector()
+        args = self.parsed_query_arguments()
+
         transport = self._registry.transport
         payload = self.request.body
 
@@ -152,25 +280,10 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
         self._send_created_to_client(resource)
 
     @gen.coroutine
-    def put(self, name):
-        res_handler = self.get_resource_handler_or_404(name)
+    def put(self):
+        res_handler = self.get_model_connector()
         args = self.parsed_query_arguments()
 
-        if res_handler.handles_singleton():
-            coro = self._put_singleton
-        else:
-            coro = self._put_collection
-
-        yield coro(res_handler, args)
-
-    @gen.coroutine
-    def _put_collection(self, res_handler, args):
-        """You cannot PUT on a collection"""
-        raise HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-
-    @gen.coroutine
-    def _put_singleton(self, res_handler, args):
-        """Replaces the resource with a new representation."""
         transport = self._registry.transport
 
         on_generic_raise = self.to_http_exception(
@@ -199,24 +312,10 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
         self._send_to_client(None)
 
     @gen.coroutine
-    def delete(self, name):
-        res_handler = self.get_resource_handler_or_404(name)
+    def delete(self):
+        res_handler = self.get_model_connector()
         args = self.parsed_query_arguments()
 
-        if res_handler.handles_singleton():
-            coro = self._delete_singleton
-        else:
-            coro = self._delete_collection
-
-        yield coro(res_handler, args)
-
-    @gen.coroutine
-    def _delete_collection(self, res_handler, args):
-        raise HTTPError(httpstatus.METHOD_NOT_ALLOWED)
-
-    @gen.coroutine
-    def _delete_singleton(self, res_handler, args):
-        """Deletes the singleton resource."""
         transport = self._registry.transport
 
         with self.exceptions_to_http(res_handler, "delete"):
@@ -228,141 +327,7 @@ class WithoutIdentifierWebHandler(BaseWebHandler):
         self._send_to_client(None)
 
 
-class WithIdentifierWebHandler(BaseWebHandler):
-    """Handler for URLs addressing a resource.
-    """
-    @gen.coroutine
-    def get(self, collection_name, identifier):
-        """Retrieves the resource representation."""
-        res_handler = self.get_resource_handler_or_404(collection_name)
-        transport = self._registry.transport
-        args = self.parsed_query_arguments()
-
-        with self.exceptions_to_http("get",
-                                     collection_name,
-                                     identifier,
-                                     on_generic_raise=web.HTTPError(
-                                         httpstatus.NOT_FOUND)):
-            identifier = res_handler.preprocess_identifier(identifier)
-
-        with self.exceptions_to_http("get", collection_name, identifier):
-            resource = transport.deserializer.deserialize(
-                res_handler.resource_class,
-                identifier)
-
-            self._check_none(identifier, "identifier", "preprocess_identifier")
-
-            yield res_handler.retrieve(resource, **args)
-
-            self._check_resource_sanity(resource, "output")
-
-        self._send_to_client(resource)
-
-    @gen.coroutine
-    def post(self, collection_name, identifier):
-        """This operation is not possible in REST, and results
-        in either Conflict or NotFound, depending on the
-        presence of a resource at the given URL"""
-        res_handler = self.get_resource_handler_or_404(collection_name)
-        transport = self._registry.transport
-        args = self.parsed_query_arguments()
-
-        with self.exceptions_to_http("post",
-                                     collection_name,
-                                     identifier,
-                                     on_generic_raise=web.HTTPError(
-                                         httpstatus.NOT_FOUND)):
-            identifier = res_handler.preprocess_identifier(identifier)
-
-        with self.exceptions_to_http("post", collection_name, identifier):
-            self._check_none(identifier, "identifier", "preprocess_identifier")
-
-            resource = transport.deserializer.deserialize(
-                res_handler.resource_class,
-                identifier)
-
-            exists = yield res_handler.exists(resource, **args)
-
-        if exists:
-            raise web.HTTPError(httpstatus.CONFLICT)
-        else:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
-
-    @gen.coroutine
-    def put(self, collection_name, identifier):
-        """Replaces the resource with a new representation."""
-        res_handler = self.get_resource_handler_or_404(collection_name)
-        transport = self._registry.transport
-        args = self.parsed_query_arguments()
-
-        with self.exceptions_to_http("put",
-                                     collection_name,
-                                     identifier,
-                                     on_generic_raise=web.HTTPError(
-                                         httpstatus.NOT_FOUND)):
-            identifier = res_handler.preprocess_identifier(identifier)
-
-        on_generic_raise = self.to_http_exception(
-            exceptions.BadRepresentation(
-                "Generic exception during preprocessing of {}".format(
-                    collection_name)))
-        with self.exceptions_to_http("put",
-                                     collection_name,
-                                     identifier,
-                                     on_generic_raise=on_generic_raise):
-            self._check_none(identifier, "identifier", "preprocess_identifier")
-
-            try:
-                resource = transport.deserializer.deserialize(
-                    res_handler.resource_class,
-                    identifier,
-                    transport.parser.parse(self.request.body))
-            except TraitError as e:
-                raise exceptions.BadRepresentation(message=str(e))
-
-            self._check_none(resource,
-                             "representation",
-                             "preprocess_representation")
-
-        with self.exceptions_to_http("put",
-                                     collection_name,
-                                     identifier):
-            self._check_resource_sanity(resource, "input")
-
-            yield res_handler.update(resource, **args)
-
-        self._send_to_client(None)
-
-    @gen.coroutine
-    def delete(self, collection_name, identifier):
-        """Deletes the resource."""
-        res_handler = self.get_resource_handler_or_404(collection_name)
-        transport = self._registry.transport
-        args = self.parsed_query_arguments()
-
-        with self.exceptions_to_http("delete",
-                                     collection_name,
-                                     identifier,
-                                     on_generic_raise=web.HTTPError(
-                                         httpstatus.NOT_FOUND)):
-            identifier = res_handler.preprocess_identifier(identifier)
-
-        self._check_none(identifier, "identifier", "preprocess_identifier")
-
-        with self.exceptions_to_http("delete",
-                                     collection_name,
-                                     identifier):
-
-            resource = transport.deserializer.deserialize(
-                res_handler.resource_class,
-                identifier)
-
-            yield res_handler.delete(resource, **args)
-
-        self._send_to_client(None)
-
-
-class JSAPIWebHandler(BaseWebHandler):
+class JSAPIWebHandler(Resource):
     """Handles the JavaScript API request."""
     @gen.coroutine
     def get(self):
