@@ -8,7 +8,7 @@ from tornadowebapi.http import httpstatus
 from tornadowebapi.registry import Registry
 from tornadowebapi.traitlets import Absent
 from tornadowebapi.web_handlers import (
-    WithIdentifierWebHandler, WithoutIdentifierWebHandler)
+    ResourceList, ResourceDetails)
 from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
@@ -41,10 +41,10 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
     def get_app(self):
         registry = Registry()
-        handlers = registry.api_handlers('/')
         for resource in ALL_RESOURCES:
             registry.register(resource)
-        app = web.Application(handlers=handlers)
+        handlers = registry.api_handlers('/')
+        app = web.Application(handlers=handlers, debug=True)
         app.hub = mock.Mock()
         return app
 
@@ -781,8 +781,12 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
         reg = Registry()
+        model_conn = resource_handlers.StudentModelConn
+        reg.register(model_conn)
         handlers = reg.api_handlers("/foo")
-        self.assertEqual(handlers[0][0], "/foo/api/v1/(.*)/(.*)/")
-        self.assertEqual(handlers[0][1], WithIdentifierWebHandler)
-        self.assertEqual(handlers[1][0], "/foo/api/v1/(.*)/")
-        self.assertEqual(handlers[1][1], WithoutIdentifierWebHandler)
+        self.assertEqual(handlers[0][0], "/foo/api/v1/students/")
+        self.assertTrue(issubclass(handlers[0][1], ResourceList))
+        self.assertEqual(handlers[0][1].model_connector, model_conn)
+        self.assertEqual(handlers[1][0], "/foo/api/v1/students/(.*)/")
+        self.assertTrue(issubclass(handlers[1][1], ResourceDetails))
+        self.assertEqual(handlers[1][1].model_connector, model_conn)

@@ -1,6 +1,5 @@
 from .web_handlers import (
-    WithIdentifierWebHandler,
-    WithoutIdentifierWebHandler,
+    ResourceList, ResourceDetails, ResourceSingletonDetails,
     JSAPIWebHandler)
 
 from .transports import BasicRESTTransport
@@ -114,19 +113,65 @@ class Registry:
             api_version=version,
         )
 
-        return [
-            (with_end_slash(
-                url_path_join(base_urlpath, "api", version, "(.*)", "(.*)")),
-             WithIdentifierWebHandler,
-             init_args
-             ),
-            (with_end_slash(
-                url_path_join(base_urlpath, "api", version, "(.*)")),
-             WithoutIdentifierWebHandler,
-             init_args
-             ),
+        handlers = []
+        for conn_cls in self._registered_handlers.values():
+            if conn_cls.handles_singleton():
+
+                class _ResourceSingletonDetails(ResourceSingletonDetails):
+                    model_connector = conn_cls
+
+                handlers.append(
+                    (
+                        with_end_slash(
+                            url_path_join(base_urlpath,
+                                          "api",
+                                          version,
+                                          conn_cls.bound_name()
+                                          )
+                        ),
+                        _ResourceSingletonDetails,
+                        init_args
+                    )
+                )
+            else:
+                class _ResourceList(ResourceList):
+                    model_connector = conn_cls
+
+                class _ResourceDetails(ResourceDetails):
+                    model_connector = conn_cls
+
+                handlers.append(
+                    (
+                        with_end_slash(
+                            url_path_join(base_urlpath,
+                                          "api",
+                                          version,
+                                          conn_cls.bound_name()
+                                          )
+                        ),
+                        _ResourceList,
+                        init_args
+                    )
+                )
+                handlers.append(
+                    (
+                        with_end_slash(
+                            url_path_join(base_urlpath,
+                                          "api",
+                                          version,
+                                          conn_cls.bound_name(),
+                                          "(.*)"
+                                          )
+                        ),
+                        _ResourceDetails,
+                        init_args
+                    )
+                )
+
+        handlers.append(
             (url_path_join(base_urlpath, "jsapi", version, "resources.js"),
              JSAPIWebHandler,
              init_args
              ),
-        ]
+        )
+        return handlers
