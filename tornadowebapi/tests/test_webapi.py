@@ -25,24 +25,42 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
     def get_app(self):
         registry = Registry()
-        registry.register("/alreadypresent/(.*)/",
+        registry.register("/alreadypresents/",
+                          resource_handlers.AlreadyPresentList)
+        registry.register("/alreadypresents/(.*)/",
                           resource_handlers.AlreadyPresentDetails)
+        registry.register("/exceptionvalidateds/",
+                          resource_handlers.ExceptionValidatedList)
         registry.register("/exceptionvalidateds/(.*)/",
                           resource_handlers.ExceptionValidatedDetails)
+        registry.register("/nullreturningvalidateds/",
+                          resource_handlers.NullReturningValidatedList)
         registry.register("/nullreturningvalidateds/(.*)/",
                           resource_handlers.NullReturningValidatedDetails)
+        registry.register("/correctvalidateds/",
+                          resource_handlers.CorrectValidatedList)
         registry.register("/correctvalidateds/(.*)/",
                           resource_handlers.CorrectValidatedDetails)
+        registry.register("/ourexceptionvalidateds/",
+                          resource_handlers.OurExceptionValidatedList)
         registry.register("/ourexceptionvalidateds/(.*)/",
                           resource_handlers.OurExceptionValidatedDetails)
+        registry.register("/brokens/",
+                          resource_handlers.BrokenList)
         registry.register("/brokens/(.*)/",
                           resource_handlers.BrokenDetails)
-        registry.register("/unsupportscollections/(.*)/",
+        registry.register("/unsupportscollections/",
                           resource_handlers.UnsupportsCollectionList)
+        registry.register("/unprocessables/",
+                          resource_handlers.UnprocessableList)
         registry.register("/unprocessables/(.*)/",
                           resource_handlers.UnprocessableDetails)
         registry.register("/unsupportalls/(.*)/",
                           resource_handlers.UnsupportAllDetails)
+        registry.register("/unsupportalls/",
+                          resource_handlers.UnsupportAllList)
+        registry.register("/students/",
+                          resource_handlers.StudentList)
         registry.register("/students/(.*)/",
                           resource_handlers.StudentDetails)
         registry.register("/teachers/(.*)/",
@@ -70,16 +88,18 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "identifiers": []
                          })
 
-        handler = resource_handlers.StudentModelConn
-        handler.collection[1] = handler.resource_class(
+        resource = resource_handlers.StudentDetails
+        connector = resource.model_connector
+
+        connector.collection[1] = resource.schema(
             identifier="1",
             name="john wick",
             age=39)
-        handler.collection[2] = handler.resource_class(
+        connector.collection[2] = resource.schema(
             identifier="2",
             name="john wick 2",
             age=39)
-        handler.collection[3] = handler.resource_class(
+        connector.collection[3] = resource.schema(
             identifier="3",
             name="john wick 3",
             age=39)
@@ -140,16 +160,17 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "identifiers": []
                          })
 
-        handler = resource_handlers.StudentModelConn
-        handler.collection[1] = handler.resource_class(
+        resource = resource_handlers.StudentDetails
+        connector = resource.model_connector
+        connector.collection[1] = resource.schema(
             identifier="1",
             name="john wick",
             age=39)
-        handler.collection[2] = handler.resource_class(
+        connector.collection[2] = resource.schema(
             identifier="2",
             name="john wick 2",
             age=39)
-        handler.collection[3] = handler.resource_class(
+        connector.collection[3] = resource.schema(
             identifier="3",
             name="john wick 3",
             age=39)
@@ -228,16 +249,17 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                           "identifiers": []
                           })
 
-        handler = resource_handlers.StudentModelConn
-        handler.collection[1] = handler.resource_class(
+        resource = resource_handlers.StudentDetails
+        connector = resource.model_connector
+        connector.collection[1] = resource.schema(
             identifier="1",
             name="john wick",
             age=39)
-        handler.collection[2] = handler.resource_class(
+        connector.collection[2] = resource.schema(
             identifier="2",
             name="john wick 2",
             age=39)
-        handler.collection[3] = handler.resource_class(
+        connector.collection[3] = resource.schema(
             identifier="3",
             name="john wick 3",
             age=39)
@@ -791,12 +813,10 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
         reg = Registry()
-        model_conn = resource_handlers.StudentModelConn
-        reg.register(model_conn)
+        reg.register("/students/", resource_handlers.StudentList)
+        reg.register("/students/(.*)/", resource_handlers.StudentDetails)
         handlers = reg.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/students/")
         self.assertTrue(issubclass(handlers[0][1], ResourceList))
-        self.assertEqual(handlers[0][1].model_connector, model_conn)
         self.assertEqual(handlers[1][0], "/foo/api/v1/students/(.*)/")
         self.assertTrue(issubclass(handlers[1][1], ResourceDetails))
-        self.assertEqual(handlers[1][1].model_connector, model_conn)
