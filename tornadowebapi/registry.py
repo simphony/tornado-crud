@@ -44,7 +44,7 @@ class Registry:
     def registered(self):
         return self._register
 
-    def register(self, url, resource):
+    def register(self, resource, url):
         """Registers a Model Connector.
         The associated resource will be used to determine the URL
         representing the resource collections. For example, a resource Image
