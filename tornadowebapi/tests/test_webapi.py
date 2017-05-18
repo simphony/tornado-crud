@@ -13,36 +13,110 @@ from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
-ALL_RESOURCES = (
-    resource_handlers.AlreadyPresentModelConn,
-    resource_handlers.ExceptionValidatedModelConn,
-    resource_handlers.NullReturningValidatedModelConn,
-    resource_handlers.CorrectValidatedModelConn,
-    resource_handlers.OurExceptionValidatedModelConn,
-    resource_handlers.BrokenModelConn,
-    resource_handlers.UnsupportsCollectionModelConn,
-    resource_handlers.UnprocessableModelConn,
-    resource_handlers.UnsupportAllModelConn,
-    resource_handlers.StudentModelConn,
-    resource_handlers.TeacherModelConn,
-    resource_handlers.InvalidIdentifierModelConn,
-    resource_handlers.OurExceptionInvalidIdentifierModelConn,
-    resource_handlers.ServerInfoModelConn,
-)
-
 
 class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
-        resource_handlers.StudentModelConn.collection = OrderedDict()
-        resource_handlers.StudentModelConn.id = 0
-        resource_handlers.ServerInfoModelConn.instance = {}
-        resource_handlers.StudentModelConn.id = 0
+        resource_handlers.StudentDetails.model_connector.collection = \
+            OrderedDict()
+        resource_handlers.StudentDetails.model_connector.id = 0
+        resource_handlers.ServerInfoDetails.model_connector.instance = {}
+        resource_handlers.StudentDetails.model_connector.id = 0
 
     def get_app(self):
         registry = Registry()
-        for resource in ALL_RESOURCES:
-            registry.register(resource)
+        registry.register(
+            resource_handlers.AlreadyPresentList,
+            "/alreadypresents/",
+        )
+        registry.register(
+            resource_handlers.AlreadyPresentDetails,
+            "/alreadypresents/(.*)/",
+        )
+        registry.register(
+            resource_handlers.ExceptionValidatedList,
+            "/exceptionvalidateds/",
+        )
+        registry.register(
+            resource_handlers.ExceptionValidatedDetails,
+            "/exceptionvalidateds/(.*)/",
+        )
+        registry.register(
+            resource_handlers.NullReturningValidatedList,
+            "/nullreturningvalidateds/",
+        )
+        registry.register(
+            resource_handlers.NullReturningValidatedDetails,
+            "/nullreturningvalidateds/(.*)/",
+        )
+        registry.register(
+            resource_handlers.CorrectValidatedList,
+            "/correctvalidateds/",
+        )
+        registry.register(
+            resource_handlers.CorrectValidatedDetails,
+            "/correctvalidateds/(.*)/",
+        )
+        registry.register(
+            resource_handlers.OurExceptionValidatedList,
+            "/ourexceptionvalidateds/",
+        )
+        registry.register(
+            resource_handlers.OurExceptionValidatedDetails,
+            "/ourexceptionvalidateds/(.*)/",
+        )
+        registry.register(
+            resource_handlers.BrokenList,
+            "/brokens/",
+        )
+        registry.register(
+            resource_handlers.BrokenDetails,
+            "/brokens/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportsCollectionList,
+            "/unsupportscollections/",
+        )
+        registry.register(
+            resource_handlers.UnprocessableList,
+            "/unprocessables/",
+        )
+        registry.register(
+            resource_handlers.UnprocessableDetails,
+            "/unprocessables/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportAllDetails,
+            "/unsupportalls/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportAllList,
+            "/unsupportalls/",
+        )
+        registry.register(
+            resource_handlers.StudentList,
+            "/students/",
+        )
+        registry.register(
+            resource_handlers.StudentDetails,
+            "/students/(.*)/",
+        )
+        registry.register(
+            resource_handlers.TeacherDetails,
+            "/teachers/(.*)/"
+        )
+        registry.register(
+            resource_handlers.InvalidIdentifierDetails,
+            "/invalididentifiers/(.*)/"
+        )
+        registry.register(
+            resource_handlers.OurExceptionInvalidIdentifierDetails,
+            "/ourexceptioninvalididentifiers/(.*)/"
+        )
+        registry.register(
+            resource_handlers.ServerInfoDetails,
+            "/serverinfo/"
+        )
         handlers = registry.api_handlers('/')
         app = web.Application(handlers=handlers, debug=True)
         app.hub = mock.Mock()
@@ -60,16 +134,18 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "identifiers": []
                          })
 
-        handler = resource_handlers.StudentModelConn
-        handler.collection[1] = handler.resource_class(
+        resource = resource_handlers.StudentDetails
+        connector = resource.model_connector
+
+        connector.collection[1] = resource.schema(
             identifier="1",
             name="john wick",
             age=39)
-        handler.collection[2] = handler.resource_class(
+        connector.collection[2] = resource.schema(
             identifier="2",
             name="john wick 2",
             age=39)
-        handler.collection[3] = handler.resource_class(
+        connector.collection[3] = resource.schema(
             identifier="3",
             name="john wick 3",
             age=39)
@@ -130,16 +206,17 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                              "identifiers": []
                          })
 
-        handler = resource_handlers.StudentModelConn
-        handler.collection[1] = handler.resource_class(
+        resource = resource_handlers.StudentDetails
+        connector = resource.model_connector
+        connector.collection[1] = resource.schema(
             identifier="1",
             name="john wick",
             age=39)
-        handler.collection[2] = handler.resource_class(
+        connector.collection[2] = resource.schema(
             identifier="2",
             name="john wick 2",
             age=39)
-        handler.collection[3] = handler.resource_class(
+        connector.collection[3] = resource.schema(
             identifier="3",
             name="john wick 3",
             age=39)
@@ -218,16 +295,17 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
                           "identifiers": []
                           })
 
-        handler = resource_handlers.StudentModelConn
-        handler.collection[1] = handler.resource_class(
+        resource = resource_handlers.StudentDetails
+        connector = resource.model_connector
+        connector.collection[1] = resource.schema(
             identifier="1",
             name="john wick",
             age=39)
-        handler.collection[2] = handler.resource_class(
+        connector.collection[2] = resource.schema(
             identifier="2",
             name="john wick 2",
             age=39)
-        handler.collection[3] = handler.resource_class(
+        connector.collection[3] = resource.schema(
             identifier="3",
             name="john wick 3",
             age=39)
@@ -781,12 +859,10 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
         reg = Registry()
-        model_conn = resource_handlers.StudentModelConn
-        reg.register(model_conn)
+        reg.register(resource_handlers.StudentList, "/students/")
+        reg.register(resource_handlers.StudentDetails, "/students/(.*)/")
         handlers = reg.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/students/")
         self.assertTrue(issubclass(handlers[0][1], ResourceList))
-        self.assertEqual(handlers[0][1].model_connector, model_conn)
         self.assertEqual(handlers[1][0], "/foo/api/v1/students/(.*)/")
         self.assertTrue(issubclass(handlers[1][1], ResourceDetails))
-        self.assertEqual(handlers[1][1].model_connector, model_conn)

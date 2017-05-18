@@ -13,6 +13,7 @@ from tornadowebapi.utils import with_end_slash, url_path_join
 
 class Resource(web.RequestHandler):
     model_connector = None
+    schema = None
 
     def initialize(self, registry, base_urlpath, api_version):
         """Initialization method for when the class is instantiated."""
