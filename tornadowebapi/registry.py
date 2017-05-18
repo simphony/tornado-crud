@@ -1,6 +1,5 @@
-from collections import OrderedDict
-
 from tornadowebapi.resource import Resource
+from .web_handlers import JSAPIWebHandler
 
 from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
@@ -21,7 +20,7 @@ class Registry:
     """
 
     def __init__(self, transport=None):
-        self._register = OrderedDict()
+        self._register = {}
         self._authenticator = NullAuthenticator
         if transport is None:
             transport = BasicRESTTransport()
@@ -116,4 +115,10 @@ class Registry:
                 )
             )
 
+        handlers.append(
+            (url_path_join(base_urlpath, "jsapi", version, "resources.js"),
+             JSAPIWebHandler,
+             init_args
+             ),
+        )
         return handlers

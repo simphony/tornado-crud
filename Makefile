@@ -44,6 +44,12 @@ test:
 	@echo "-----------------"
 	flake8 . && python -m tornado.testing discover -s tornadowebapi -t . -v
 
+.PHONY: jstest
+jstest:
+	@echo "Running javascript testsuite"
+	@echo "----------------------------"
+	pushd jstests && sh run.sh && popd
+
 .PHONY: docs
 docs:
 	sphinx-build -W doc/source doc/build/sphinx

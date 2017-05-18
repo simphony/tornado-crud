@@ -1,4 +1,4 @@
-from tornado import gen, web
+from tornado import gen, web, template
 from tornado.web import HTTPError
 from tornadowebapi.resource import Resource
 from tornadowebapi.traitlets import TraitError
@@ -325,3 +325,37 @@ class ResourceSingletonDetails(Resource):
             yield connector.delete(resource, **args)
 
         self._send_to_client(None)
+
+
+class JSAPIWebHandler(Resource):
+    """Handles the JavaScript API request."""
+    @gen.coroutine
+    def get(self):
+        resources = []
+        reg = self.registry
+        for resource in reg.registered_handlers.values():
+            class_name = self.schema.__name__
+            bound_name = resource.bound_name()
+
+            resources.append({
+                "class_name": class_name,
+                "bound_name": bound_name,
+                "singleton": resource.is_singleton()
+            })
+        self.set_header("Content-Type", "application/javascript")
+        self.render("templates/resources.template.js",
+                    base_urlpath=self.base_urlpath,
+                    api_version=self.api_version,
+                    resources=resources)
+
+    def create_template_loader(self, template_path):
+        """Ovberride the default template loader, because if
+        any code overrides the template loader in the settings,
+        we don't want to rely on that. We want to be sure we use
+        the tornado loader."""
+        return template.Loader(template_path, whitespace='all')
+
+    def get_template_path(self):
+        """Override the path to make sure we search relative to this file
+        """
+        return None

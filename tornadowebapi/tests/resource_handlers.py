@@ -7,8 +7,7 @@ from tornadowebapi.model_connector import ModelConnector
 from tornadowebapi.schema import Schema
 from tornadowebapi.singleton_schema import SingletonSchema
 from tornadowebapi.traitlets import Unicode, Int, List, OneOf
-from tornadowebapi.web_handlers import ResourceDetails, ResourceList, \
-    ResourceSingletonDetails
+from tornadowebapi.web_handlers import ResourceDetails, ResourceList
 
 
 class WorkingModelConn(ModelConnector):
@@ -172,7 +171,7 @@ class ServerInfoModelConn(SingletonModelConn):
     resource_class = ServerInfo
 
 
-class ServerInfoDetails(ResourceSingletonDetails):
+class ServerInfoDetails(ResourceDetails):
     schema = ServerInfo
     model_connector = ServerInfoModelConn
 
@@ -186,11 +185,6 @@ class UnsupportAllModelConn(ModelConnector):
 
 
 class UnsupportAllDetails(ResourceDetails):
-    schema = UnsupportAll
-    model_connector = UnsupportAllModelConn
-
-
-class UnsupportAllList(ResourceList):
     schema = UnsupportAll
     model_connector = UnsupportAllModelConn
 
@@ -218,11 +212,6 @@ class UnprocessableModelConn(ModelConnector):
 
 
 class UnprocessableDetails(ResourceDetails):
-    schema = Unprocessable
-    model_connector = UnprocessableModelConn
-
-
-class UnprocessableList(ResourceList):
     schema = Unprocessable
     model_connector = UnprocessableModelConn
 
@@ -264,11 +253,6 @@ class BrokenDetails(ResourceDetails):
     model_connector = BrokenModelConn
 
 
-class BrokenList(ResourceList):
-    schema = Broken
-    model_connector = BrokenModelConn
-
-
 class ExceptionValidated(Schema):
     pass
 
@@ -279,11 +263,6 @@ class ExceptionValidatedModelConn(ModelConnector):
 
 
 class ExceptionValidatedDetails(ResourceDetails):
-    schema = ExceptionValidated
-    model_connector = ExceptionValidatedModelConn
-
-
-class ExceptionValidatedList(ResourceList):
     schema = ExceptionValidated
     model_connector = ExceptionValidatedModelConn
 
@@ -302,11 +281,6 @@ class OurExceptionValidatedDetails(ResourceDetails):
     model_connector = OurExceptionValidatedModelConn
 
 
-class OurExceptionValidatedList(ResourceList):
-    schema = OurExceptionValidated
-    model_connector = OurExceptionValidatedModelConn
-
-
 class NullReturningValidated(Schema):
     pass
 
@@ -317,11 +291,6 @@ class NullReturningValidatedModelConn(ModelConnector):
 
 
 class NullReturningValidatedDetails(ResourceDetails):
-    schema = NullReturningValidated
-    model_connector = NullReturningValidatedModelConn
-
-
-class NullReturningValidatedList(ResourceList):
     schema = NullReturningValidated
     model_connector = NullReturningValidatedModelConn
 
@@ -342,11 +311,6 @@ class CorrectValidatedDetails(ResourceDetails):
     model_connector = CorrectValidatedModelConn
 
 
-class CorrectValidatedList(ResourceList):
-    schema = CorrectValidated
-    model_connector = CorrectValidatedModelConn
-
-
 class AlreadyPresent(Schema):
     pass
 
@@ -359,11 +323,6 @@ class AlreadyPresentModelConn(ModelConnector):
 
 
 class AlreadyPresentDetails(ResourceDetails):
-    schema = AlreadyPresent
-    model_connector = AlreadyPresentModelConn
-
-
-class AlreadyPresentList(ResourceList):
     schema = AlreadyPresent
     model_connector = AlreadyPresentModelConn
 
@@ -438,3 +397,7 @@ class FrobnicatorModelConn(ModelConnector):
 class FrobnicatorDetails(ResourceDetails):
     schema = Frobnicator
     model_connector = FrobnicatorModelConn
+
+
+class WrongClassModelConn(ModelConnector):
+    resource_class = str
