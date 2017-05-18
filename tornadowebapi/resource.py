@@ -13,6 +13,7 @@ from tornadowebapi.utils import with_end_slash, url_path_join
 
 class Resource(web.RequestHandler):
     model_connector = None
+    schema = None
 
     def initialize(self, registry, base_urlpath, api_version):
         """Initialization method for when the class is instantiated."""
@@ -200,6 +201,42 @@ class Resource(web.RequestHandler):
                 del ret["filter"]
 
         return ret
+
+    @classmethod
+    def is_singleton(cls):
+        """Returns true if the handler resource_class is a singleton class.
+        Returns false otherwise."""
+        schema = cls.schema
+
+        if schema is None:
+            raise TypeError(
+                "schema for handler {} must not be None".format(
+                    cls
+                ))
+
+        if issubclass(schema, Schema):
+            return False
+        elif issubclass(schema, SingletonSchema):
+            return True
+
+        raise TypeError(
+            "schema for handler {} must be a "
+            "subtype of BaseResource. Found {}".format(
+                cls,
+                schema))
+
+    @classmethod
+    def bound_name(cls):
+        """Returns the name under which the resource will be presented as
+        a URL /name/.
+        This passes through the call to its name if singleton,
+        or to the collection name if not.
+        """
+        schema = cls.schema
+        if cls.is_singleton():
+            return schema.name()
+        else:
+            return schema.collection_name()
 
     def _send_to_client(self, entity):
         """Convenience method to send a given entity to a client.

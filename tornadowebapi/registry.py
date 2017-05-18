@@ -1,10 +1,8 @@
-from .web_handlers import (
-    ResourceList, ResourceDetails, ResourceSingletonDetails,
-    JSAPIWebHandler)
+from tornadowebapi.resource import Resource
+from .web_handlers import JSAPIWebHandler
 
 from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
-from .model_connector import ModelConnector
 from .authenticator import NullAuthenticator
 
 
@@ -22,7 +20,7 @@ class Registry:
     """
 
     def __init__(self, transport=None):
-        self._registered_handlers = {}
+        self._register = {}
         self._authenticator = NullAuthenticator
         if transport is None:
             transport = BasicRESTTransport()
@@ -42,10 +40,10 @@ class Registry:
         return self._transport
 
     @property
-    def registered_handlers(self):
-        return self._registered_handlers
+    def registered(self):
+        return self._register
 
-    def register(self, model_connector):
+    def register(self, url, resource):
         """Registers a Model Connector.
         The associated resource will be used to determine the URL
         representing the resource collections. For example, a resource Image
@@ -55,39 +53,27 @@ class Registry:
 
         Parameters
         ----------
-        model_connector: ModelConnector
-            A subclass of the ModelConnector
+        resource: Resource
+            A subclass of the Resource class
 
         Raises
         ------
         TypeError:
             if typ is not a subclass of Resource
         """
-        if model_connector is None or not issubclass(model_connector,
-                                                     ModelConnector):
-            raise TypeError("handler must be a subclass of ModelConnector")
+        if resource is None or not issubclass(resource, Resource):
+            raise TypeError("resource must be a subclass of Resource")
 
-        name = model_connector.bound_name()
-
-        if name in self._registered_handlers:
+        if url in self._register:
             raise ValueError(
-                "Name {} is already in use by "
-                "class {}, so it cannot be used by class {}".format(
-                    name,
-                    self._registered_handlers[name].__name__,
-                    model_connector.__name__
+                "url {} is already in use by "
+                "{}, so it cannot be used by {}".format(
+                    url,
+                    self._register[url].__name__,
+                    resource.__name__
                 ))
 
-        self._registered_handlers[name] = model_connector
-
-    def __getitem__(self, collection_name):
-        """Returns the class from the collection name with the
-        indexing operator"""
-        return self._registered_handlers[collection_name]
-
-    def __contains__(self, item):
-        """If the registry contains the given item"""
-        return item in self._registered_handlers
+        self._register[url] = resource
 
     def api_handlers(self, base_urlpath, version="v1"):
         """Returns the API handlers for the interface.
@@ -114,59 +100,20 @@ class Registry:
         )
 
         handlers = []
-        for conn_cls in self._registered_handlers.values():
-            if conn_cls.handles_singleton():
-
-                class _ResourceSingletonDetails(ResourceSingletonDetails):
-                    model_connector = conn_cls
-
-                handlers.append(
-                    (
-                        with_end_slash(
-                            url_path_join(base_urlpath,
-                                          "api",
-                                          version,
-                                          conn_cls.bound_name()
-                                          )
-                        ),
-                        _ResourceSingletonDetails,
-                        init_args
-                    )
+        for url, resource in self._register.items():
+            handlers.append(
+                (
+                    with_end_slash(
+                        url_path_join(base_urlpath,
+                                      "api",
+                                      version,
+                                      url
+                                      )
+                    ),
+                    resource,
+                    init_args
                 )
-            else:
-                class _ResourceList(ResourceList):
-                    model_connector = conn_cls
-
-                class _ResourceDetails(ResourceDetails):
-                    model_connector = conn_cls
-
-                handlers.append(
-                    (
-                        with_end_slash(
-                            url_path_join(base_urlpath,
-                                          "api",
-                                          version,
-                                          conn_cls.bound_name()
-                                          )
-                        ),
-                        _ResourceList,
-                        init_args
-                    )
-                )
-                handlers.append(
-                    (
-                        with_end_slash(
-                            url_path_join(base_urlpath,
-                                          "api",
-                                          version,
-                                          conn_cls.bound_name(),
-                                          "(.*)"
-                                          )
-                        ),
-                        _ResourceDetails,
-                        init_args
-                    )
-                )
+            )
 
         handlers.append(
             (url_path_join(base_urlpath, "jsapi", version, "resources.js"),
