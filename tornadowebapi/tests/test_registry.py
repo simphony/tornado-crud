@@ -12,10 +12,10 @@ class TestRegistry(unittest.TestCase):
         reg = Registry()
 
         # Register the classes.
-        reg.register(StudentDetails, "/students/(.*)/")
-        reg.register(SheepDetails, "/sheep/(.*)/")
-        reg.register(OctopusDetails, "/octopuses/(.*)/")
-        reg.register(FrobnicatorDetails, "/frobnicators/(.*)/")
+        reg.register("/students/(.*)/", StudentDetails)
+        reg.register("/sheep/(.*)/", SheepDetails)
+        reg.register("/octopuses/(.*)/", OctopusDetails)
+        reg.register("/frobnicators/(.*)/", FrobnicatorDetails)
 
         api_handlers = reg.api_handlers("/foo")
         self.assertEqual(len(api_handlers), 4)
@@ -23,18 +23,18 @@ class TestRegistry(unittest.TestCase):
     def test_double_registration(self):
         reg = Registry()
 
-        reg.register(StudentDetails, "/students/(.*)/")
+        reg.register("/students/(.*)/", StudentDetails)
         with self.assertRaises(ValueError):
-            reg.register(StudentDetails, "/students/(.*)/")
+            reg.register("/students/(.*)/", StudentDetails)
 
     def test_incorrect_class_registration(self):
         reg = Registry()
 
         with self.assertRaises(TypeError):
-            reg.register("hello", "/students/(.*)/")
+            reg.register("/students/(.*)/", "hello")
 
         with self.assertRaises(TypeError):
-            reg.register(int, "/students/(.*)/")
+            reg.register("/students/(.*)/", int)
 
     def test_authenticator(self):
         reg = Registry()
