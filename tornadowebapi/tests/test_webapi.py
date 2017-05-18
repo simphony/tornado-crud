@@ -25,52 +25,98 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
     def get_app(self):
         registry = Registry()
-        registry.register("/alreadypresents/",
-                          resource_handlers.AlreadyPresentList)
-        registry.register("/alreadypresents/(.*)/",
-                          resource_handlers.AlreadyPresentDetails)
-        registry.register("/exceptionvalidateds/",
-                          resource_handlers.ExceptionValidatedList)
-        registry.register("/exceptionvalidateds/(.*)/",
-                          resource_handlers.ExceptionValidatedDetails)
-        registry.register("/nullreturningvalidateds/",
-                          resource_handlers.NullReturningValidatedList)
-        registry.register("/nullreturningvalidateds/(.*)/",
-                          resource_handlers.NullReturningValidatedDetails)
-        registry.register("/correctvalidateds/",
-                          resource_handlers.CorrectValidatedList)
-        registry.register("/correctvalidateds/(.*)/",
-                          resource_handlers.CorrectValidatedDetails)
-        registry.register("/ourexceptionvalidateds/",
-                          resource_handlers.OurExceptionValidatedList)
-        registry.register("/ourexceptionvalidateds/(.*)/",
-                          resource_handlers.OurExceptionValidatedDetails)
-        registry.register("/brokens/",
-                          resource_handlers.BrokenList)
-        registry.register("/brokens/(.*)/",
-                          resource_handlers.BrokenDetails)
-        registry.register("/unsupportscollections/",
-                          resource_handlers.UnsupportsCollectionList)
-        registry.register("/unprocessables/",
-                          resource_handlers.UnprocessableList)
-        registry.register("/unprocessables/(.*)/",
-                          resource_handlers.UnprocessableDetails)
-        registry.register("/unsupportalls/(.*)/",
-                          resource_handlers.UnsupportAllDetails)
-        registry.register("/unsupportalls/",
-                          resource_handlers.UnsupportAllList)
-        registry.register("/students/",
-                          resource_handlers.StudentList)
-        registry.register("/students/(.*)/",
-                          resource_handlers.StudentDetails)
-        registry.register("/teachers/(.*)/",
-                          resource_handlers.TeacherDetails)
-        registry.register("/invalididentifiers/(.*)/",
-                          resource_handlers.InvalidIdentifierDetails)
         registry.register(
-            "/ourexceptioninvalididentifiers/(.*)/",
-            resource_handlers.OurExceptionInvalidIdentifierDetails)
-        registry.register("/serverinfo/", resource_handlers.ServerInfoDetails)
+            resource_handlers.AlreadyPresentList,
+            "/alreadypresents/",
+        )
+        registry.register(
+            resource_handlers.AlreadyPresentDetails,
+            "/alreadypresents/(.*)/",
+        )
+        registry.register(
+            resource_handlers.ExceptionValidatedList,
+            "/exceptionvalidateds/",
+        )
+        registry.register(
+            resource_handlers.ExceptionValidatedDetails,
+            "/exceptionvalidateds/(.*)/",
+        )
+        registry.register(
+            resource_handlers.NullReturningValidatedList,
+            "/nullreturningvalidateds/",
+        )
+        registry.register(
+            resource_handlers.NullReturningValidatedDetails,
+            "/nullreturningvalidateds/(.*)/",
+        )
+        registry.register(
+            resource_handlers.CorrectValidatedList,
+            "/correctvalidateds/",
+        )
+        registry.register(
+            resource_handlers.CorrectValidatedDetails,
+            "/correctvalidateds/(.*)/",
+        )
+        registry.register(
+            resource_handlers.OurExceptionValidatedList,
+            "/ourexceptionvalidateds/",
+        )
+        registry.register(
+            resource_handlers.OurExceptionValidatedDetails,
+            "/ourexceptionvalidateds/(.*)/",
+        )
+        registry.register(
+            resource_handlers.BrokenList,
+            "/brokens/",
+        )
+        registry.register(
+            resource_handlers.BrokenDetails,
+            "/brokens/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportsCollectionList,
+            "/unsupportscollections/",
+        )
+        registry.register(
+            resource_handlers.UnprocessableList,
+            "/unprocessables/",
+        )
+        registry.register(
+            resource_handlers.UnprocessableDetails,
+            "/unprocessables/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportAllDetails,
+            "/unsupportalls/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportAllList,
+            "/unsupportalls/",
+        )
+        registry.register(
+            resource_handlers.StudentList,
+            "/students/",
+        )
+        registry.register(
+            resource_handlers.StudentDetails,
+            "/students/(.*)/",
+        )
+        registry.register(
+            resource_handlers.TeacherDetails,
+            "/teachers/(.*)/"
+        )
+        registry.register(
+            resource_handlers.InvalidIdentifierDetails,
+            "/invalididentifiers/(.*)/"
+        )
+        registry.register(
+            resource_handlers.OurExceptionInvalidIdentifierDetails,
+            "/ourexceptioninvalididentifiers/(.*)/"
+        )
+        registry.register(
+            resource_handlers.ServerInfoDetails,
+            "/serverinfo/"
+        )
         handlers = registry.api_handlers('/')
         app = web.Application(handlers=handlers, debug=True)
         app.hub = mock.Mock()
@@ -813,8 +859,8 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
 class TestRESTFunctions(unittest.TestCase):
     def test_api_handlers(self):
         reg = Registry()
-        reg.register("/students/", resource_handlers.StudentList)
-        reg.register("/students/(.*)/", resource_handlers.StudentDetails)
+        reg.register(resource_handlers.StudentList, "/students/")
+        reg.register(resource_handlers.StudentDetails, "/students/(.*)/")
         handlers = reg.api_handlers("/foo")
         self.assertEqual(handlers[0][0], "/foo/api/v1/students/")
         self.assertTrue(issubclass(handlers[0][1], ResourceList))
