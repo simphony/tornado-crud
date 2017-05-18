@@ -7,7 +7,6 @@ from tornadowebapi.model_connector import ModelConnector
 from tornadowebapi.schema import Schema
 from tornadowebapi.singleton_schema import SingletonSchema
 from tornadowebapi.traitlets import Unicode, Int, List, OneOf
-from tornadowebapi.web_handlers import ResourceDetails, ResourceList
 
 
 class WorkingModelConn(ModelConnector):
@@ -110,17 +109,7 @@ class Student(Schema):
 
 
 class StudentModelConn(WorkingModelConn):
-    pass
-
-
-class StudentDetails(ResourceDetails):
-    schema = Student
-    model_connector = StudentModelConn
-
-
-class StudentList(ResourceList):
-    schema = Student
-    model_connector = StudentModelConn
+    resource_class = Student
 
 
 class Teacher(Schema):
@@ -130,17 +119,7 @@ class Teacher(Schema):
 
 
 class TeacherModelConn(ModelConnector):
-    pass
-
-
-class TeacherDetails(ResourceDetails):
-    schema = Teacher
-    model_connector = TeacherModelConn
-
-
-class TeacherList(ResourceDetails):
-    schema = Teacher
-    model_connector = TeacherModelConn
+    resource_class = Teacher
 
 
 class Person(SchemaFragment):
@@ -154,12 +133,7 @@ class City(Schema):
 
 
 class CityModelConn(WorkingModelConn):
-    pass
-
-
-class CityDetails(ResourceDetails):
-    schema = City
-    model_connector = CityModelConn
+    resource_class = City
 
 
 class ServerInfo(SingletonSchema):
@@ -171,22 +145,12 @@ class ServerInfoModelConn(SingletonModelConn):
     resource_class = ServerInfo
 
 
-class ServerInfoDetails(ResourceDetails):
-    schema = ServerInfo
-    model_connector = ServerInfoModelConn
-
-
 class UnsupportAll(Schema):
     pass
 
 
 class UnsupportAllModelConn(ModelConnector):
-    pass
-
-
-class UnsupportAllDetails(ResourceDetails):
-    schema = UnsupportAll
-    model_connector = UnsupportAllModelConn
+    resource_class = UnsupportAll
 
 
 class Unprocessable(Schema):
@@ -194,6 +158,8 @@ class Unprocessable(Schema):
 
 
 class UnprocessableModelConn(ModelConnector):
+    resource_class = Unprocessable
+
     @gen.coroutine
     def create(self, instance, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
@@ -211,25 +177,16 @@ class UnprocessableModelConn(ModelConnector):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
 
-class UnprocessableDetails(ResourceDetails):
-    schema = Unprocessable
-    model_connector = UnprocessableModelConn
-
-
 class UnsupportsCollection(Schema):
     pass
 
 
 class UnsupportsCollectionModelConn(ModelConnector):
+    resource_class = UnsupportsCollection
 
     @gen.coroutine
     def items(self, items_response, offset=None, limit=None, **kwargs):
         raise NotImplementedError()
-
-
-class UnsupportsCollectionList(ResourceList):
-    schema = UnsupportsCollection
-    model_connector = UnsupportsCollectionModelConn
 
 
 class Broken(Schema):
@@ -237,6 +194,8 @@ class Broken(Schema):
 
 
 class BrokenModelConn(ModelConnector):
+    resource_class = Broken
+
     @gen.coroutine
     def boom(self, *args):
         raise Exception("Boom!")
@@ -248,23 +207,15 @@ class BrokenModelConn(ModelConnector):
     items = boom
 
 
-class BrokenDetails(ResourceDetails):
-    schema = Broken
-    model_connector = BrokenModelConn
-
-
 class ExceptionValidated(Schema):
     pass
 
 
 class ExceptionValidatedModelConn(ModelConnector):
+    resource_class = ExceptionValidated
+
     def preprocess_representation(self, representation):
         raise Exception("woo!")
-
-
-class ExceptionValidatedDetails(ResourceDetails):
-    schema = ExceptionValidated
-    model_connector = ExceptionValidatedModelConn
 
 
 class OurExceptionValidated(Schema):
@@ -272,13 +223,10 @@ class OurExceptionValidated(Schema):
 
 
 class OurExceptionValidatedModelConn(ModelConnector):
+    resource_class = OurExceptionValidated
+
     def preprocess_representation(self, representation):
         raise exceptions.BadRepresentation("woo!")
-
-
-class OurExceptionValidatedDetails(ResourceDetails):
-    schema = OurExceptionValidated
-    model_connector = OurExceptionValidatedModelConn
 
 
 class NullReturningValidated(Schema):
@@ -286,13 +234,10 @@ class NullReturningValidated(Schema):
 
 
 class NullReturningValidatedModelConn(ModelConnector):
+    resource_class = NullReturningValidated
+
     def preprocess_representation(self, representation):
         pass
-
-
-class NullReturningValidatedDetails(ResourceDetails):
-    schema = NullReturningValidated
-    model_connector = NullReturningValidatedModelConn
 
 
 class CorrectValidated(Schema):
@@ -300,15 +245,11 @@ class CorrectValidated(Schema):
 
 
 class CorrectValidatedModelConn(WorkingModelConn):
+    resource_class = CorrectValidated
 
     def preprocess_representation(self, representation):
         representation["hello"] = 5
         return representation
-
-
-class CorrectValidatedDetails(ResourceDetails):
-    schema = CorrectValidated
-    model_connector = CorrectValidatedModelConn
 
 
 class AlreadyPresent(Schema):
@@ -316,15 +257,11 @@ class AlreadyPresent(Schema):
 
 
 class AlreadyPresentModelConn(ModelConnector):
+    resource_class = AlreadyPresent
 
     @gen.coroutine
     def create(self, *args, **kwargs):
         raise exceptions.Exists()
-
-
-class AlreadyPresentDetails(ResourceDetails):
-    schema = AlreadyPresent
-    model_connector = AlreadyPresentModelConn
 
 
 class InvalidIdentifier(Schema):
@@ -332,13 +269,10 @@ class InvalidIdentifier(Schema):
 
 
 class InvalidIdentifierModelConn(ModelConnector):
+    resource_class = InvalidIdentifier
+
     def preprocess_identifier(self, identifier):
         raise Exception("woo!")
-
-
-class InvalidIdentifierDetails(ResourceDetails):
-    schema = InvalidIdentifier
-    model_connector = InvalidIdentifierModelConn
 
 
 class OurExceptionInvalidIdentifier(Schema):
@@ -346,13 +280,10 @@ class OurExceptionInvalidIdentifier(Schema):
 
 
 class OurExceptionInvalidIdentifierModelConn(ModelConnector):
+    resource_class = OurExceptionInvalidIdentifier
+
     def preprocess_identifier(self, identifier):
         raise exceptions.BadRepresentation("woo!")
-
-
-class OurExceptionInvalidIdentifierDetails(ResourceDetails):
-    schema = OurExceptionInvalidIdentifier
-    model_connector = OurExceptionInvalidIdentifierModelConn
 
 
 class Sheep(Schema):
@@ -363,11 +294,7 @@ class Sheep(Schema):
 
 class SheepModelConn(ModelConnector):
     """Sheep plural is the same as singular."""
-
-
-class SheepDetails(ResourceDetails):
-    schema = Sheep
-    model_connector = SheepModelConn
+    resource_class = Sheep
 
 
 class Octopus(Schema):
@@ -381,22 +308,13 @@ class OctopusModelConn(ModelConnector):
     resource_class = Octopus
 
 
-class OctopusDetails(ResourceDetails):
-    schema = Octopus
-    model_connector = OctopusModelConn
-
-
 class Frobnicator(Schema):
     pass
 
 
 class FrobnicatorModelConn(ModelConnector):
     """A weird name to test if it's kept"""
-
-
-class FrobnicatorDetails(ResourceDetails):
-    schema = Frobnicator
-    model_connector = FrobnicatorModelConn
+    resource_class = Frobnicator
 
 
 class WrongClassModelConn(ModelConnector):

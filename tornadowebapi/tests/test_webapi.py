@@ -13,46 +13,36 @@ from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
+ALL_RESOURCES = (
+    resource_handlers.AlreadyPresentModelConn,
+    resource_handlers.ExceptionValidatedModelConn,
+    resource_handlers.NullReturningValidatedModelConn,
+    resource_handlers.CorrectValidatedModelConn,
+    resource_handlers.OurExceptionValidatedModelConn,
+    resource_handlers.BrokenModelConn,
+    resource_handlers.UnsupportsCollectionModelConn,
+    resource_handlers.UnprocessableModelConn,
+    resource_handlers.UnsupportAllModelConn,
+    resource_handlers.StudentModelConn,
+    resource_handlers.TeacherModelConn,
+    resource_handlers.InvalidIdentifierModelConn,
+    resource_handlers.OurExceptionInvalidIdentifierModelConn,
+    resource_handlers.ServerInfoModelConn,
+)
+
 
 class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
-        resource_handlers.StudentDetails.model_connector.collection = \
-            OrderedDict()
-        resource_handlers.StudentDetails.model_connector.id = 0
-        resource_handlers.ServerInfoDetails.model_connector.instance = {}
-        resource_handlers.StudentDetails.model_connector.id = 0
+        resource_handlers.StudentModelConn.collection = OrderedDict()
+        resource_handlers.StudentModelConn.id = 0
+        resource_handlers.ServerInfoModelConn.instance = {}
+        resource_handlers.StudentModelConn.id = 0
 
     def get_app(self):
         registry = Registry()
-        registry.register("/alreadypresent/(.*)/",
-                          resource_handlers.AlreadyPresentDetails)
-        registry.register("/exceptionvalidateds/(.*)/",
-                          resource_handlers.ExceptionValidatedDetails)
-        registry.register("/nullreturningvalidateds/(.*)/",
-                          resource_handlers.NullReturningValidatedDetails)
-        registry.register("/correctvalidateds/(.*)/",
-                          resource_handlers.CorrectValidatedDetails)
-        registry.register("/ourexceptionvalidateds/(.*)/",
-                          resource_handlers.OurExceptionValidatedDetails)
-        registry.register("/brokens/(.*)/",
-                          resource_handlers.BrokenDetails)
-        registry.register("/unsupportscollections/(.*)/",
-                          resource_handlers.UnsupportsCollectionList)
-        registry.register("/unprocessables/(.*)/",
-                          resource_handlers.UnprocessableDetails)
-        registry.register("/unsupportalls/(.*)/",
-                          resource_handlers.UnsupportAllDetails)
-        registry.register("/students/(.*)/",
-                          resource_handlers.StudentDetails)
-        registry.register("/teachers/(.*)/",
-                          resource_handlers.TeacherDetails)
-        registry.register("/invalididentifiers/(.*)/",
-                          resource_handlers.InvalidIdentifierDetails)
-        registry.register(
-            "/ourexceptioninvalididentifiers/(.*)/",
-            resource_handlers.OurExceptionInvalidIdentifierDetails)
-        registry.register("/serverinfo/", resource_handlers.ServerInfoDetails)
+        for resource in ALL_RESOURCES:
+            registry.register(resource)
         handlers = registry.api_handlers('/')
         app = web.Application(handlers=handlers, debug=True)
         app.hub = mock.Mock()
