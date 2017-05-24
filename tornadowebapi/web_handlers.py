@@ -19,7 +19,7 @@ class ResourceList(Resource):
         items_response = ItemsResponse(self.schema)
 
         with self.exceptions_to_http(connector, "get"):
-            yield connector.get_collection(items_response, **args)
+            yield connector.retrieve_collection(items_response, **args)
 
         for resource in items_response.items:
             self._check_none(resource.identifier,
@@ -136,12 +136,13 @@ class ResourceDetails(Resource):
                 self.schema,
                 identifier)
 
-        try:
-            yield connector.retrieve_object(resource, **args)
-        except NotFound:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
-        else:
-            raise web.HTTPError(httpstatus.CONFLICT)
+        with self.exceptions_to_http("post", str(connector), identifier):
+            try:
+                yield connector.retrieve_object(resource, **args)
+            except NotFound:
+                raise web.HTTPError(httpstatus.NOT_FOUND)
+            else:
+                raise web.HTTPError(httpstatus.CONFLICT)
 
     @gen.coroutine
     def put(self, identifier):

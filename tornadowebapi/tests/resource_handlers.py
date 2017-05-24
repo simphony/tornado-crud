@@ -356,7 +356,7 @@ class AlreadyPresent(Schema):
 class AlreadyPresentModelConn(ModelConnector):
 
     @gen.coroutine
-    def create(self, *args, **kwargs):
+    def create_object(self, *args, **kwargs):
         raise exceptions.Exists()
 
 
