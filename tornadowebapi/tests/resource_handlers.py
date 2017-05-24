@@ -19,14 +19,14 @@ class WorkingModelConn(ModelConnector):
     id = 0
 
     @gen.coroutine
-    def create(self, instance, **kwargs):
+    def create_object(self, instance, **kwargs):
         id = type(self).id
         self.collection[str(id)] = instance
         instance.identifier = str(id)
         type(self).id += 1
 
     @gen.coroutine
-    def retrieve(self, instance, **kwargs):
+    def retrieve_object(self, instance, **kwargs):
         if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
@@ -35,22 +35,23 @@ class WorkingModelConn(ModelConnector):
             setattr(instance, trait_name, getattr(stored_item, trait_name))
 
     @gen.coroutine
-    def update(self, instance, **kwargs):
+    def replace_object(self, instance, **kwargs):
         if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
         self.collection[instance.identifier] = instance
 
     @gen.coroutine
-    def delete(self, instance, **kwargs):
+    def delete_object(self, instance, **kwargs):
         if instance.identifier not in self.collection:
             raise exceptions.NotFound()
 
         del self.collection[instance.identifier]
 
     @gen.coroutine
-    def items(self, items_response,
-              offset=None, limit=None, filter_=None, **kwargs):
+    def retrieve_collection(
+            self, items_response,
+            offset=None, limit=None, filter_=None, **kwargs):
         if offset is None:
             offset = 0
 
@@ -77,11 +78,11 @@ class SingletonModelConn(ModelConnector):
     instance = {}
 
     @gen.coroutine
-    def create(self, instance, **kwargs):
+    def create_object(self, instance, **kwargs):
         self.instance['instance'] = instance
 
     @gen.coroutine
-    def retrieve(self, instance, **kwargs):
+    def retrieve_object(self, instance, **kwargs):
         if "instance" not in self.instance:
             raise exceptions.NotFound()
 
@@ -91,14 +92,14 @@ class SingletonModelConn(ModelConnector):
                             trait_name))
 
     @gen.coroutine
-    def update(self, instance, **kwargs):
+    def replace_object(self, instance, **kwargs):
         if "instance" not in self.instance:
             raise exceptions.NotFound()
 
         self.instance["instance"] = instance
 
     @gen.coroutine
-    def delete(self, instance, **kwargs):
+    def delete_object(self, instance, **kwargs):
         if "instance" not in self.instance:
             raise exceptions.NotFound()
 
@@ -201,19 +202,20 @@ class Unprocessable(Schema):
 
 class UnprocessableModelConn(ModelConnector):
     @gen.coroutine
-    def create(self, instance, **kwargs):
+    def create_object(self, instance, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def update(self, instance, **kwargs):
+    def replace_object(self, instance, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def retrieve(self, instance, **kwargs):
+    def retrieve_object(self, instance, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
     @gen.coroutine
-    def items(self, items_response, offset=None, limit=None, **kwargs):
+    def retrieve_collection(
+            self, items_response, offset=None, limit=None, **kwargs):
         raise exceptions.BadRepresentation("unprocessable", foo="bar")
 
 
@@ -252,11 +254,11 @@ class BrokenModelConn(ModelConnector):
     def boom(self, *args):
         raise Exception("Boom!")
 
-    create = boom
-    retrieve = boom
-    update = boom
-    delete = boom
-    items = boom
+    create_object = boom
+    retrieve_object = boom
+    replace_object = boom
+    delete_object = boom
+    retrieve_collection = boom
 
 
 class BrokenDetails(ResourceDetails):
@@ -354,7 +356,7 @@ class AlreadyPresent(Schema):
 class AlreadyPresentModelConn(ModelConnector):
 
     @gen.coroutine
-    def create(self, *args, **kwargs):
+    def create_object(self, *args, **kwargs):
         raise exceptions.Exists()
 
 

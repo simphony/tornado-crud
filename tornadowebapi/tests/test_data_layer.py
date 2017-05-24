@@ -9,16 +9,16 @@ class TestModelConn(AsyncTestCase):
     def test_basic_expectations(self):
         handler = ModelConnector(Mock(), Mock())
         with self.assertRaises(NotImplementedError):
-            yield handler.create(Mock())
+            yield handler.create_object(Mock())
 
         with self.assertRaises(NotImplementedError):
-            yield handler.retrieve(Mock())
+            yield handler.retrieve_object(Mock())
 
         with self.assertRaises(NotImplementedError):
-            yield handler.update(Mock())
+            yield handler.replace_object(Mock())
 
         with self.assertRaises(NotImplementedError):
-            yield handler.delete(Mock())
+            yield handler.delete_object(Mock())
 
         with self.assertRaises(NotImplementedError):
-            yield handler.items(Mock())
+            yield handler.retrieve_collection(Mock())
