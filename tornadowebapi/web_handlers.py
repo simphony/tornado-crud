@@ -38,21 +38,6 @@ class ResourceList(Resource):
 
         with self.exceptions_to_http(connector, "post"):
             representation = transport.parser.parse(payload)
-
-        on_generic_raise = self.to_http_exception(
-            exceptions.BadRepresentation("Generic exception "
-                                         "during preprocessing"))
-
-        with self.exceptions_to_http(connector, "post",
-                                     on_generic_raise=on_generic_raise):
-            representation = connector.preprocess_representation(
-                representation)
-
-            self._check_none(representation,
-                             "representation",
-                             "preprocess_representation")
-
-        with self.exceptions_to_http(connector, "post"):
             try:
                 resource = transport.deserializer.deserialize(
                     self.schema,
@@ -92,13 +77,6 @@ class ResourceDetails(Resource):
         transport = self._registry.transport
         args = self.parsed_query_arguments()
 
-        with self.exceptions_to_http("get",
-                                     str(connector),
-                                     identifier,
-                                     on_generic_raise=web.HTTPError(
-                                         httpstatus.NOT_FOUND)):
-            identifier = connector.preprocess_identifier(identifier)
-
         with self.exceptions_to_http("get", str(connector), identifier):
             resource = transport.deserializer.deserialize(
                 self.schema,
@@ -121,16 +99,7 @@ class ResourceDetails(Resource):
         transport = self._registry.transport
         args = self.parsed_query_arguments()
 
-        with self.exceptions_to_http("post",
-                                     str(connector),
-                                     identifier,
-                                     on_generic_raise=web.HTTPError(
-                                         httpstatus.NOT_FOUND)):
-            identifier = connector.preprocess_identifier(identifier)
-
         with self.exceptions_to_http("post", str(connector), identifier):
-            self._check_none(identifier, "identifier", "preprocess_identifier")
-
             resource = transport.deserializer.deserialize(
                 self.schema,
                 identifier)
@@ -150,13 +119,6 @@ class ResourceDetails(Resource):
         transport = self._registry.transport
         args = self.parsed_query_arguments()
 
-        with self.exceptions_to_http("put",
-                                     str(connector),
-                                     identifier,
-                                     on_generic_raise=web.HTTPError(
-                                         httpstatus.NOT_FOUND)):
-            identifier = connector.preprocess_identifier(identifier)
-
         on_generic_raise = self.to_http_exception(
             exceptions.BadRepresentation(
                 "Generic exception during preprocessing of {}".format(
@@ -165,8 +127,6 @@ class ResourceDetails(Resource):
                                      str(connector),
                                      identifier,
                                      on_generic_raise=on_generic_raise):
-            self._check_none(identifier, "identifier", "preprocess_identifier")
-
             try:
                 resource = transport.deserializer.deserialize(
                     self.schema,
@@ -194,15 +154,6 @@ class ResourceDetails(Resource):
         connector = self.get_model_connector()
         transport = self._registry.transport
         args = self.parsed_query_arguments()
-
-        with self.exceptions_to_http("delete",
-                                     str(connector),
-                                     identifier,
-                                     on_generic_raise=web.HTTPError(
-                                         httpstatus.NOT_FOUND)):
-            identifier = connector.preprocess_identifier(identifier)
-
-        self._check_none(identifier, "identifier", "preprocess_identifier")
 
         with self.exceptions_to_http("delete",
                                      str(connector),
@@ -245,21 +196,6 @@ class ResourceSingletonDetails(Resource):
 
         with self.exceptions_to_http(connector, "post"):
             representation = transport.parser.parse(payload)
-
-        on_generic_raise = self.to_http_exception(
-            exceptions.BadRepresentation("Generic exception "
-                                         "during preprocessing"))
-
-        with self.exceptions_to_http(connector, "post",
-                                     on_generic_raise=on_generic_raise):
-            representation = connector.preprocess_representation(
-                representation)
-
-            self._check_none(representation,
-                             "representation",
-                             "preprocess_representation")
-
-        with self.exceptions_to_http(connector, "post"):
             try:
                 resource = transport.deserializer.deserialize(
                     self.schema,
