@@ -271,84 +271,6 @@ class BrokenList(ResourceList):
     model_connector = BrokenModelConn
 
 
-class ExceptionValidated(Schema):
-    pass
-
-
-class ExceptionValidatedModelConn(ModelConnector):
-    def preprocess_representation(self, representation):
-        raise Exception("woo!")
-
-
-class ExceptionValidatedDetails(ResourceDetails):
-    schema = ExceptionValidated
-    model_connector = ExceptionValidatedModelConn
-
-
-class ExceptionValidatedList(ResourceList):
-    schema = ExceptionValidated
-    model_connector = ExceptionValidatedModelConn
-
-
-class OurExceptionValidated(Schema):
-    pass
-
-
-class OurExceptionValidatedModelConn(ModelConnector):
-    def preprocess_representation(self, representation):
-        raise exceptions.BadRepresentation("woo!")
-
-
-class OurExceptionValidatedDetails(ResourceDetails):
-    schema = OurExceptionValidated
-    model_connector = OurExceptionValidatedModelConn
-
-
-class OurExceptionValidatedList(ResourceList):
-    schema = OurExceptionValidated
-    model_connector = OurExceptionValidatedModelConn
-
-
-class NullReturningValidated(Schema):
-    pass
-
-
-class NullReturningValidatedModelConn(ModelConnector):
-    def preprocess_representation(self, representation):
-        pass
-
-
-class NullReturningValidatedDetails(ResourceDetails):
-    schema = NullReturningValidated
-    model_connector = NullReturningValidatedModelConn
-
-
-class NullReturningValidatedList(ResourceList):
-    schema = NullReturningValidated
-    model_connector = NullReturningValidatedModelConn
-
-
-class CorrectValidated(Schema):
-    pass
-
-
-class CorrectValidatedModelConn(WorkingModelConn):
-
-    def preprocess_representation(self, representation):
-        representation["hello"] = 5
-        return representation
-
-
-class CorrectValidatedDetails(ResourceDetails):
-    schema = CorrectValidated
-    model_connector = CorrectValidatedModelConn
-
-
-class CorrectValidatedList(ResourceList):
-    schema = CorrectValidated
-    model_connector = CorrectValidatedModelConn
-
-
 class AlreadyPresent(Schema):
     pass
 
@@ -368,34 +290,6 @@ class AlreadyPresentDetails(ResourceDetails):
 class AlreadyPresentList(ResourceList):
     schema = AlreadyPresent
     model_connector = AlreadyPresentModelConn
-
-
-class InvalidIdentifier(Schema):
-    pass
-
-
-class InvalidIdentifierModelConn(ModelConnector):
-    def preprocess_identifier(self, identifier):
-        raise Exception("woo!")
-
-
-class InvalidIdentifierDetails(ResourceDetails):
-    schema = InvalidIdentifier
-    model_connector = InvalidIdentifierModelConn
-
-
-class OurExceptionInvalidIdentifier(Schema):
-    pass
-
-
-class OurExceptionInvalidIdentifierModelConn(ModelConnector):
-    def preprocess_identifier(self, identifier):
-        raise exceptions.BadRepresentation("woo!")
-
-
-class OurExceptionInvalidIdentifierDetails(ResourceDetails):
-    schema = OurExceptionInvalidIdentifier
-    model_connector = OurExceptionInvalidIdentifierModelConn
 
 
 class Sheep(Schema):

@@ -34,38 +34,6 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
             "/alreadypresents/(.*)/",
         )
         registry.register(
-            resource_handlers.ExceptionValidatedList,
-            "/exceptionvalidateds/",
-        )
-        registry.register(
-            resource_handlers.ExceptionValidatedDetails,
-            "/exceptionvalidateds/(.*)/",
-        )
-        registry.register(
-            resource_handlers.NullReturningValidatedList,
-            "/nullreturningvalidateds/",
-        )
-        registry.register(
-            resource_handlers.NullReturningValidatedDetails,
-            "/nullreturningvalidateds/(.*)/",
-        )
-        registry.register(
-            resource_handlers.CorrectValidatedList,
-            "/correctvalidateds/",
-        )
-        registry.register(
-            resource_handlers.CorrectValidatedDetails,
-            "/correctvalidateds/(.*)/",
-        )
-        registry.register(
-            resource_handlers.OurExceptionValidatedList,
-            "/ourexceptionvalidateds/",
-        )
-        registry.register(
-            resource_handlers.OurExceptionValidatedDetails,
-            "/ourexceptionvalidateds/(.*)/",
-        )
-        registry.register(
             resource_handlers.BrokenList,
             "/brokens/",
         )
@@ -104,14 +72,6 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         registry.register(
             resource_handlers.TeacherDetails,
             "/teachers/(.*)/"
-        )
-        registry.register(
-            resource_handlers.InvalidIdentifierDetails,
-            "/invalididentifiers/(.*)/"
-        )
-        registry.register(
-            resource_handlers.OurExceptionInvalidIdentifierDetails,
-            "/ourexceptioninvalididentifiers/(.*)/"
         )
         registry.register(
             resource_handlers.ServerInfoDetails,
@@ -677,56 +637,6 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
             "/api/v1/unsupportscollections/",
             method="GET")
         self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
-
-    def test_validated(self):
-        url = "/api/v1/exceptionvalidateds/"
-
-        res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
-        url = "/api/v1/nullreturningvalidateds/"
-
-        res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
-
-        url = "/api/v1/correctvalidateds/"
-
-        res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.CREATED)
-
-        url = "/api/v1/ourexceptionvalidateds/"
-
-        res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
-    def test_validate_identifier(self):
-        url = "/api/v1/invalididentifiers/whoo/"
-
-        res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
-
-        res = self.fetch(url, method="PUT", body="{}")
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
-
-        res = self.fetch(url, method="GET")
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
-
-        res = self.fetch(url, method="DELETE")
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
-
-        url = "/api/v1/ourexceptioninvalididentifiers/whoo/"
-
-        res = self.fetch(url, method="POST", body="{}")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
-        res = self.fetch(url, method="PUT", body="{}")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
-        res = self.fetch(url, method="GET")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
-
-        res = self.fetch(url, method="DELETE")
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
 
     def test_exists(self):
         collection_url = "/api/v1/alreadypresents/"
