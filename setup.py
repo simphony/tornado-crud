@@ -33,7 +33,7 @@ setup(
     install_requires=[
         "setuptools>=21.0",
         "tornado>=4.3",
-        "marshmallow>=2.13.1",
+        "marshmallow>=2.13",
         "marshmallow_jsonapi>=0.14",
     ],
     packages=find_packages(),
