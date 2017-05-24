@@ -58,7 +58,7 @@ class ModelConnector:
         raise NotImplementedError()
 
     @gen.coroutine
-    def get_object(self, instance, **kwargs):
+    def retrieve_object(self, instance, **kwargs):
         """Called to retrieve a specific resource given its
         identifier. Correspond to a GET operation on the resource URL.
 
@@ -168,8 +168,8 @@ class ModelConnector:
         raise NotImplementedError()
 
     @gen.coroutine
-    def get_collection(self, items_response, offset=None, limit=None,
-                       **kwargs):
+    def retrieve_collection(
+            self, items_response, offset=None, limit=None, **kwargs):
         """Invoked when a request is performed to the collection
         URL. Passes an empty items_response object that must be filled
         with the relevant information.

@@ -107,7 +107,7 @@ class ResourceDetails(Resource):
 
             self._check_none(identifier, "identifier", "preprocess_identifier")
 
-            yield connector.get_object(resource, **args)
+            yield connector.retrieve_object(resource, **args)
 
             self._check_resource_sanity(resource, "output")
 
@@ -137,7 +137,7 @@ class ResourceDetails(Resource):
                 identifier)
 
         try:
-            yield connector.get_object(resource, **args)
+            yield connector.retrieve_object(resource, **args)
         except NotFound:
             raise web.HTTPError(httpstatus.NOT_FOUND)
         else:
@@ -272,7 +272,7 @@ class ResourceSingletonDetails(Resource):
             self._check_resource_sanity(resource, "input")
 
             try:
-                yield connector.get_object(resource)
+                yield connector.retrieve_object(resource)
             except NotFound:
                 yield connector.create_object(resource, **args)
             else:
