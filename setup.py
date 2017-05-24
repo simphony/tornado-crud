@@ -32,7 +32,9 @@ setup(
     description='Tornado-based WebAPI framework',
     install_requires=[
         "setuptools>=21.0",
-        "tornado>=4.3"
+        "tornado>=4.3",
+        "marshmallow==2.13.1",
+        "marshmallow_jsonapi",
     ],
     packages=find_packages(),
     include_package_data=True,
