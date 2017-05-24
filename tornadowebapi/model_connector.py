@@ -1,7 +1,5 @@
 from tornado import gen, log
 
-from . import exceptions
-
 
 class ModelConnector:
     """Base class for model connectors.
@@ -28,7 +26,7 @@ class ModelConnector:
         self.log = log.app_log
 
     @gen.coroutine
-    def create(self, instance, **kwargs):
+    def create_object(self, instance, **kwargs):
         """Called to create a resource with the given data.
         The member is passed with an instance of Resource, pre-filled
         with the data from the passed (and decoded) payload.
@@ -60,7 +58,7 @@ class ModelConnector:
         raise NotImplementedError()
 
     @gen.coroutine
-    def retrieve(self, instance, **kwargs):
+    def retrieve_object(self, instance, **kwargs):
         """Called to retrieve a specific resource given its
         identifier. Correspond to a GET operation on the resource URL.
 
@@ -92,7 +90,7 @@ class ModelConnector:
         raise NotImplementedError()
 
     @gen.coroutine
-    def update(self, instance, **kwargs):
+    def replace_object(self, instance, **kwargs):
         """Called to update (fully) a specific Resource given its
         identifier with new data. Correspond to a PUT operation on the
         Resource URL.
@@ -118,7 +116,33 @@ class ModelConnector:
         raise NotImplementedError()
 
     @gen.coroutine
-    def delete(self, instance, **kwargs):
+    def update_object(self, instance, **kwargs):
+        """Called to update (fully) a specific Resource given its
+        identifier with new data. Correspond to a PUT operation on the
+        Resource URL.
+
+        Parameters
+        ----------
+        instance:
+            An instance of the resource_class. This instance will be filled
+            with data from the payload.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        NotFound:
+            Raised if the resource with the given identifier cannot
+            be found
+        NotImplementedError:
+            If the resource does not support the method.
+        """
+        raise NotImplementedError()
+
+    @gen.coroutine
+    def delete_object(self, instance, **kwargs):
         """Called to delete a specific resource given its identifier.
         Corresponds to a DELETE operation on the resource URL.
 
@@ -144,28 +168,8 @@ class ModelConnector:
         raise NotImplementedError()
 
     @gen.coroutine
-    def exists(self, instance, **kwargs):
-        """Returns True if the resource with a given identifier
-        exists. False otherwise.
-
-        Parameters
-        ----------
-        instance: Schema
-            A Resource instance. Only the identifier will be filled.
-
-        Returns
-        -------
-        bool: True if found, False otherwise.
-        """
-        try:
-            yield self.retrieve(instance)
-        except exceptions.NotFound:
-            return False
-
-        return True
-
-    @gen.coroutine
-    def items(self, items_response, offset=None, limit=None, **kwargs):
+    def retrieve_collection(
+            self, items_response, offset=None, limit=None, **kwargs):
         """Invoked when a request is performed to the collection
         URL. Passes an empty items_response object that must be filled
         with the relevant information.

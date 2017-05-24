@@ -1,5 +1,6 @@
 from tornado import gen, web
 from tornado.web import HTTPError
+from tornadowebapi.exceptions import NotFound
 from tornadowebapi.resource import Resource
 from tornadowebapi.traitlets import TraitError
 from . import exceptions
@@ -18,7 +19,7 @@ class ResourceList(Resource):
         items_response = ItemsResponse(self.schema)
 
         with self.exceptions_to_http(connector, "get"):
-            yield connector.items(items_response, **args)
+            yield connector.retrieve_collection(items_response, **args)
 
         for resource in items_response.items:
             self._check_none(resource.identifier,
@@ -64,7 +65,7 @@ class ResourceList(Resource):
 
             self._check_resource_sanity(resource, "input")
 
-            yield connector.create(resource, **args)
+            yield connector.create_object(resource, **args)
 
             self._check_none(resource.identifier,
                              "resource_id",
@@ -106,7 +107,7 @@ class ResourceDetails(Resource):
 
             self._check_none(identifier, "identifier", "preprocess_identifier")
 
-            yield connector.retrieve(resource, **args)
+            yield connector.retrieve_object(resource, **args)
 
             self._check_resource_sanity(resource, "output")
 
@@ -135,12 +136,13 @@ class ResourceDetails(Resource):
                 self.schema,
                 identifier)
 
-            exists = yield connector.exists(resource, **args)
-
-        if exists:
-            raise web.HTTPError(httpstatus.CONFLICT)
-        else:
-            raise web.HTTPError(httpstatus.NOT_FOUND)
+        with self.exceptions_to_http("post", str(connector), identifier):
+            try:
+                yield connector.retrieve_object(resource, **args)
+            except NotFound:
+                raise web.HTTPError(httpstatus.NOT_FOUND)
+            else:
+                raise web.HTTPError(httpstatus.CONFLICT)
 
     @gen.coroutine
     def put(self, identifier):
@@ -183,7 +185,7 @@ class ResourceDetails(Resource):
                                      identifier):
             self._check_resource_sanity(resource, "input")
 
-            yield connector.update(resource, **args)
+            yield connector.replace_object(resource, **args)
 
         self._send_to_client(None)
 
@@ -211,7 +213,7 @@ class ResourceDetails(Resource):
                 self.schema,
                 identifier)
 
-            yield connector.delete(resource, **args)
+            yield connector.delete_object(resource, **args)
 
         self._send_to_client(None)
 
@@ -228,7 +230,7 @@ class ResourceSingletonDetails(Resource):
             resource = transport.deserializer.deserialize(
                 self.schema)
 
-            yield connector.retrieve(resource, **args)
+            yield connector.retrieve_object(resource, **args)
 
             self._check_resource_sanity(resource, "output")
 
@@ -270,12 +272,12 @@ class ResourceSingletonDetails(Resource):
 
             self._check_resource_sanity(resource, "input")
 
-            exists = yield connector.exists(resource)
-
-            if exists:
+            try:
+                yield connector.retrieve_object(resource)
+            except NotFound:
+                yield connector.create_object(resource, **args)
+            else:
                 raise exceptions.Exists()
-
-            yield connector.create(resource, **args)
 
         self._send_created_to_client(resource)
 
@@ -307,7 +309,7 @@ class ResourceSingletonDetails(Resource):
         with self.exceptions_to_http(connector, "put"):
             self._check_resource_sanity(resource, "input")
 
-            yield connector.update(resource, **args)
+            yield connector.replace_object(resource, **args)
 
         self._send_to_client(None)
 
@@ -322,6 +324,6 @@ class ResourceSingletonDetails(Resource):
             resource = transport.deserializer.deserialize(
                 self.schema)
 
-            yield connector.delete(resource, **args)
+            yield connector.delete_object(resource, **args)
 
         self._send_to_client(None)
