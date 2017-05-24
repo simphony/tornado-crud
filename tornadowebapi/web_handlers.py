@@ -2,7 +2,6 @@ from tornado import gen, web
 from tornado.web import HTTPError
 from tornadowebapi.exceptions import NotFound
 from tornadowebapi.resource import Resource
-from tornadowebapi.traitlets import TraitError
 from . import exceptions
 from .http import httpstatus
 from .items_response import ItemsResponse

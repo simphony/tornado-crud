@@ -2,7 +2,6 @@ from collections import OrderedDict
 
 from tornadowebapi.resource import Resource
 
-from .transports import BasicRESTTransport
 from .utils import url_path_join, with_end_slash
 from .authenticator import NullAuthenticator
 
@@ -20,12 +19,9 @@ class Registry:
     Tornado Application.
     """
 
-    def __init__(self, transport=None):
+    def __init__(self):
         self._register = OrderedDict()
         self._authenticator = NullAuthenticator
-        if transport is None:
-            transport = BasicRESTTransport()
-        self._transport = transport
 
     @property
     def authenticator(self):
@@ -34,11 +30,6 @@ class Registry:
     @authenticator.setter
     def authenticator(self, authenticator):
         self._authenticator = authenticator
-
-    @property
-    def transport(self):
-        """Returns the current transport."""
-        return self._transport
 
     @property
     def registered(self):

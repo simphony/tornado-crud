@@ -1,12 +1,9 @@
 from collections import OrderedDict
 
+from marshmallow_jsonapi import Schema, fields
 from tornado import gen
 from tornadowebapi import exceptions
-from tornadowebapi.schema_fragment import SchemaFragment
 from tornadowebapi.model_connector import ModelConnector
-from tornadowebapi.schema import Schema
-from tornadowebapi.singleton_schema import SingletonSchema
-from tornadowebapi.traitlets import Unicode, Int, List, OneOf
 from tornadowebapi.web_handlers import ResourceDetails, ResourceList, \
     ResourceSingletonDetails
 
@@ -107,8 +104,8 @@ class SingletonModelConn(ModelConnector):
 
 
 class Student(Schema):
-    name = Unicode()
-    age = Int()
+    name = fields.String()
+    age = fields.Int()
 
 
 class StudentModelConn(WorkingModelConn):
@@ -126,9 +123,9 @@ class StudentList(ResourceList):
 
 
 class Teacher(Schema):
-    name = Unicode()
-    age = Int(optional=True)
-    discipline = List()
+    name = fields.String()
+    age = fields.Int(required=False)
+    discipline = fields.List(fields.String())
 
 
 class TeacherModelConn(ModelConnector):
@@ -145,14 +142,14 @@ class TeacherList(ResourceDetails):
     model_connector = TeacherModelConn
 
 
-class Person(SchemaFragment):
-    name = Unicode()
-    age = Int()
+class Person(Schema):
+    name = fields.String()
+    age = fields.Int()
 
 
 class City(Schema):
-    name = Unicode()
-    mayor = OneOf(Person)
+    name = fields.String()
+    mayor = fields.Nested(Person())
 
 
 class CityModelConn(WorkingModelConn):
@@ -164,9 +161,9 @@ class CityDetails(ResourceDetails):
     model_connector = CityModelConn
 
 
-class ServerInfo(SingletonSchema):
-    uptime = Int()
-    status = Unicode()
+class ServerInfo(Schema):
+    uptime = fields.Int()
+    status = fields.String()
 
 
 class ServerInfoModelConn(SingletonModelConn):

@@ -6,8 +6,6 @@ from tornadowebapi import exceptions
 from tornadowebapi.filtering import filter_spec_to_function
 from tornadowebapi.http import httpstatus
 from tornadowebapi.http.payloaded_http_error import PayloadedHTTPError
-from tornadowebapi.schema import Schema, mandatory_absents
-from tornadowebapi.singleton_schema import SingletonSchema
 from tornadowebapi.utils import with_end_slash, url_path_join
 
 
@@ -223,16 +221,16 @@ class Resource(web.RequestHandler):
         self.set_header("Content-Type", transport.content_type)
         self.flush()
 
-    def _send_created_to_client(self, resource):
-        """Sends a created message to the client for a given resource"""
-        if isinstance(resource, Schema):
-            location = with_end_slash(
-                url_path_join(self.request.full_url(),
-                              str(resource.identifier)))
-        elif isinstance(resource, SingletonSchema):
-            location = with_end_slash(self.request.full_url())
-        else:
-            raise TypeError("Invalid resource type {}".format(resource))
+    def _send_created_to_client(self, identifier):
+        """Sends a created message to the client for a given resource
+
+        """
+        url = self.request.full_url()
+
+        if identifier is not None:
+            url = url_path_join(url, identifier)
+
+        location = with_end_slash(url)
 
         self.set_status(httpstatus.CREATED)
         self.set_header("Location", location)
