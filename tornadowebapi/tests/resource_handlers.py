@@ -4,8 +4,7 @@ from marshmallow_jsonapi import Schema, fields
 from tornado import gen
 from tornadowebapi import exceptions
 from tornadowebapi.model_connector import ModelConnector
-from tornadowebapi.resource import ResourceDetails, ResourceList, \
-    ResourceSingletonDetails
+from tornadowebapi.resource import ResourceDetails, ResourceList
 
 
 class WorkingModelConn(ModelConnector):
@@ -31,11 +30,11 @@ class WorkingModelConn(ModelConnector):
         return self.collection[identifier]
 
     @gen.coroutine
-    def replace_object(self, identifier, data, **kwargs):
+    def update_object(self, identifier, data, **kwargs):
         if identifier not in self.collection:
             raise exceptions.ObjectNotFound({}, "")
 
-        self.collection[identifier] = data
+        self.collection[identifier].update(data)
 
     @gen.coroutine
     def delete_object(self, identifier, **kwargs):

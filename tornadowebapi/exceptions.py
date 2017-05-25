@@ -28,7 +28,8 @@ class JsonApiException(Exception):
         return {'status': self.status.value,
                 'source': self.source,
                 'title': self.title,
-                'detail': self.detail}
+                'detail': self.detail
+                }
 
 
 class BadRequest(JsonApiException):
@@ -79,6 +80,11 @@ class RelatedObjectNotFound(ObjectNotFound):
 
 class RelationNotFound(JsonApiException):
     title = "Relation not found"
+
+
+class ObjectAlreadyPresent(JsonApiException):
+    title = "Object already present"
+    status = http.client.CONFLICT
 
 
 class InvalidType(JsonApiException):

@@ -1,4 +1,5 @@
 import http.client
+import json
 
 from marshmallow import ValidationError
 from marshmallow_jsonapi.exceptions import IncorrectTypeError
@@ -64,6 +65,10 @@ class Resource(web.RequestHandler):
             self.set_header('Content-Type', _CONTENT_TYPE_JSONAPI)
             self.set_status(exc.status)
             self.finish(escape.json_encode(jsonapi_errors(exc.to_dict())))
+        elif isinstance(exc, json.decoder.JSONDecodeError):
+            self.clear_header('Content-Type')
+            self.set_status(http.client.BAD_REQUEST)
+            self.finish()
         else:
             # For non-payloaded http errors or any other exception
             # we don't want to return anything as payload.
@@ -174,35 +179,65 @@ class ResourceList(Resource):
 
 
 class ResourceDetails(Resource):
-    pass
-
-
-class ResourceSingletonDetails(Resource):
-    pass
-
-'''
-class ResourceDetails(Resource):
     """Handler for URLs addressing a resource.
     """
     @gen.coroutine
     def get(self, identifier):
         """Retrieves the resource representation."""
         connector = self.get_model_connector()
-        transport = self._registry.transport
-        args = self.parsed_query_arguments()
+        qs = QSManager(self.request.query_arguments, self.schema)
+        schema = compute_schema(self.schema,
+                                {},
+                                qs,
+                                qs.include)
 
-        with self.exceptions_to_http("get", str(connector), identifier):
-            resource = transport.deserializer.deserialize(
-                self.schema,
-                identifier)
+        obj = yield connector.retrieve_object(identifier)
 
-            self._check_none(identifier, "identifier", "preprocess_identifier")
+        result = schema.dump(obj).data
 
-            yield connector.retrieve_object(resource, **args)
+        self._send_to_client(result)
 
-            self._check_resource_sanity(resource, "output")
+    @gen.coroutine
+    def patch(self, identifier):
+        connector = self.get_model_connector()
+        qs = QSManager(self.request.query_arguments, self.schema)
 
-        self._send_to_client(resource)
+        json_data = escape.json_decode(self.request.body)
+
+        schema = compute_schema(self.schema,
+                                {"partial": True},
+                                qs,
+                                qs.include)
+
+        try:
+            data, errors = schema.load(json_data)
+        except IncorrectTypeError as e:
+            errors = e.messages
+            for error in errors['errors']:
+                error['status'] = '409'
+                error['title'] = "Incorrect type"
+            raise exceptions.InvalidType({}, "")
+        except ValidationError as e:
+            errors = e.messages
+            for message in errors['errors']:
+                message['status'] = '422'
+                message['title'] = "Validation error"
+            raise exceptions.BadRequest({}, "")
+
+        if errors:
+            raise exceptions.BadRequest({}, "")
+
+        if 'id' not in json_data['data']:
+            raise exceptions.BadRequest({}, "")
+
+        if str(json_data['data']['id']) != identifier:
+            raise exceptions.BadRequest({}, "")
+
+        updated_obj = yield connector.update_object(identifier, data)
+
+        result = schema.dump(updated_obj).data
+
+        self._send_to_client(result)
 
     @gen.coroutine
     def post(self, identifier):
@@ -210,170 +245,19 @@ class ResourceDetails(Resource):
         in either Conflict or NotFound, depending on the
         presence of a resource at the given URL"""
         connector = self.get_model_connector()
-        transport = self._registry.transport
-        args = self.parsed_query_arguments()
 
-        with self.exceptions_to_http("post", str(connector), identifier):
-            resource = transport.deserializer.deserialize(
-                self.schema,
-                identifier)
-
-        with self.exceptions_to_http("post", str(connector), identifier):
-            try:
-                yield connector.retrieve_object(resource, **args)
-            except NotFound:
-                raise web.HTTPError(httpstatus.NOT_FOUND)
-            else:
-                raise web.HTTPError(httpstatus.CONFLICT)
-
-    @gen.coroutine
-    def put(self, identifier):
-        """Replaces the resource with a new representation."""
-        connector = self.get_model_connector()
-        transport = self._registry.transport
-        args = self.parsed_query_arguments()
-
-        on_generic_raise = self.to_http_exception(
-            exceptions.BadRepresentation(
-                "Generic exception during preprocessing of {}".format(
-                    str(connector))))
-        with self.exceptions_to_http("put",
-                                     str(connector),
-                                     identifier,
-                                     on_generic_raise=on_generic_raise):
-            try:
-                resource = transport.deserializer.deserialize(
-                    self.schema,
-                    identifier,
-                    transport.parser.parse(self.request.body))
-            except TraitError as e:
-                raise exceptions.BadRepresentation(message=str(e))
-
-            self._check_none(resource,
-                             "representation",
-                             "preprocess_representation")
-
-        with self.exceptions_to_http("put",
-                                     str(connector),
-                                     identifier):
-            self._check_resource_sanity(resource, "input")
-
-            yield connector.replace_object(resource, **args)
-
-        self._send_to_client(None)
+        try:
+            yield connector.retrieve_object(identifier)
+        except exceptions.ObjectNotFound:
+            raise
+        else:
+            raise exceptions.ObjectAlreadyPresent({}, "")
 
     @gen.coroutine
     def delete(self, identifier):
         """Deletes the resource."""
         connector = self.get_model_connector()
-        transport = self._registry.transport
-        args = self.parsed_query_arguments()
 
-        with self.exceptions_to_http("delete",
-                                     str(connector),
-                                     identifier):
-
-            resource = transport.deserializer.deserialize(
-                self.schema,
-                identifier)
-
-            yield connector.delete_object(resource, **args)
+        yield connector.delete_object(identifier)
 
         self._send_to_client(None)
-
-
-class ResourceSingletonDetails(Resource):
-    @gen.coroutine
-    def get(self):
-        connector = self.get_model_connector()
-        args = self.parsed_query_arguments()
-
-        transport = self._registry.transport
-
-        with self.exceptions_to_http(connector, "get"):
-            resource = transport.deserializer.deserialize(
-                self.schema)
-
-            yield connector.retrieve_object(resource, **args)
-
-            self._check_resource_sanity(resource, "output")
-
-        self._send_to_client(resource)
-
-    @gen.coroutine
-    def post(self):
-        connector = self.get_model_connector()
-        args = self.parsed_query_arguments()
-
-        transport = self._registry.transport
-        payload = self.request.body
-
-        with self.exceptions_to_http(connector, "post"):
-            representation = transport.parser.parse(payload)
-            try:
-                resource = transport.deserializer.deserialize(
-                    self.schema,
-                    None,
-                    representation,
-                )
-            except TraitError as e:
-                raise exceptions.BadRepresentation(message=str(e))
-
-            self._check_resource_sanity(resource, "input")
-
-            try:
-                yield connector.retrieve_object(resource)
-            except NotFound:
-                yield connector.create_object(resource, **args)
-            else:
-                raise exceptions.Exists()
-
-        self._send_created_to_client(resource)
-
-    @gen.coroutine
-    def put(self):
-        connector = self.get_model_connector()
-        args = self.parsed_query_arguments()
-
-        transport = self._registry.transport
-
-        on_generic_raise = self.to_http_exception(
-            exceptions.BadRepresentation("Generic exception during "
-                                         "deserialization"))
-        with self.exceptions_to_http(connector,
-                                     "put",
-                                     on_generic_raise=on_generic_raise):
-            try:
-                resource = transport.deserializer.deserialize(
-                    self.schema,
-                    None,
-                    transport.parser.parse(self.request.body))
-            except TraitError as e:
-                raise exceptions.BadRepresentation(message=str(e))
-
-            self._check_none(resource,
-                             "representation",
-                             "deserialize")
-
-        with self.exceptions_to_http(connector, "put"):
-            self._check_resource_sanity(resource, "input")
-
-            yield connector.replace_object(resource, **args)
-
-        self._send_to_client(None)
-
-    @gen.coroutine
-    def delete(self):
-        connector = self.get_model_connector()
-        args = self.parsed_query_arguments()
-
-        transport = self._registry.transport
-
-        with self.exceptions_to_http(connector, "delete"):
-            resource = transport.deserializer.deserialize(
-                self.schema)
-
-            yield connector.delete_object(resource, **args)
-
-        self._send_to_client(None)
-        '''

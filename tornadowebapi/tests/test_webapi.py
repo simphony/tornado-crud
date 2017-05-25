@@ -1,4 +1,3 @@
-import unittest
 import urllib.parse
 from collections import OrderedDict
 from unittest import mock
@@ -7,62 +6,19 @@ import http.client
 
 from tornado.testing import LogTrapTestCase
 from tornadowebapi.registry import Registry
-from tornadowebapi.resource import (
-    ResourceList, ResourceDetails)
 from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
-
-class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
+class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
         resource_handlers.StudentDetails.model_connector.collection = \
             OrderedDict()
         resource_handlers.StudentDetails.model_connector.id = 0
-        #resource_handlers.ServerInfoDetails.model_connector.instance = {}
-        #resource_handlers.StudentDetails.model_connector.id = 0
 
     def get_app(self):
         registry = Registry()
-        '''
-        registry.register(
-            resource_handlers.AlreadyPresentList,
-            "/alreadypresents/",
-        )
-        registry.register(
-            resource_handlers.AlreadyPresentDetails,
-            "/alreadypresents/(.*)/",
-        )
-        registry.register(
-            resource_handlers.BrokenList,
-            "/brokens/",
-        )
-        registry.register(
-            resource_handlers.BrokenDetails,
-            "/brokens/(.*)/",
-        )
-        registry.register(
-            resource_handlers.UnsupportsCollectionList,
-            "/unsupportscollections/",
-        )
-        registry.register(
-            resource_handlers.UnprocessableList,
-            "/unprocessables/",
-        )
-        registry.register(
-            resource_handlers.UnprocessableDetails,
-            "/unprocessables/(.*)/",
-        )
-        registry.register(
-            resource_handlers.UnsupportAllDetails,
-            "/unsupportalls/(.*)/",
-        )
-        registry.register(
-            resource_handlers.UnsupportAllList,
-            "/unsupportalls/",
-        )
-        '''
         registry.register(
             resource_handlers.StudentList,
             "/students/",
@@ -71,20 +27,27 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
             resource_handlers.StudentDetails,
             "/students/(.*)/",
         )
-        '''
-        registry.register(
-            resource_handlers.TeacherDetails,
-            "/teachers/(.*)/"
-        )
-        registry.register(
-            resource_handlers.ServerInfoDetails,
-            "/serverinfo/"
-        )
-        '''
         handlers = registry.api_handlers('/')
         app = web.Application(handlers=handlers, debug=True)
         app.hub = mock.Mock()
         return app
+
+    def _create_one_student(self, name, age):
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "data": {
+                    "type": "student",
+                    "attributes": {
+                        "name": name,
+                        "age": age,
+                    }
+                }
+            })
+        )
+        location = urllib.parse.urlparse(res.headers["Location"]).path
+        return location
 
     def test_items(self):
         res = self.fetch("/api/v1/students/")
@@ -303,11 +266,11 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
             method="POST",
             body=escape.json_encode({
                 "data": {
-                        "type": "student",
-                        "attributes": {
-                            "name": "john wick",
-                            "age": 19,
-                        }
+                    "type": "student",
+                    "attributes": {
+                        "name": "john wick",
+                        "age": 19,
+                    }
                 }
             })
         )
@@ -389,155 +352,203 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
             })
         )
         self.assertEqual(res.code, http.client.BAD_REQUEST)
-'''
-    def test_retrieve(self):
-        res = self.fetch(
-            "/api/v1/students/",
-            method="POST",
-            body=escape.json_encode({
-                "name": "john wick",
-                "age": 19,
-            })
-        )
 
-        location = urllib.parse.urlparse(res.headers["Location"]).path
+    def test_retrieve(self):
+        location = self._create_one_student("john wick", 19)
 
         res = self.fetch(location)
-        self.assertEqual(res.code, httpstatus.OK)
+        self.assertEqual(res.code, http.client.OK)
 
-        self.assertEqual(escape.json_decode(res.body),
-                         {"name": "john wick",
-                          "age": 19}
-                         )
+        self.assertEqual(
+            escape.json_decode(res.body),
+            {
+                "data": {
+                    "type": "student",
+                    "id": 0,
+                    "attributes": {
+                        "name": "john wick",
+                        "age": 19
+                    }
+                },
+                "jsonapi": {
+                    "version": "1.0"
+                }
+            })
 
         res = self.fetch("/api/v1/students/1/")
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
-        self.assertNotIn("Content-Type", res.headers)
-
-        handler = resource_handlers.StudentModelConn
-        handler.collection["0"].age = Absent
-
-        # Verify output checks
-        res = self.fetch(location)
-        self.assertEqual(res.code, httpstatus.INTERNAL_SERVER_ERROR)
+        self.assertEqual(res.code, http.client.NOT_FOUND)
+        #self.assertNotIn("Content-Type", res.headers)
 
     def test_post_on_resource(self):
-        res = self.fetch(
-            "/api/v1/students/",
-            method="POST",
-            body=escape.json_encode({
-                "name": "john wick",
-                "age": 19,
-            })
-        )
-
-        location = urllib.parse.urlparse(res.headers["Location"]).path
+        location = self._create_one_student("john wick", 19)
         res = self.fetch(
             location,
             method="POST",
             body=escape.json_encode({
-                "name": "john wick",
-                "age": 19,
+                'data': {
+                    "type": "student",
+                    "attributes": {
+                        "name": "john wick 2",
+                        "age": 34,
+                    }
+                }
             })
         )
 
-        self.assertEqual(res.code, httpstatus.CONFLICT)
+        self.assertEqual(res.code, http.client.CONFLICT)
 
     def test_update(self):
-        res = self.fetch(
-            "/api/v1/students/",
-            method="POST",
-            body=escape.json_encode({
-                "name": "john wick",
-                "age": 19,
-            })
-        )
-
-        location = urllib.parse.urlparse(res.headers["Location"]).path
+        location = self._create_one_student("john wick", 19)
         res = self.fetch(
             location,
-            method="PUT",
+            method="PATCH",
             body=escape.json_encode({
-                "name": "john wick",
-                "age": 19,
+                'data': {
+                    "type": "student",
+                    "id": 0,
+                    "attributes": {
+                        "age": 49,
+                    }
+                }
             })
         )
-        self.assertEqual(res.code, httpstatus.NO_CONTENT)
+        self.assertEqual(res.code, http.client.OK)
 
         res = self.fetch(location)
         self.assertEqual(escape.json_decode(res.body),
                          {
-                             "name": "john wick",
-                             "age": 19,
+                             "data": {
+                                 "type": "student",
+                                 "id": 0,
+                                 "attributes": {
+                                     "name": "john wick",
+                                     "age": 49
+                                 }
+                             },
+                             "jsonapi": {
+                                 "version": "1.0"
+                             }
                          })
 
-        # Incorrect type
+    def _test_update_errors(self):
+        location = self._create_one_student("john wick", 19)
         res = self.fetch(
             location,
-            method="PUT",
+            method="PATCH",
             body=escape.json_encode({
-                "name": "john wick",
-                "age": "hello",
+                "data": {
+                    "type": "student",
+                    "id": 0,
+                    "attributes": {
+                        "age": "hello",
+                    }
+                }
             })
         )
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.code, http.client.BAD_REQUEST)
 
         res = self.fetch(
             "/api/v1/students/1/",
-            method="PUT",
+            method="PATCH",
             body=escape.json_encode({
-                "name": "john wick",
-                "age": 19,
+                "data": {
+                    "type": "student",
+                    "id": 1,
+                    "attributes": {
+                        "age": 34,
+                    }
+                }
             })
         )
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
-
-        # Missing mandatory entry
-        res = self.fetch(
-            location,
-            method="PUT",
-            body=escape.json_encode({
-                "name": "john wick",
-            })
-        )
-        self.assertEqual(res.code, httpstatus.BAD_REQUEST)
+        self.assertEqual(res.code, http.client.NOT_FOUND)
 
     def test_delete(self):
-        res = self.fetch(
-            "/api/v1/students/",
-            method="POST",
-            body=escape.json_encode({
-                "name": "john wick",
-                "age": 19,
-            })
-        )
-
-        # Unfortunately, self.fetch wants a path and never consider
-        # the possibility of a fqdn in the url, but according to
-        # REST standard and HTTP standard, location should be absolute.
-        location = urllib.parse.urlparse(res.headers["Location"]).path
+        location = self._create_one_student("john wick", 19)
 
         res = self.fetch(location, method="DELETE")
-        self.assertEqual(res.code, httpstatus.NO_CONTENT)
+        self.assertEqual(res.code, http.client.NO_CONTENT)
 
         res = self.fetch(location)
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, http.client.NOT_FOUND)
 
         res = self.fetch("/api/v1/students/1/", method="DELETE")
-        self.assertEqual(res.code, httpstatus.NOT_FOUND)
+        self.assertEqual(res.code, http.client.NOT_FOUND)
 
     def test_delete_collection(self):
         res = self.fetch("/api/v1/students/", method="DELETE")
-        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+        self.assertEqual(res.code, http.client.METHOD_NOT_ALLOWED)
 
     def test_put_collection(self):
         res = self.fetch("/api/v1/students/",
                          method="PUT",
-                         body=escape.json_encode({
-                             "name": "john wick",
-                             "age": 19,
-                         }))
-        self.assertEqual(res.code, httpstatus.METHOD_NOT_ALLOWED)
+                         body=escape.json_encode({}))
+        self.assertEqual(res.code, http.client.METHOD_NOT_ALLOWED)
+
+    def test_post_non_json(self):
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body="hello"
+        )
+        self.assertEqual(res.code, http.client.BAD_REQUEST)
+
+'''
+class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
+    def setUp(self):
+        super().setUp()
+        #resource_handlers.ServerInfoDetails.model_connector.instance = {}
+        #resource_handlers.StudentDetails.model_connector.id = 0
+
+    def get_app(self):
+        registry = Registry()
+        registry.register(
+            resource_handlers.AlreadyPresentList,
+            "/alreadypresents/",
+        )
+        registry.register(
+            resource_handlers.AlreadyPresentDetails,
+            "/alreadypresents/(.*)/",
+        )
+        registry.register(
+            resource_handlers.BrokenList,
+            "/brokens/",
+        )
+        registry.register(
+            resource_handlers.BrokenDetails,
+            "/brokens/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportsCollectionList,
+            "/unsupportscollections/",
+        )
+        registry.register(
+            resource_handlers.UnprocessableList,
+            "/unprocessables/",
+        )
+        registry.register(
+            resource_handlers.UnprocessableDetails,
+            "/unprocessables/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportAllDetails,
+            "/unsupportalls/(.*)/",
+        )
+        registry.register(
+            resource_handlers.UnsupportAllList,
+            "/unsupportalls/",
+        )
+        registry.register(
+            resource_handlers.TeacherDetails,
+            "/teachers/(.*)/"
+        )
+        registry.register(
+            resource_handlers.ServerInfoDetails,
+            "/serverinfo/"
+        )
+        handlers = registry.api_handlers('/')
+        app = web.Application(handlers=handlers, debug=True)
+        app.hub = mock.Mock()
+        return app
 
     def test_unexistent_resource_type(self):
         res = self.fetch(
