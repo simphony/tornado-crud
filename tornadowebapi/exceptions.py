@@ -30,7 +30,6 @@ class JsonApiException(Exception):
                 'title': self.title,
                 'detail': self.detail}
 
-
 class BadRequest(JsonApiException):
     title = "Bad request"
     status = http.client.BAD_REQUEST
