@@ -26,7 +26,7 @@ class ModelConnector:
         self.log = log.app_log
 
     @gen.coroutine
-    def create_object(self, data, **kwargs):
+    def create_object(self, data, qs, **kwargs):
         """Called to create a resource with the given data.
         The member is passed with an instance of Resource, pre-filled
         with the data from the passed (and decoded) payload.

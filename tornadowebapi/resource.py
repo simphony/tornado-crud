@@ -134,7 +134,7 @@ class ResourceList(Resource):
         connector = self.get_model_connector()
         qs = QSManager(self.request.query_arguments, self.schema)
 
-        json_data = self.request.body
+        json_data = escape.json_decode(self.request.body)
 
         schema = compute_schema(self.schema,
                                 {},
@@ -155,7 +155,7 @@ class ResourceList(Resource):
                 message['title'] = "Validation error"
             raise exceptions.BadRequest({}, "")
 
-        identifier = yield connector.create_object(qs)
+        identifier = yield connector.create_object(data, qs)
 
         self._send_created_to_client(identifier)
 

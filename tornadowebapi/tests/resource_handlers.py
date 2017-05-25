@@ -25,25 +25,25 @@ class WorkingModelConn(ModelConnector):
     @gen.coroutine
     def retrieve_object(self, instance, **kwargs):
         if instance.identifier not in self.collection:
-            raise exceptions.NotFound()
+            raise exceptions.ObjectNotFound({}, "")
 
         stored_item = self.collection[instance.identifier]
         for trait_name, trait_class in instance.traits().items():
             setattr(instance, trait_name, getattr(stored_item, trait_name))
 
     @gen.coroutine
-    def replace_object(self, instance, **kwargs):
-        if instance.identifier not in self.collection:
-            raise exceptions.NotFound()
+    def replace_object(self, identifier, data, **kwargs):
+        if identifier not in self.collection:
+            raise exceptions.ObjectNotFound({}, "")
 
-        self.collection[instance.identifier] = instance
+        self.collection[identifier] = data
 
     @gen.coroutine
-    def delete_object(self, instance, **kwargs):
-        if instance.identifier not in self.collection:
-            raise exceptions.NotFound()
+    def delete_object(self, identifier, **kwargs):
+        if identifier not in self.collection:
+            raise exceptions.ObjectNotFound({}, "")
 
-        del self.collection[instance.identifier]
+        del self.collection[identifier]
 
     @gen.coroutine
     def retrieve_collection(self, qs, **kwargs):
