@@ -164,7 +164,7 @@ class ModelConnector:
 
     @gen.coroutine
     def retrieve_collection(
-            self, offset=None, limit=None, **kwargs):
+            self, qs, **kwargs):
         """Invoked when a request is performed to the collection
         URL. Passes an empty items_response object that must be filled
         with the relevant information.

@@ -88,7 +88,6 @@ class Registry:
         init_args = dict(
             registry=self,
             base_urlpath=base_urlpath,
-            api_version=version,
         )
 
         handlers = []

@@ -4,7 +4,7 @@ from marshmallow_jsonapi import Schema, fields
 from tornado import gen
 from tornadowebapi import exceptions
 from tornadowebapi.model_connector import ModelConnector
-from tornadowebapi.web_handlers import ResourceDetails, ResourceList, \
+from tornadowebapi.resource import ResourceDetails, ResourceList, \
     ResourceSingletonDetails
 
 
@@ -16,11 +16,11 @@ class WorkingModelConn(ModelConnector):
     id = 0
 
     @gen.coroutine
-    def create_object(self, instance, **kwargs):
-        id = type(self).id
-        self.collection[str(id)] = instance
-        instance.identifier = str(id)
+    def create_object(self, data, qs, **kwargs):
+        id = str(type(self).id)
+        self.collection[id] = data
         type(self).id += 1
+        return id
 
     @gen.coroutine
     def retrieve_object(self, instance, **kwargs):
@@ -46,29 +46,25 @@ class WorkingModelConn(ModelConnector):
         del self.collection[instance.identifier]
 
     @gen.coroutine
-    def retrieve_collection(
-            self, items_response,
-            offset=None, limit=None, filter_=None, **kwargs):
-        if offset is None:
-            offset = 0
-
-        start = offset
-
-        if limit is None:
-            end = None
-        else:
-            end = start + limit
-
-        interval = slice(start, end)
-
-        if filter_ is not None:
-            values = [x for x in self.collection.values() if filter_(x)]
-        else:
-            values = [x for x in self.collection.values()]
-
-        items_response.set(values[interval],
-                           offset=start,
-                           total=len(self.collection.values()))
+    def retrieve_collection(self, qs, **kwargs):
+        # if offset is None:
+        #     offset = 0
+        #
+        # start = offset
+        #
+        # if limit is None:
+        #     end = None
+        # else:
+        #     end = start + limit
+        #
+        # interval = slice(start, end)
+        #
+        # if filter_ is not None:
+        #     values = [x for x in self.collection.values() if filter_(x)]
+        # else:
+        #     values = [x for x in self.collection.values()]
+        values = [x for x in self.collection.values()]
+        return values, len(self.collection.values())
 
 
 class SingletonModelConn(ModelConnector):
@@ -104,6 +100,9 @@ class SingletonModelConn(ModelConnector):
 
 
 class Student(Schema):
+    class Meta:
+        type_ = "student"
+    id = fields.Int()
     name = fields.String()
     age = fields.Int()
 
@@ -121,7 +120,7 @@ class StudentList(ResourceList):
     schema = Student
     model_connector = StudentModelConn
 
-
+'''
 class Teacher(Schema):
     name = fields.String()
     age = fields.Int(required=False)
@@ -331,3 +330,4 @@ class FrobnicatorModelConn(ModelConnector):
 class FrobnicatorDetails(ResourceDetails):
     schema = Frobnicator
     model_connector = FrobnicatorModelConn
+'''

@@ -118,20 +118,16 @@ class ResourceList(Resource):
         connector = self.get_model_connector()
         qs = QSManager(self.request.query_arguments, self.schema)
 
-        items_response = yield connector.retrieve_collection(qs)
+        items, total_num = yield connector.retrieve_collection(qs)
 
         schema = compute_schema(self.schema,
-                                {},
+                                {"many": True},
                                 qs,
                                 qs.include)
-        result = schema.dump(items_response.items).data
-        add_pagination_links(result,
-                             len(items_response.items),
-                             qs,
-                             "FIXME"
-                             )
+        result = schema.dump(items).data
+        add_pagination_links(result, total_num, qs, "FIXME")
 
-        self._send_to_client(items_response)
+        self._send_to_client(result)
 
     @gen.coroutine
     def post(self):
@@ -171,6 +167,14 @@ class ResourceList(Resource):
     @gen.coroutine
     def delete(self):
         raise HTTPError(http.client.METHOD_NOT_ALLOWED.value)
+
+
+class ResourceDetails(Resource):
+    pass
+
+
+class ResourceSingletonDetails(Resource):
+    pass
 
 '''
 class ResourceDetails(Resource):
