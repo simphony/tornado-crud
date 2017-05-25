@@ -62,6 +62,7 @@ class Resource(web.RequestHandler):
 
         if isinstance(exc, exceptions.JsonApiException):
             self.set_header('Content-Type', _CONTENT_TYPE_JSONAPI)
+            self.set_status(exc.status)
             self.finish(escape.json_encode(jsonapi_errors(exc.to_dict())))
         else:
             # For non-payloaded http errors or any other exception
@@ -155,7 +156,10 @@ class ResourceList(Resource):
                 message['title'] = "Validation error"
             raise exceptions.BadRequest({}, "")
 
-        identifier = yield connector.create_object(data, qs)
+        if errors:
+            raise exceptions.BadRequest({}, "")
+
+        identifier = yield connector.create_object(data)
 
         self._send_created_to_client(identifier)
 

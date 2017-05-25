@@ -315,53 +315,80 @@ class TestWebAPI(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(res.code, http.client.CREATED)
         self.assertIn("api/v1/students/0/", res.headers["Location"])
 
-        # res = self.fetch(
-        #     "/api/v1/students/",
-        #     method="POST",
-        #     body=escape.json_encode({
-        #         "name": "john wick 2",
-        #         "age": 19,
-        #     })
-        # )
-        # self.assertEqual(res.code, http.client.CREATED)
-        # self.assertIn("api/v1/students/1/", res.headers["Location"])
-        #
-        # res = self.fetch("/api/v1/students/")
-        # self.assertEqual(res.code, http.client.OK)
-        # self.assertEqual(escape.json_decode(res.body),
-        #                  {"offset": 0,
-        #                   "total": 2,
-        #                   "items": {
-        #                       "0": {"age": 19,
-        #                             "name": "john wick"
-        #                             },
-        #                       "1": {"age": 19,
-        #                             "name": "john wick 2"
-        #                             },
-        #                   },
-        #                   "identifiers": ["0", "1"],
-        #                   })
-        #
-        # # incorrect value for age
-        # res = self.fetch(
-        #     "/api/v1/students/",
-        #     method="POST",
-        #     body=escape.json_encode({
-        #         "name": "john wick",
-        #         "age": "hello",
-        #     })
-        # )
-        # self.assertEqual(res.code, http.client.BAD_REQUEST)
-        #
-        # # Missing mandatory entry
-        # res = self.fetch(
-        #     "/api/v1/students/",
-        #     method="POST",
-        #     body=escape.json_encode({
-        #         "name": "john wick",
-        #     })
-        # )
-        # self.assertEqual(res.code, http.client.BAD_REQUEST)
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "data": {
+                    "type": "student",
+                    "attributes": {
+                        "name": "john wick",
+                        "age": 19,
+                    }
+                }
+            })
+        )
+        self.assertEqual(res.code, http.client.CREATED)
+        self.assertIn("api/v1/students/1/", res.headers["Location"])
+
+        res = self.fetch("/api/v1/students/")
+        self.assertEqual(res.code, http.client.OK)
+        self.assertEqual(
+            escape.json_decode(res.body),
+            {
+                'data': [
+                    {
+                        'attributes': {
+                            'age': 19,
+                            'name': 'john wick'
+                        },
+                        'id': 0,
+                        'type': 'student'
+                    },
+                    {
+                        'attributes': {
+                            'age': 19,
+                            'name': 'john wick'
+                        },
+                        'id': 1,
+                        'type': 'student'
+                    }
+                ],
+                'jsonapi': {'version': '1.0'},
+                'links': {'self': 'FIXME'}
+            }
+        )
+
+        # incorrect value for age
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                'data': {
+                    "type": "student",
+                    "attributes": {
+                        "name": "john wick",
+                        "age": "hello",
+                    }
+                }
+            })
+        )
+        self.assertEqual(res.code, http.client.BAD_REQUEST)
+
+        # Missing mandatory entry
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                'data': {
+                    "type": "student",
+                    "attributes": {
+                        "name": "john wick",
+                    }
+                }
+            })
+        )
+        self.assertEqual(res.code, http.client.BAD_REQUEST)
 '''
     def test_retrieve(self):
         res = self.fetch(

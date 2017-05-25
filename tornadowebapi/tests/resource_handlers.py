@@ -16,20 +16,19 @@ class WorkingModelConn(ModelConnector):
     id = 0
 
     @gen.coroutine
-    def create_object(self, data, qs, **kwargs):
+    def create_object(self, data, **kwargs):
         id = str(type(self).id)
+        data["id"] = id
         self.collection[id] = data
         type(self).id += 1
         return id
 
     @gen.coroutine
-    def retrieve_object(self, instance, **kwargs):
-        if instance.identifier not in self.collection:
+    def retrieve_object(self, identifier, **kwargs):
+        if identifier not in self.collection:
             raise exceptions.ObjectNotFound({}, "")
 
-        stored_item = self.collection[instance.identifier]
-        for trait_name, trait_class in instance.traits().items():
-            setattr(instance, trait_name, getattr(stored_item, trait_name))
+        return self.collection[identifier]
 
     @gen.coroutine
     def replace_object(self, identifier, data, **kwargs):
@@ -103,8 +102,8 @@ class Student(Schema):
     class Meta:
         type_ = "student"
     id = fields.Int()
-    name = fields.String()
-    age = fields.Int()
+    name = fields.String(required=True)
+    age = fields.Int(required=True)
 
 
 class StudentModelConn(WorkingModelConn):
