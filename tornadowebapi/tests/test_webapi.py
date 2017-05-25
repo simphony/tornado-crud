@@ -10,6 +10,7 @@ from tornadowebapi.tests import resource_handlers
 from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
+
 class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
@@ -53,13 +54,14 @@ class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
         res = self.fetch("/api/v1/students/")
 
         self.assertEqual(res.code, http.client.OK)
-        # self.assertEqual(escape.json_decode(res.body),
-        #                  {
-        #                      "total": 0,
-        #                      "offset": 0,
-        #                      "items": {},
-        #                      "identifiers": []
-        #                  })
+        payload = escape.json_decode(res.body)
+        self.assertIn("/api/v1/students/", payload['links']['self'])
+        del payload['links']
+        self.assertEqual(payload,
+                         {'data': [],
+                          'jsonapi': {
+                              'version': '1.0'
+                          }})
 
         resource = resource_handlers.StudentDetails
         connector = resource.model_connector
@@ -296,8 +298,11 @@ class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
         res = self.fetch("/api/v1/students/")
         self.assertEqual(res.code, http.client.OK)
+        payload = escape.json_decode(res.body)
+        self.assertIn('/api/v1/students/', payload['links']['self'])
+        del payload["links"]
         self.assertEqual(
-            escape.json_decode(res.body),
+            payload,
             {
                 'data': [
                     {
@@ -317,8 +322,7 @@ class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
                         'type': 'student'
                     }
                 ],
-                'jsonapi': {'version': '1.0'},
-                'links': {'self': 'FIXME'}
+                'jsonapi': {'version': '1.0'}
             }
         )
 
@@ -377,7 +381,7 @@ class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
 
         res = self.fetch("/api/v1/students/1/")
         self.assertEqual(res.code, http.client.NOT_FOUND)
-        #self.assertNotIn("Content-Type", res.headers)
+        # self.assertNotIn("Content-Type", res.headers)
 
     def test_post_on_resource(self):
         location = self._create_one_student("john wick", 19)

@@ -131,7 +131,7 @@ class ResourceList(Resource):
                                 qs,
                                 qs.include)
         result = schema.dump(items).data
-        add_pagination_links(result, total_num, qs, "FIXME")
+        add_pagination_links(result, total_num, qs, self.request.full_url())
 
         self._send_to_client(result)
 
