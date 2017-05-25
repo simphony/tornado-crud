@@ -14,11 +14,10 @@ class Resource(web.RequestHandler):
     model_connector = None
     schema = None
 
-    def initialize(self, registry, base_urlpath, api_version):
+    def initialize(self, registry, base_urlpath):
         """Initialization method for when the class is instantiated."""
         self._registry = registry
         self._base_urlpath = base_urlpath
-        self._api_version = api_version
 
     @gen.coroutine
     def prepare(self):
@@ -35,12 +34,6 @@ class Resource(web.RequestHandler):
     def base_urlpath(self):
         """Returns the Base urlpath as from initial setup"""
         return self._base_urlpath
-
-    @property
-    def api_version(self):
-        """Returns the API version this handler is taking care of
-        """
-        return self._api_version
 
     @property
     def log(self):
