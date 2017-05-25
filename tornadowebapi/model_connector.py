@@ -4,7 +4,7 @@ from tornado import gen, log
 class ModelConnector:
     """Base class for model connectors.
     To implement a new ModelConnector class, inherit from this subclass
-    and reimplement the CRUD class methods with the appropriate
+    and reimplement the methods with the appropriate
     logic.
 
     The ModelConnector exports two member vars: application and current_user.
@@ -38,16 +38,16 @@ class ModelConnector:
         Parameters
         ----------
         data: dict
-            A dict of the data submitted as payload, validated against the
-            schema.
+            A dict of the data submitted as payload, already validated
+            against the schema.
 
         Returns
         -------
-        obj: the model object
+        identifier: the model object
 
         Raises
         ------
-        Exists:
+        ObjectAlreadyPresent:
             Raised when the resource cannot be created because of a
             conflicting already existing resource.
         NotImplementedError:
@@ -70,33 +70,6 @@ class ModelConnector:
         ----------
         identifier:
             the identifier of the object
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        NotFound:
-            Raised if the resource with the given identifier cannot
-            be found
-        NotImplementedError:
-            If the resource does not support the method.
-        """
-        raise NotImplementedError()
-
-    @gen.coroutine
-    def replace_object(self, identifier, data, **kwargs):
-        """Called to update (fully) a specific Resource given its
-        identifier with new data. Correspond to a PUT operation on the
-        Resource URL.
-
-        Parameters
-        ----------
-        identifier: str
-            The identifier of the object to replace
-        data: dict
-            The validated dict of the data.
 
         Returns
         -------
@@ -163,8 +136,7 @@ class ModelConnector:
         raise NotImplementedError()
 
     @gen.coroutine
-    def retrieve_collection(
-            self, qs, **kwargs):
+    def retrieve_collection(self, qs, **kwargs):
         """Invoked when a request is performed to the collection
         URL. Passes an empty items_response object that must be filled
         with the relevant information.
