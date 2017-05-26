@@ -14,28 +14,46 @@ class QueryStringManager(object):
     """Querystring parser according to jsonapi reference
     """
 
-    MANAGED_KEYS = (
-        'filter',
-        'page',
-        'fields',
-        'sort',
-        'include'
-    )
-
-    def __init__(self, querystring, schema):
+    def __init__(self, raw_query_args, schema):
         """Initialization instance
 
         Parameters
         ----------
-        querystring: dict
-            query string dict from request.args
+        raw_query_args: dict
+            query arguments from tornado request.arguments
         """
-        if not isinstance(querystring, dict):
+        if not isinstance(raw_query_args, dict):
             raise ValueError('QueryStringManager require a dict-like object '
-                             'query_string parameter')
+                             'query_args parameter')
 
-        self.qs = querystring
+        self.query_args = self._normalize_query_args(raw_query_args)
         self.schema = schema
+
+    def queryitems(self):
+        res = []
+        for key, value in self.query_args.items():
+            if not isinstance(value, list):
+                value = [value]
+
+            for v in value:
+                res.append((key, v))
+
+        return res
+
+    def _normalize_query_args(self, query_args):
+        res = {}
+
+        query_args = escape.recursive_unicode(query_args)
+        for key, value in query_args.items():
+            if isinstance(value, list):
+                if len(value) == 0:
+                    continue
+                elif len(value) == 1:
+                    value = value[0]
+
+            res[key] = value
+
+        return res
 
     def _get_key_values(self, name):
         """Return a dict containing key / values items for a given key, used
@@ -53,7 +71,7 @@ class QueryStringManager(object):
         """
         results = {}
 
-        for key, value in self.qs.items():
+        for key, value in self.query_args.items():
             try:
                 if not key.startswith(name):
                     continue
@@ -82,17 +100,6 @@ class QueryStringManager(object):
                     )])
 
         return escape.recursive_unicode(results)
-
-    @property
-    def querystring(self):
-        """Return original querystring but containing only managed keys
-
-        Returns
-        -------
-        dict: dict of managed querystring parameter
-        """
-        return {key: value for (key, value) in self.qs.items()
-                if key.startswith(self.MANAGED_KEYS)}
 
     @property
     def filters(self):
@@ -199,9 +206,9 @@ class QueryStringManager(object):
                 ]
 
         """
-        if self.qs.get('sort'):
+        if self.query_args.get('sort'):
             sorting_results = []
-            for sort_field in self.qs['sort'].split(','):
+            for sort_field in self.query_args['sort'].split(','):
                 field = sort_field.replace('-', '')
                 if field not in self.schema._declared_fields:
                     raise InvalidSort.from_message(
@@ -228,5 +235,5 @@ class QueryStringManager(object):
         list:
             a list of include information
         """
-        include_param = self.qs.get('include')
+        include_param = self.query_args.get('include')
         return include_param.split(',') if include_param else []
