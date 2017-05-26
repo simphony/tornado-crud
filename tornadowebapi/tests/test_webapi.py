@@ -334,8 +334,11 @@ class TestFilteringAPI(TestBase):
         self.assertEqual(len(payload["data"]), 10)
         self.assertIn("?page%5Bnumber%5D=2", payload["links"]["last"])
         self.assertIn("?page%5Bnumber%5D=1", payload["links"]["next"])
+        self.assertNotIn("prev", payload["links"])
 
         res = self.fetch("/api/v1/students/?page%5Bnumber%5D=1")
+        payload = escape.json_decode(res.body)
         self.assertEqual(len(payload["data"]), 10)
         self.assertIn("?page%5Bnumber%5D=2", payload["links"]["last"])
         self.assertIn("?page%5Bnumber%5D=2", payload["links"]["next"])
+        self.assertIn("?page%5Bnumber%5D=0", payload["links"]["prev"])

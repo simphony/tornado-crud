@@ -28,7 +28,8 @@ def pagination_links(object_count, query, base_url):
     if len(query):
         links['self'] += '?' + urlencode(query.queryitems)
 
-    if query.pagination.get('size', 0) != 0 and object_count > 1:
+    if query.pagination.get('size',
+                            DEFAULT_PAGE_SIZE) != 0 and object_count > 1:
         # compute last link
         page_size = query.pagination.get('size', DEFAULT_PAGE_SIZE)
         last_page = int((object_count - 1) / page_size)

@@ -7,10 +7,10 @@ from ..querystring import QueryStringManager as QSManager
 
 class TestPagination(unittest.TestCase):
     def test_no_pagination_need(self):
-        qs = QSManager({"page[number]": [b"0"]}, Schema)
+        qs = QSManager({"page[size]": [b"80"]}, Schema)
         links = pagination_links(50, qs, "http://example.com/foos")
         self.assertEqual(links, {
-            "self": "http://example.com/foos?page%5Bnumber%5D=0"
+            "self": "http://example.com/foos?page%5Bsize%5D=80"
         })
 
     def test_pagination(self):

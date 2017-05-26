@@ -41,4 +41,3 @@ class TestQueryStringManager(unittest.TestCase):
         self.assertIn(("page[size]", '10'), items)
         self.assertIn(("foo", 'bar'), items)
         self.assertIn(("foo", 'baz'), items)
-

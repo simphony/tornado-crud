@@ -8,7 +8,7 @@ from tornado.log import app_log
 from tornado.web import HTTPError
 from tornadowebapi import exceptions
 from tornadowebapi.errors import jsonapi_errors
-from tornadowebapi.pagination import add_pagination_links
+from tornadowebapi.pagination import pagination_links
 from tornadowebapi.schema import compute_schema
 from tornadowebapi.utils import with_end_slash, url_path_join
 from .querystring import QueryStringManager as QSManager
@@ -124,7 +124,7 @@ class ResourceList(Resource):
     @gen.coroutine
     def get(self):
         connector = self.get_model_connector()
-        qs = QSManager(self.request.query_arguments, self.schema)
+        qs = QSManager(self.request.arguments, self.schema)
 
         items, total_num = yield connector.retrieve_collection(qs)
 
@@ -133,14 +133,15 @@ class ResourceList(Resource):
                                 qs,
                                 qs.include)
         result = schema.dump(items).data
-        add_pagination_links(result, total_num, qs, self.request.full_url())
-
+        result["links"] = pagination_links(total_num,
+                                           qs,
+                                           self.request.full_url())
         self._send_to_client(result)
 
     @gen.coroutine
     def post(self):
         connector = self.get_model_connector()
-        qs = QSManager(self.request.query_arguments, self.schema)
+        qs = QSManager(self.request.arguments, self.schema)
 
         json_data = escape.json_decode(self.request.body)
 
@@ -187,7 +188,7 @@ class ResourceDetails(Resource):
     def get(self, identifier):
         """Retrieves the resource representation."""
         connector = self.get_model_connector()
-        qs = QSManager(self.request.query_arguments, self.schema)
+        qs = QSManager(self.request.arguments, self.schema)
         schema = compute_schema(self.schema,
                                 {},
                                 qs,
@@ -202,7 +203,7 @@ class ResourceDetails(Resource):
     @gen.coroutine
     def patch(self, identifier):
         connector = self.get_model_connector()
-        qs = QSManager(self.request.query_arguments, self.schema)
+        qs = QSManager(self.request.arguments, self.schema)
 
         json_data = escape.json_decode(self.request.body)
 
