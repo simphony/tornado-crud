@@ -36,7 +36,7 @@ class TestQueryStringManager(unittest.TestCase):
                         },
                        Schema)
 
-        items = qs.queryitems()
+        items = qs.queryitems
         self.assertIn(("page[number]", '1'), items)
         self.assertIn(("page[size]", '10'), items)
         self.assertIn(("foo", 'bar'), items)

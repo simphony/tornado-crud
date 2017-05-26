@@ -29,7 +29,11 @@ class QueryStringManager(object):
         self.query_args = self._normalize_query_args(raw_query_args)
         self.schema = schema
 
+    @property
     def queryitems(self):
+        """Returns the query entries as a list of tuples, so that they can
+        be encoded as foo=bar&foo=baz
+        """
         res = []
         for key, value in self.query_args.items():
             if not isinstance(value, list):
@@ -41,6 +45,10 @@ class QueryStringManager(object):
         return res
 
     def _normalize_query_args(self, query_args):
+        """Normalizes the raw query arguments passed as from tornado.
+        It makes one-element lists a single value, and decodes bytes into
+        unicode. It does _not_ convert strings to integers.
+        """
         res = {}
 
         query_args = escape.recursive_unicode(query_args)
@@ -54,6 +62,18 @@ class QueryStringManager(object):
             res[key] = value
 
         return res
+
+    def __setitem__(self, key, value):
+        """Dict access: set item"""
+        self.query_args[key] = value
+
+    def __delitem__(self, key):
+        """Dict access: del item"""
+        del self.query_args[key]
+
+    def __len__(self):
+        """Dict access: length"""
+        return len(self.query_args)
 
     def _get_key_values(self, name):
         """Return a dict containing key / values items for a given key, used
