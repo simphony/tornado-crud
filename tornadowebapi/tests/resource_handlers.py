@@ -45,23 +45,19 @@ class WorkingModelConn(ModelConnector):
 
     @gen.coroutine
     def retrieve_collection(self, qs, **kwargs):
-        # if offset is None:
-        #     offset = 0
-        #
-        # start = offset
-        #
-        # if limit is None:
-        #     end = None
-        # else:
-        #     end = start + limit
-        #
-        # interval = slice(start, end)
-        #
+        pagination = qs.pagination
+
+        number = pagination.get("number", 0)
+        size = pagination.get("size", 10)
+
+        interval = slice(number*size, (number+1)*size)
+
         # if filter_ is not None:
         #     values = [x for x in self.collection.values() if filter_(x)]
         # else:
         #     values = [x for x in self.collection.values()]
-        values = [x for x in self.collection.values()]
+
+        values = [x for x in self.collection.values()][interval]
         return values, len(self.collection.values())
 
 
