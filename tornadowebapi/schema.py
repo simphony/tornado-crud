@@ -31,11 +31,12 @@ def compute_schema(schema_cls, default_kwargs, qs, include):
         for include_path in include:
             field = include_path.split('.')[0]
             if field not in schema_cls._declared_fields:
-                raise InvalidInclude("{} has no attribute {}".format(
-                    schema_cls.__name__, field))
+                raise InvalidInclude.from_message(
+                    "{} has no attribute {}".format(schema_cls.__name__,
+                                                    field))
             elif not isinstance(schema_cls._declared_fields[field],
                                 Relationship):
-                raise InvalidInclude(
+                raise InvalidInclude.from_message(
                     "{} is not a relationship attribute of {}".format(
                         field, schema_cls.__name__))
             schema_kwargs['include_data'] += (field, )
@@ -54,8 +55,9 @@ def compute_schema(schema_cls, default_kwargs, qs, include):
         # check that sparse fieldsets exists in the schema
         for field in qs.fields[schema.opts.type_]:
             if field not in schema.declared_fields:
-                raise InvalidField("{} has no attribute {}".format(
-                    schema.__class__.__name__, field))
+                raise InvalidField.from_message(
+                    "{} has no attribute {}".format(schema.__class__.__name__,
+                                                    field))
 
         tmp_only = set(schema.declared_fields.keys()) & set(
             qs.fields[schema.opts.type_])
