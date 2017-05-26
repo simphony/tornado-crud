@@ -11,7 +11,7 @@ from tornadowebapi.tests.utils import AsyncHTTPTestCase
 from tornado import web, escape
 
 
-class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
+class TestBase(AsyncHTTPTestCase, LogTrapTestCase):
     def setUp(self):
         super().setUp()
         resource_handlers.StudentDetails.model_connector.collection = \
@@ -50,6 +50,8 @@ class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
         location = urllib.parse.urlparse(res.headers["Location"]).path
         return location
 
+
+class TestCRUDAPI(TestBase):
     def test_items(self):
         res = self.fetch("/api/v1/students/")
 
@@ -315,3 +317,25 @@ class TestStudentAPI(AsyncHTTPTestCase, LogTrapTestCase):
             body="hello"
         )
         self.assertEqual(res.code, http.client.BAD_REQUEST)
+
+
+class TestFilteringAPI(TestBase):
+    def setUp(self):
+        super().setUp()
+
+        for i in range(50):
+            self._create_one_student("john wick {}".format(i), age=10+i)
+
+    def test_no_filtering(self):
+        res = self.fetch("/api/v1/students/")
+
+        self.assertEqual(res.code, http.client.OK)
+        payload = escape.json_decode(res.body)
+        self.assertEqual(len(payload["data"]), 10)
+        self.assertIn("?page%5Bnumber%5D=2", payload["links"]["last"])
+        self.assertIn("?page%5Bnumber%5D=1", payload["links"]["next"])
+
+        res = self.fetch("/api/v1/students/?page%5Bnumber%5D=1")
+        self.assertEqual(len(payload["data"]), 10)
+        self.assertIn("?page%5Bnumber%5D=2", payload["links"]["last"])
+        self.assertIn("?page%5Bnumber%5D=2", payload["links"]["next"])
