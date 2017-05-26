@@ -148,22 +148,6 @@ class TestCRUDAPI(TestBase):
             }
         )
 
-        # incorrect value for age
-        res = self.fetch(
-            "/api/v1/students/",
-            method="POST",
-            body=escape.json_encode({
-                'data': {
-                    "type": "student",
-                    "attributes": {
-                        "name": "john wick",
-                        "age": "hello",
-                    }
-                }
-            })
-        )
-        self.assertEqual(res.code, http.client.BAD_REQUEST)
-
         # Missing mandatory entry
         res = self.fetch(
             "/api/v1/students/",
@@ -342,3 +326,55 @@ class TestFilteringAPI(TestBase):
         self.assertIn("?page%5Bnumber%5D=2", payload["links"]["last"])
         self.assertIn("?page%5Bnumber%5D=2", payload["links"]["next"])
         self.assertIn("?page%5Bnumber%5D=0", payload["links"]["prev"])
+
+
+class TestErrors(TestBase):
+    def test_invalid_type(self):
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "data": {
+                    "type": "gnaka",
+                    "attributes": {
+                        "name": "john wick",
+                        "age": 19,
+                    }
+                }
+            })
+        )
+
+        self.assertEqual(res.code, http.client.CONFLICT)
+        payload = escape.json_decode(res.body)
+        self.assertEqual(payload, {
+            'errors': [{
+                'detail': 'Invalid type. Expected "student".',
+                'source': {'pointer': '/data/type'},
+                'status': '409',
+                'title': 'Incorrect type'}],
+            'jsonapi': {'version': '1.0'}})
+
+    def test_invalid_value(self):
+        res = self.fetch(
+            "/api/v1/students/",
+            method="POST",
+            body=escape.json_encode({
+                "data": {
+                    "type": "student",
+                    "attributes": {
+                        "name": "john wick",
+                        "age": "hello",
+                    }
+                }
+            })
+        )
+
+        self.assertEqual(res.code, http.client.BAD_REQUEST)
+
+        payload = escape.json_decode(res.body)
+        self.assertEqual(payload, {
+            'errors': [{
+                'detail': 'Not a valid integer.',
+                'source': {'pointer': '/data/attributes/age'}}
+                ],
+            'jsonapi': {'version': '1.0'}})

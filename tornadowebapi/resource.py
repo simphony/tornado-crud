@@ -6,11 +6,11 @@ from marshmallow_jsonapi.exceptions import IncorrectTypeError
 from tornado import web, gen, escape
 from tornado.log import app_log
 from tornado.web import HTTPError
-from tornadowebapi import exceptions
-from tornadowebapi.errors import jsonapi_errors
-from tornadowebapi.pagination import pagination_links
-from tornadowebapi.schema import compute_schema
-from tornadowebapi.utils import with_end_slash, url_path_join
+from . import exceptions
+from .errors import jsonapi_errors, errors_from_jsonapi_errors
+from .pagination import pagination_links
+from .schema import compute_schema
+from .utils import with_end_slash, url_path_join
 from .querystring import QueryStringManager as QSManager
 
 _CONTENT_TYPE_JSONAPI = 'application/vnd.api+json'
@@ -64,8 +64,7 @@ class Resource(web.RequestHandler):
         if isinstance(exc, exceptions.JsonApiException):
             self.set_header('Content-Type', _CONTENT_TYPE_JSONAPI)
             self.set_status(exc.status)
-            self.finish(escape.json_encode(
-                jsonapi_errors(exc.to_jsonapi())))
+            self.finish(escape.json_encode(jsonapi_errors(exc)))
         elif isinstance(exc, json.decoder.JSONDecodeError):
             self.clear_header('Content-Type')
             self.set_status(http.client.BAD_REQUEST)
@@ -156,16 +155,19 @@ class ResourceList(Resource):
             for error in errors['errors']:
                 error['status'] = '409'
                 error['title'] = "Incorrect type"
-            raise exceptions.InvalidType(errors)
+            raise exceptions.InvalidType(
+                errors_from_jsonapi_errors(errors))
         except ValidationError as e:
             errors = e.messages
             for message in errors['errors']:
                 message['status'] = '422'
                 message['title'] = "Validation error"
-            raise exceptions.ValidationError(errors)
+
+            raise exceptions.ValidationError(
+                errors_from_jsonapi_errors(errors))
 
         if errors:
-            raise exceptions.BadRequest(errors)
+            raise exceptions.BadRequest(errors_from_jsonapi_errors(errors))
 
         identifier = yield connector.create_object(data)
 
@@ -219,15 +221,16 @@ class ResourceDetails(Resource):
             for error in errors['errors']:
                 error['status'] = '409'
                 error['title'] = "Incorrect type"
-            raise exceptions.InvalidType(errors)
+            raise exceptions.InvalidType(errors_from_jsonapi_errors(errors))
         except ValidationError as e:
             errors = e.messages
             for message in errors['errors']:
                 message['status'] = '422'
                 message['title'] = "Validation error"
-            raise exceptions.ValidationError(errors)
+            raise exceptions.ValidationError(
+                errors_from_jsonapi_errors(errors))
         if errors:
-            raise exceptions.BadRequest(errors)
+            raise exceptions.BadRequest(errors_from_jsonapi_errors(errors))
 
         if 'id' not in json_data['data']:
             raise exceptions.InvalidIdentifier()

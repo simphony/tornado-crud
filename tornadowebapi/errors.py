@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
 # Imported from flask-rest-jsonapi
 # https://github.com/miLibris/flask-rest-jsonapi
+import http
 
 
-def jsonapi_errors(jsonapi_errors):
+def jsonapi_errors(exception):
     """Construct api error according to jsonapi 1.0
 
     Parameters
     ----------
-    jsonapi_errors:
-        an iterable of jsonapi error
+    exception: JsonApiException
+        A JsonApiException
 
     Returns
     -------
     dict
         a dict of errors according to jsonapi 1.0
     """
-    return {'errors': [jsonapi_error for jsonapi_error in jsonapi_errors],
+    return {'errors': exception.to_jsonapi(),
             'jsonapi': {'version': '1.0'}}
+
+
+def errors_from_jsonapi_errors(jsonapi_errors):
+    return [Error.from_jsonapi(err) for err in jsonapi_errors["errors"]]
 
 
 class Source:
@@ -87,5 +92,9 @@ class Error:
         source = d.get("source")
         if source is not None:
             d["source"] = Source.from_jsonapi(d["source"])
+
+        status = d.get("status")
+        if status is not None:
+            d["status"] = http.HTTPStatus(int(d["status"]))
 
         return cls(**d)
