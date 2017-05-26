@@ -33,6 +33,8 @@ class Source:
         if self.parameter is not None:
             ret["parameter"] = self.parameter
 
+        return ret
+
     @classmethod
     def from_jsonapi(cls, d):
         return cls(**d)
