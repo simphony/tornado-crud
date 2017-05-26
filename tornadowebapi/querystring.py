@@ -41,8 +41,7 @@ class QueryStringManager(object):
 
             for v in value:
                 res.append((key, v))
-
-        return res
+        return sorted(res, key=lambda x: x[0])
 
     def _normalize_query_args(self, query_args):
         """Normalizes the raw query arguments passed as from tornado.
@@ -100,7 +99,7 @@ class QueryStringManager(object):
                 key_end = key.index(']')
                 item_key = key[key_start:key_end]
 
-                if ',' in value:
+                if isinstance(value, str) and ',' in value:
                     item_value = value.split(',')
                 else:
                     item_value = value
