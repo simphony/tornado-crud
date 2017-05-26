@@ -2,91 +2,149 @@
 # https://github.com/miLibris/flask-rest-jsonapi
 import http.client
 
+from tornadowebapi.errors import Error, Source
+
 
 class JsonApiException(Exception):
-    title = 'Unknown error'
     status = http.client.INTERNAL_SERVER_ERROR
 
-    def __init__(self, source, detail, title=None, status=None):
+    def __init__(self, errors):
         """Initialize a jsonapi exception
 
         Parameters
         ----------
-        source: dict
-            the source of the error
-        detail: str
-            the detail of the error
+        errors: List
+            A list of Error objects
         """
-        self.source = source
-        self.detail = detail
-        if title is not None:
-            self.title = title
-        if status is not None:
-            self.status = status
 
-    def to_dict(self):
-        return {'status': self.status.value,
-                'source': self.source,
-                'title': self.title,
-                'detail': self.detail
-                }
+        self.errors = errors
+
+    def to_jsonapi(self):
+        return [
+            error.to_jsonapi()
+            for error in self.errors
+        ]
 
 
 class BadRequest(JsonApiException):
-    title = "Bad request"
     status = http.client.BAD_REQUEST
+
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Bad Request",
+                            status=self.status)]
+
+        super().__init__(errors)
+
+
+class ValidationError(JsonApiException):
+    status = http.client.UNPROCESSABLE_ENTITY
+
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Validation Error",
+                            status=self.status)]
+
+        super().__init__(errors)
 
 
 class InvalidField(BadRequest):
-    title = "Invalid fields querystring parameter."
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Invalid fields querystring parameter",
+                            source=Source(parameter="sort"),
+                            status=self.status)]
 
-    def __init__(self, detail):
-        self.source = {'parameter': 'fields'}
-        self.detail = detail
+        super().__init__(errors)
 
 
 class InvalidInclude(BadRequest):
-    title = "Invalid include querystring parameter."
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Invalid include querystring parameter",
+                            source=Source(parameter="include"),
+                            status=self.status)]
 
-    def __init__(self, detail):
-        self.source = {'parameter': 'include'}
-        self.detail = detail
+        super().__init__(errors)
 
 
 class InvalidFilters(BadRequest):
-    title = "Invalid filters querystring parameter."
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Invalid filters querystring parameter",
+                            source=Source(parameter="filters"),
+                            status=self.status)]
 
-    def __init__(self, detail):
-        self.source = {'parameter': 'filters'}
-        self.detail = detail
+        super().__init__(errors)
 
 
 class InvalidSort(BadRequest):
-    title = "Invalid sort querystring parameter."
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Invalid sort querystring parameter",
+                            source=Source(parameter="sort"),
+                            status=self.status)]
 
-    def __init__(self, detail):
-        self.source = {'parameter': 'sort'}
-        self.detail = detail
+        super().__init__(errors)
 
 
 class ObjectNotFound(JsonApiException):
-    title = "Object not found"
     status = http.client.NOT_FOUND
+
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Object not found",
+                            status=self.status)]
+
+        super().__init__(errors)
 
 
 class RelatedObjectNotFound(ObjectNotFound):
-    title = "Related object not found"
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Related object not found",
+                            status=self.status)]
+
+        super().__init__(errors)
 
 
-class RelationNotFound(JsonApiException):
-    title = "Relation not found"
+class RelationNotFound(ObjectNotFound):
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Relation object not found",
+                            status=self.status)]
+
+        super().__init__(errors)
 
 
 class ObjectAlreadyPresent(JsonApiException):
-    title = "Object already present"
     status = http.client.CONFLICT
+
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Object already present",
+                            status=self.status)]
+
+        super().__init__(errors)
 
 
 class InvalidType(JsonApiException):
-    title = "Invalid type"
     status = http.client.CONFLICT
+
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Invalid type",
+                            status=self.status)]
+
+        super().__init__(errors)
+
+
+class InvalidIdentifier(JsonApiException):
+    status = http.client.CONFLICT
+
+    def __init__(self, errors=None):
+        if errors is None:
+            errors = [Error(title="Invalid identifier",
+                            status=self.status)]
+
+        super().__init__(errors)

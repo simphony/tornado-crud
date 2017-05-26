@@ -64,7 +64,8 @@ class Resource(web.RequestHandler):
         if isinstance(exc, exceptions.JsonApiException):
             self.set_header('Content-Type', _CONTENT_TYPE_JSONAPI)
             self.set_status(exc.status)
-            self.finish(escape.json_encode(jsonapi_errors(exc.to_dict())))
+            self.finish(escape.json_encode(
+                jsonapi_errors(exc.to_jsonapi())))
         elif isinstance(exc, json.decoder.JSONDecodeError):
             self.clear_header('Content-Type')
             self.set_status(http.client.BAD_REQUEST)
@@ -73,6 +74,7 @@ class Resource(web.RequestHandler):
             # For non-payloaded http errors or any other exception
             # we don't want to return anything as payload.
             # The error code is enough.
+            self.set_status(status_code)
             self.clear_header('Content-Type')
             self.finish()
 
@@ -153,16 +155,16 @@ class ResourceList(Resource):
             for error in errors['errors']:
                 error['status'] = '409'
                 error['title'] = "Incorrect type"
-            raise exceptions.InvalidType({}, "")
+            raise exceptions.InvalidType(errors)
         except ValidationError as e:
             errors = e.messages
             for message in errors['errors']:
                 message['status'] = '422'
                 message['title'] = "Validation error"
-            raise exceptions.BadRequest({}, "")
+            raise exceptions.ValidationError(errors)
 
         if errors:
-            raise exceptions.BadRequest({}, "")
+            raise exceptions.BadRequest(errors)
 
         identifier = yield connector.create_object(data)
 
@@ -216,22 +218,21 @@ class ResourceDetails(Resource):
             for error in errors['errors']:
                 error['status'] = '409'
                 error['title'] = "Incorrect type"
-            raise exceptions.InvalidType({}, "")
+            raise exceptions.InvalidType(errors)
         except ValidationError as e:
             errors = e.messages
             for message in errors['errors']:
                 message['status'] = '422'
                 message['title'] = "Validation error"
-            raise exceptions.BadRequest({}, "")
-
+            raise exceptions.ValidationError(errors)
         if errors:
-            raise exceptions.BadRequest({}, "")
+            raise exceptions.BadRequest(errors)
 
         if 'id' not in json_data['data']:
-            raise exceptions.BadRequest({}, "")
+            raise exceptions.InvalidIdentifier()
 
         if str(json_data['data']['id']) != identifier:
-            raise exceptions.BadRequest({}, "")
+            raise exceptions.InvalidIdentifier()
 
         updated_obj = yield connector.update_object(identifier, data)
 
@@ -251,7 +252,7 @@ class ResourceDetails(Resource):
         except exceptions.ObjectNotFound:
             raise
         else:
-            raise exceptions.ObjectAlreadyPresent({}, "")
+            raise exceptions.ObjectAlreadyPresent()
 
     @gen.coroutine
     def delete(self, identifier):

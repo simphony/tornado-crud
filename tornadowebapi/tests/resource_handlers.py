@@ -25,21 +25,21 @@ class WorkingModelConn(ModelConnector):
     @gen.coroutine
     def retrieve_object(self, identifier, **kwargs):
         if identifier not in self.collection:
-            raise exceptions.ObjectNotFound({}, "")
+            raise exceptions.ObjectNotFound()
 
         return self.collection[identifier]
 
     @gen.coroutine
     def update_object(self, identifier, data, **kwargs):
         if identifier not in self.collection:
-            raise exceptions.ObjectNotFound({}, "")
+            raise exceptions.ObjectNotFound()
 
         self.collection[identifier].update(data)
 
     @gen.coroutine
     def delete_object(self, identifier, **kwargs):
         if identifier not in self.collection:
-            raise exceptions.ObjectNotFound({}, "")
+            raise exceptions.ObjectNotFound()
 
         del self.collection[identifier]
 
