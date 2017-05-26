@@ -3,60 +3,61 @@
 # https://github.com/miLibris/flask-rest-jsonapi
 
 from urllib.parse import urlencode
-from math import ceil
-from copy import copy
+from copy import deepcopy
 
 DEFAULT_PAGE_SIZE = 20
 
 
-def add_pagination_links(data, object_count, querystring, base_url):
+def pagination_links(object_count, query, base_url):
     """Add pagination links to result
 
     Parameters
     ----------
-    data: dict
-        the result of the view
     object_count: int
         number of objects in result
-    querystring: QueryStringManager
+    query: QueryStringManager
         the managed querystring fields and values
     base_url: str
         the base url for pagination
     """
     links = {}
-    all_qs_args = copy(querystring.querystring)
-
+    new_query = deepcopy(query)
     links['self'] = base_url
 
     # compute self link
-    if all_qs_args:
-        links['self'] += '?' + urlencode(all_qs_args)
+    if len(query):
+        links['self'] += '?' + urlencode(query.queryitems)
 
-    if querystring.pagination.get('size') != '0' and object_count > 1:
+    if query.pagination.get('size',
+                            DEFAULT_PAGE_SIZE) != 0 and object_count > 1:
         # compute last link
-        page_size = int(querystring.pagination.get(
-            'size', 0)) or DEFAULT_PAGE_SIZE
-        last_page = int(ceil(object_count / page_size))
+        page_size = query.pagination.get('size', DEFAULT_PAGE_SIZE)
+        last_page = int((object_count - 1) / page_size)
 
-        if last_page > 1:
+        if last_page > 0:
             links['first'] = links['last'] = base_url
 
-            all_qs_args.pop('page[number]', None)
+            try:
+                del new_query['page[number]']
+            except KeyError:
+                pass
 
             # compute first link
-            if all_qs_args:
-                links['first'] += '?' + urlencode(all_qs_args)
+            if len(new_query):
+                links['first'] += '?' + urlencode(new_query.queryitems)
 
-            all_qs_args.update({'page[number]': last_page})
-            links['last'] += '?' + urlencode(all_qs_args)
+            new_query['page[number]'] = last_page
+            links['last'] += '?' + urlencode(new_query.queryitems)
 
             # compute previous and next link
-            current_page = int(querystring.pagination.get('number', 0)) or 1
-            if current_page > 1:
-                all_qs_args.update({'page[number]': current_page - 1})
-                links['prev'] = '?'.join((base_url, urlencode(all_qs_args)))
+            current_page = query.pagination.get('number', 0)
+            if current_page > 0:
+                new_query['page[number]'] = current_page - 1
+                links['prev'] = '?'.join((base_url,
+                                          urlencode(new_query.queryitems)))
             if current_page < last_page:
-                all_qs_args.update({'page[number]': current_page + 1})
-                links['next'] = '?'.join((base_url, urlencode(all_qs_args)))
+                new_query['page[number]'] = current_page + 1
+                links['next'] = '?'.join((base_url,
+                                          urlencode(new_query.queryitems)))
 
-    data['links'] = links
+    return links

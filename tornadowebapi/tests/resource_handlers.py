@@ -1,14 +1,10 @@
 from collections import OrderedDict
 
+from marshmallow_jsonapi import Schema, fields
 from tornado import gen
 from tornadowebapi import exceptions
-from tornadowebapi.schema_fragment import SchemaFragment
 from tornadowebapi.model_connector import ModelConnector
-from tornadowebapi.schema import Schema
-from tornadowebapi.singleton_schema import SingletonSchema
-from tornadowebapi.traitlets import Unicode, Int, List, OneOf
-from tornadowebapi.web_handlers import ResourceDetails, ResourceList, \
-    ResourceSingletonDetails
+from tornadowebapi.resource import ResourceDetails, ResourceList
 
 
 class WorkingModelConn(ModelConnector):
@@ -19,96 +15,58 @@ class WorkingModelConn(ModelConnector):
     id = 0
 
     @gen.coroutine
-    def create_object(self, instance, **kwargs):
-        id = type(self).id
-        self.collection[str(id)] = instance
-        instance.identifier = str(id)
+    def create_object(self, data, **kwargs):
+        id = str(type(self).id)
+        data["id"] = id
+        self.collection[id] = data
         type(self).id += 1
+        return id
 
     @gen.coroutine
-    def retrieve_object(self, instance, **kwargs):
-        if instance.identifier not in self.collection:
-            raise exceptions.NotFound()
+    def retrieve_object(self, identifier, **kwargs):
+        if identifier not in self.collection:
+            raise exceptions.ObjectNotFound()
 
-        stored_item = self.collection[instance.identifier]
-        for trait_name, trait_class in instance.traits().items():
-            setattr(instance, trait_name, getattr(stored_item, trait_name))
+        return self.collection[identifier]
 
     @gen.coroutine
-    def replace_object(self, instance, **kwargs):
-        if instance.identifier not in self.collection:
-            raise exceptions.NotFound()
+    def update_object(self, identifier, data, **kwargs):
+        if identifier not in self.collection:
+            raise exceptions.ObjectNotFound()
 
-        self.collection[instance.identifier] = instance
-
-    @gen.coroutine
-    def delete_object(self, instance, **kwargs):
-        if instance.identifier not in self.collection:
-            raise exceptions.NotFound()
-
-        del self.collection[instance.identifier]
+        self.collection[identifier].update(data)
 
     @gen.coroutine
-    def retrieve_collection(
-            self, items_response,
-            offset=None, limit=None, filter_=None, **kwargs):
-        if offset is None:
-            offset = 0
+    def delete_object(self, identifier, **kwargs):
+        if identifier not in self.collection:
+            raise exceptions.ObjectNotFound()
 
-        start = offset
-
-        if limit is None:
-            end = None
-        else:
-            end = start + limit
-
-        interval = slice(start, end)
-
-        if filter_ is not None:
-            values = [x for x in self.collection.values() if filter_(x)]
-        else:
-            values = [x for x in self.collection.values()]
-
-        items_response.set(values[interval],
-                           offset=start,
-                           total=len(self.collection.values()))
-
-
-class SingletonModelConn(ModelConnector):
-    instance = {}
+        del self.collection[identifier]
 
     @gen.coroutine
-    def create_object(self, instance, **kwargs):
-        self.instance['instance'] = instance
+    def retrieve_collection(self, qs, **kwargs):
+        pagination = qs.pagination
 
-    @gen.coroutine
-    def retrieve_object(self, instance, **kwargs):
-        if "instance" not in self.instance:
-            raise exceptions.NotFound()
+        number = pagination.get("number", 0)
+        size = pagination.get("size", 10)
 
-        for trait_name, trait_class in instance.traits().items():
-            setattr(instance, trait_name,
-                    getattr(self.instance["instance"],
-                            trait_name))
+        interval = slice(number*size, (number+1)*size)
 
-    @gen.coroutine
-    def replace_object(self, instance, **kwargs):
-        if "instance" not in self.instance:
-            raise exceptions.NotFound()
+        # if filter_ is not None:
+        #     values = [x for x in self.collection.values() if filter_(x)]
+        # else:
+        #     values = [x for x in self.collection.values()]
 
-        self.instance["instance"] = instance
-
-    @gen.coroutine
-    def delete_object(self, instance, **kwargs):
-        if "instance" not in self.instance:
-            raise exceptions.NotFound()
-
-        del self.instance["instance"]
+        values = [x for x in self.collection.values()][interval]
+        return values, len(self.collection.values())
 
 
-class Student(Schema):
-    name = Unicode()
-    age = Int()
+class StudentSchema(Schema):
+    class Meta:
+        type_ = "student"
+    id = fields.Int()
+    name = fields.String(required=True)
+    age = fields.Int(required=True)
 
 
 class StudentModelConn(WorkingModelConn):
@@ -116,221 +74,221 @@ class StudentModelConn(WorkingModelConn):
 
 
 class StudentDetails(ResourceDetails):
-    schema = Student
+    schema = StudentSchema
     model_connector = StudentModelConn
 
 
 class StudentList(ResourceList):
-    schema = Student
+    schema = StudentSchema
     model_connector = StudentModelConn
 
 
-class Teacher(Schema):
-    name = Unicode()
-    age = Int(optional=True)
-    discipline = List()
-
-
-class TeacherModelConn(ModelConnector):
-    pass
-
-
-class TeacherDetails(ResourceDetails):
-    schema = Teacher
-    model_connector = TeacherModelConn
-
-
-class TeacherList(ResourceDetails):
-    schema = Teacher
-    model_connector = TeacherModelConn
-
-
-class Person(SchemaFragment):
-    name = Unicode()
-    age = Int()
-
-
-class City(Schema):
-    name = Unicode()
-    mayor = OneOf(Person)
-
-
-class CityModelConn(WorkingModelConn):
-    pass
-
-
-class CityDetails(ResourceDetails):
-    schema = City
-    model_connector = CityModelConn
-
-
-class ServerInfo(SingletonSchema):
-    uptime = Int()
-    status = Unicode()
-
-
-class ServerInfoModelConn(SingletonModelConn):
-    resource_class = ServerInfo
-
-
-class ServerInfoDetails(ResourceSingletonDetails):
-    schema = ServerInfo
-    model_connector = ServerInfoModelConn
-
-
-class UnsupportAll(Schema):
-    pass
-
-
-class UnsupportAllModelConn(ModelConnector):
-    pass
-
-
-class UnsupportAllDetails(ResourceDetails):
-    schema = UnsupportAll
-    model_connector = UnsupportAllModelConn
-
-
-class UnsupportAllList(ResourceList):
-    schema = UnsupportAll
-    model_connector = UnsupportAllModelConn
-
-
-class Unprocessable(Schema):
-    pass
-
-
-class UnprocessableModelConn(ModelConnector):
-    @gen.coroutine
-    def create_object(self, instance, **kwargs):
-        raise exceptions.BadRepresentation("unprocessable", foo="bar")
-
-    @gen.coroutine
-    def replace_object(self, instance, **kwargs):
-        raise exceptions.BadRepresentation("unprocessable", foo="bar")
-
-    @gen.coroutine
-    def retrieve_object(self, instance, **kwargs):
-        raise exceptions.BadRepresentation("unprocessable", foo="bar")
-
-    @gen.coroutine
-    def retrieve_collection(
-            self, items_response, offset=None, limit=None, **kwargs):
-        raise exceptions.BadRepresentation("unprocessable", foo="bar")
-
-
-class UnprocessableDetails(ResourceDetails):
-    schema = Unprocessable
-    model_connector = UnprocessableModelConn
-
-
-class UnprocessableList(ResourceList):
-    schema = Unprocessable
-    model_connector = UnprocessableModelConn
-
-
-class UnsupportsCollection(Schema):
-    pass
-
-
-class UnsupportsCollectionModelConn(ModelConnector):
-
-    @gen.coroutine
-    def items(self, items_response, offset=None, limit=None, **kwargs):
-        raise NotImplementedError()
-
-
-class UnsupportsCollectionList(ResourceList):
-    schema = UnsupportsCollection
-    model_connector = UnsupportsCollectionModelConn
-
-
-class Broken(Schema):
-    pass
-
-
-class BrokenModelConn(ModelConnector):
-    @gen.coroutine
-    def boom(self, *args):
-        raise Exception("Boom!")
-
-    create_object = boom
-    retrieve_object = boom
-    replace_object = boom
-    delete_object = boom
-    retrieve_collection = boom
-
-
-class BrokenDetails(ResourceDetails):
-    schema = Broken
-    model_connector = BrokenModelConn
-
-
-class BrokenList(ResourceList):
-    schema = Broken
-    model_connector = BrokenModelConn
-
-
-class AlreadyPresent(Schema):
-    pass
-
-
-class AlreadyPresentModelConn(ModelConnector):
-
-    @gen.coroutine
-    def create_object(self, *args, **kwargs):
-        raise exceptions.Exists()
-
-
-class AlreadyPresentDetails(ResourceDetails):
-    schema = AlreadyPresent
-    model_connector = AlreadyPresentModelConn
-
-
-class AlreadyPresentList(ResourceList):
-    schema = AlreadyPresent
-    model_connector = AlreadyPresentModelConn
-
-
-class Sheep(Schema):
-    @classmethod
-    def collection_name(cls):
-        return "sheep"
-
-
-class SheepModelConn(ModelConnector):
-    """Sheep plural is the same as singular."""
-
-
-class SheepDetails(ResourceDetails):
-    schema = Sheep
-    model_connector = SheepModelConn
-
-
-class Octopus(Schema):
-    @classmethod
-    def collection_name(cls):
-        return "octopi"
-
-
-class OctopusModelConn(ModelConnector):
-    """Octopus plural is a matter of debate."""
-    resource_class = Octopus
-
-
-class OctopusDetails(ResourceDetails):
-    schema = Octopus
-    model_connector = OctopusModelConn
-
-
-class Frobnicator(Schema):
-    pass
-
-
-class FrobnicatorModelConn(ModelConnector):
-    """A weird name to test if it's kept"""
-
-
-class FrobnicatorDetails(ResourceDetails):
-    schema = Frobnicator
-    model_connector = FrobnicatorModelConn
+# class Teacher(Schema):
+#     name = fields.String()
+#     age = fields.Int(required=False)
+#     discipline = fields.List(fields.String())
+#
+#
+# class TeacherModelConn(ModelConnector):
+#     pass
+#
+#
+# class TeacherDetails(ResourceDetails):
+#     schema = Teacher
+#     model_connector = TeacherModelConn
+#
+#
+# class TeacherList(ResourceDetails):
+#     schema = Teacher
+#     model_connector = TeacherModelConn
+#
+#
+# class Person(Schema):
+#     name = fields.String()
+#     age = fields.Int()
+#
+#
+# class City(Schema):
+#     name = fields.String()
+#     mayor = fields.Nested(Person())
+#
+#
+# class CityModelConn(WorkingModelConn):
+#     pass
+#
+#
+# class CityDetails(ResourceDetails):
+#     schema = City
+#     model_connector = CityModelConn
+#
+#
+# class ServerInfo(Schema):
+#     uptime = fields.Int()
+#     status = fields.String()
+#
+#
+# class ServerInfoModelConn(SingletonModelConn):
+#     resource_class = ServerInfo
+#
+#
+# class ServerInfoDetails(ResourceSingletonDetails):
+#     schema = ServerInfo
+#     model_connector = ServerInfoModelConn
+#
+#
+# class UnsupportAll(Schema):
+#     pass
+#
+#
+# class UnsupportAllModelConn(ModelConnector):
+#     pass
+#
+#
+# class UnsupportAllDetails(ResourceDetails):
+#     schema = UnsupportAll
+#     model_connector = UnsupportAllModelConn
+#
+#
+# class UnsupportAllList(ResourceList):
+#     schema = UnsupportAll
+#     model_connector = UnsupportAllModelConn
+#
+#
+# class Unprocessable(Schema):
+#     pass
+#
+#
+# class UnprocessableModelConn(ModelConnector):
+#     @gen.coroutine
+#     def create_object(self, instance, **kwargs):
+#         raise exceptions.BadRepresentation("unprocessable", foo="bar")
+#
+#     @gen.coroutine
+#     def replace_object(self, instance, **kwargs):
+#         raise exceptions.BadRepresentation("unprocessable", foo="bar")
+#
+#     @gen.coroutine
+#     def retrieve_object(self, instance, **kwargs):
+#         raise exceptions.BadRepresentation("unprocessable", foo="bar")
+#
+#     @gen.coroutine
+#     def retrieve_collection(
+#             self, items_response, offset=None, limit=None, **kwargs):
+#         raise exceptions.BadRepresentation("unprocessable", foo="bar")
+#
+#
+# class UnprocessableDetails(ResourceDetails):
+#     schema = Unprocessable
+#     model_connector = UnprocessableModelConn
+#
+#
+# class UnprocessableList(ResourceList):
+#     schema = Unprocessable
+#     model_connector = UnprocessableModelConn
+#
+#
+# class UnsupportsCollection(Schema):
+#     pass
+#
+#
+# class UnsupportsCollectionModelConn(ModelConnector):
+#
+#     @gen.coroutine
+#     def items(self, items_response, offset=None, limit=None, **kwargs):
+#         raise NotImplementedError()
+#
+#
+# class UnsupportsCollectionList(ResourceList):
+#     schema = UnsupportsCollection
+#     model_connector = UnsupportsCollectionModelConn
+#
+#
+# class Broken(Schema):
+#     pass
+#
+#
+# class BrokenModelConn(ModelConnector):
+#     @gen.coroutine
+#     def boom(self, *args):
+#         raise Exception("Boom!")
+#
+#     create_object = boom
+#     retrieve_object = boom
+#     replace_object = boom
+#     delete_object = boom
+#     retrieve_collection = boom
+#
+#
+# class BrokenDetails(ResourceDetails):
+#     schema = Broken
+#     model_connector = BrokenModelConn
+#
+#
+# class BrokenList(ResourceList):
+#     schema = Broken
+#     model_connector = BrokenModelConn
+#
+#
+# class AlreadyPresent(Schema):
+#     pass
+#
+#
+# class AlreadyPresentModelConn(ModelConnector):
+#
+#     @gen.coroutine
+#     def create_object(self, *args, **kwargs):
+#         raise exceptions.Exists()
+#
+#
+# class AlreadyPresentDetails(ResourceDetails):
+#     schema = AlreadyPresent
+#     model_connector = AlreadyPresentModelConn
+#
+#
+# class AlreadyPresentList(ResourceList):
+#     schema = AlreadyPresent
+#     model_connector = AlreadyPresentModelConn
+#
+#
+# class Sheep(Schema):
+#     @classmethod
+#     def collection_name(cls):
+#         return "sheep"
+#
+#
+# class SheepModelConn(ModelConnector):
+#     """Sheep plural is the same as singular."""
+#
+#
+# class SheepDetails(ResourceDetails):
+#     schema = Sheep
+#     model_connector = SheepModelConn
+#
+#
+# class Octopus(Schema):
+#     @classmethod
+#     def collection_name(cls):
+#         return "octopi"
+#
+#
+# class OctopusModelConn(ModelConnector):
+#     """Octopus plural is a matter of debate."""
+#     resource_class = Octopus
+#
+#
+# class OctopusDetails(ResourceDetails):
+#     schema = Octopus
+#     model_connector = OctopusModelConn
+#
+#
+# class Frobnicator(Schema):
+#     pass
+#
+#
+# class FrobnicatorModelConn(ModelConnector):
+#     """A weird name to test if it's kept"""
+#
+#
+# class FrobnicatorDetails(ResourceDetails):
+#     schema = Frobnicator
+#     model_connector = FrobnicatorModelConn

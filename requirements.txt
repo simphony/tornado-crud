@@ -1,5 +1,4 @@
 setuptools>=21.0
 tornado>=4.3
-traitlets>=4.3
-marshmallow>=2.13
-marshmallow_jsonapi>=0.14
+marshmallow==2.13.1
+marshmallow_jsonapi==0.14.0

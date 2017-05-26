@@ -4,7 +4,7 @@ from tornado.testing import AsyncTestCase, gen_test
 from tornadowebapi.model_connector import ModelConnector
 
 
-class TestModelConn(AsyncTestCase):
+class TestModelConnector(AsyncTestCase):
     @gen_test
     def test_basic_expectations(self):
         handler = ModelConnector(Mock(), Mock())
@@ -13,9 +13,6 @@ class TestModelConn(AsyncTestCase):
 
         with self.assertRaises(NotImplementedError):
             yield handler.retrieve_object(Mock())
-
-        with self.assertRaises(NotImplementedError):
-            yield handler.replace_object(Mock())
 
         with self.assertRaises(NotImplementedError):
             yield handler.delete_object(Mock())
