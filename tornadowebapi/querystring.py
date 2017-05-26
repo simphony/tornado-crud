@@ -4,6 +4,7 @@
 
 import json
 
+from tornadowebapi.errors import Error, Source
 from .exceptions import BadRequest, InvalidFilters, InvalidSort
 from .schema import get_model_field, get_relationships
 
@@ -66,7 +67,11 @@ class QueryStringManager(object):
                     item_value = value
                 results.update({item_key: item_value})
             except Exception:
-                raise BadRequest({'parameter': key}, "Parse error")
+                raise BadRequest([
+                    Error(
+                        source=Source(parameter=key),
+                        title="Parse error"
+                    )])
 
         return results
 
@@ -95,7 +100,7 @@ class QueryStringManager(object):
             try:
                 filters = json.loads(filters)
             except (ValueError, TypeError):
-                raise InvalidFilters("Parse error")
+                raise InvalidFilters.from_message("Parse error")
 
         return filters
 
@@ -123,14 +128,25 @@ class QueryStringManager(object):
         result = self._get_key_values('page')
         for key, value in result.items():
             if key not in ('number', 'size'):
-                raise BadRequest({'parameter': 'page'},
-                                 "{} is not a valid parameter "
-                                 "of pagination".format(key))
+                raise BadRequest([
+                    Error(
+                        source=Source(
+                            parameter="page",
+                        ),
+                        detail="{} is not a valid parameter "
+                               "of pagination".format(key)
+                    )])
             try:
                 int(value)
             except ValueError:
-                raise BadRequest({'parameter': 'page[{}]'.format(key)},
-                                 "Parse error")
+                raise BadRequest([
+                    Error(
+                        source=Source(
+                            parameter='page[{}]'.format(key),
+                        ),
+                        detail="Parse error"
+                    )
+                ])
 
         return result
 
@@ -180,12 +196,14 @@ class QueryStringManager(object):
             for sort_field in self.qs['sort'].split(','):
                 field = sort_field.replace('-', '')
                 if field not in self.schema._declared_fields:
-                    raise InvalidSort("{} has no attribute "
-                                      "{}".format(self.schema.__name__, field))
+                    raise InvalidSort.from_message(
+                        "{} has no attribute "
+                        "{}".format(self.schema.__name__, field))
                 if field in get_relationships(self.schema).values():
-                    raise InvalidSort("You can't sort on {} "
-                                      "because it is a relationship "
-                                      "field".format(field))
+                    raise InvalidSort.from_message(
+                        "You can't sort on {} "
+                        "because it is a relationship "
+                        "field".format(field))
                 field = get_model_field(self.schema, field)
                 order = 'desc' if sort_field.startswith('-') else 'asc'
                 sorting_results.append({'field': field, 'order': order})
