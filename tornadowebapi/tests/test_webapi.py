@@ -256,7 +256,7 @@ class TestCRUDAPI(TestBase):
                              }
                          })
 
-    def _test_update_errors(self):
+    def test_update_errors(self):
         location = self._create_one_student("john wick", 19)
         res = self.fetch(
             location,

@@ -2,7 +2,7 @@ from marshmallow import class_registry
 from marshmallow.base import SchemaABC
 from marshmallow_jsonapi.fields import Relationship
 
-from .exceptions import InvalidField, InvalidInclude
+from .exceptions import InvalidFields, InvalidInclude
 
 
 def compute_schema(schema_cls, default_kwargs, qs, include):
@@ -55,7 +55,7 @@ def compute_schema(schema_cls, default_kwargs, qs, include):
         # check that sparse fieldsets exists in the schema
         for field in qs.fields[schema.opts.type_]:
             if field not in schema.declared_fields:
-                raise InvalidField.from_message(
+                raise InvalidFields.from_message(
                     "{} has no attribute {}".format(schema.__class__.__name__,
                                                     field))
 

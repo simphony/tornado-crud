@@ -33,10 +33,11 @@ class JsonApiException(Exception):
 
     @classmethod
     def from_message(cls, message):
-        return cls(errors=Error(
+        return cls(errors=[Error(
             title=cls.title,
+            status=cls.status,
             detail=message
-        ))
+        )])
 
 
 class BadRequest(JsonApiException):
@@ -49,13 +50,13 @@ class ValidationError(JsonApiException):
     title = "Validation error"
 
 
-class InvalidField(BadRequest):
+class InvalidFields(BadRequest):
     title = "Invalid fields querystring parameter"
 
     def __init__(self, errors=None):
         if errors is None:
             errors = [Error(title=self.title,
-                            source=Source(parameter="sort"),
+                            source=Source(parameter="fields"),
                             status=self.status)]
 
         super().__init__(errors)

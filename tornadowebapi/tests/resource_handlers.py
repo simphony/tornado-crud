@@ -61,7 +61,7 @@ class WorkingModelConn(ModelConnector):
         return values, len(self.collection.values())
 
 
-class Student(Schema):
+class StudentSchema(Schema):
     class Meta:
         type_ = "student"
     id = fields.Int()
@@ -74,12 +74,12 @@ class StudentModelConn(WorkingModelConn):
 
 
 class StudentDetails(ResourceDetails):
-    schema = Student
+    schema = StudentSchema
     model_connector = StudentModelConn
 
 
 class StudentList(ResourceList):
-    schema = Student
+    schema = StudentSchema
     model_connector = StudentModelConn
 
 
