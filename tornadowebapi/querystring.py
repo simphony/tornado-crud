@@ -4,6 +4,7 @@
 
 import json
 
+from tornado import escape
 from tornadowebapi.errors import Error, Source
 from .exceptions import BadRequest, InvalidFilters, InvalidSort
 from .schema import get_model_field, get_relationships
@@ -65,6 +66,13 @@ class QueryStringManager(object):
                     item_value = value.split(',')
                 else:
                     item_value = value
+
+                if isinstance(item_value, list):
+                    if len(item_value) == 0:
+                        continue
+                    elif len(item_value) == 1:
+                        item_value = item_value[0]
+
                 results.update({item_key: item_value})
             except Exception:
                 raise BadRequest([
@@ -73,7 +81,7 @@ class QueryStringManager(object):
                         title="Parse error"
                     )])
 
-        return results
+        return escape.recursive_unicode(results)
 
     @property
     def querystring(self):
@@ -137,7 +145,7 @@ class QueryStringManager(object):
                                "of pagination".format(key)
                     )])
             try:
-                int(value)
+                result[key] = int(value)
             except ValueError:
                 raise BadRequest([
                     Error(
